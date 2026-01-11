@@ -8,7 +8,7 @@ import {
     Loader2, Search, Calendar, Plus,
     CreditCard, Banknote, Coins, Receipt,
     Trash2, UploadCloud, CheckCircle2,
-    Clock, Filter, X, Eye, DollarSign,
+    Clock, Filter, X, Eye, DollarSign, Bookmark,
     ZoomIn, ZoomOut, RotateCcw, Download, Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -136,70 +136,6 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', locked
                 )}
             </AnimatePresence>
 
-            {/* Add Name Modal */}
-            <AnimatePresence>
-                {showAddNameModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setShowAddNameModal(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
-                        >
-                            <div className="p-6 bg-[#4a3426] text-white">
-                                <h3 className="text-lg font-black uppercase tracking-tight">Ajouter Nouveau</h3>
-                                <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-1">Section: {newName.section}</p>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Section</label>
-                                    <select
-                                        value={newName.section}
-                                        onChange={(e) => setNewName({ ...newName, section: e.target.value as any })}
-                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
-                                    >
-                                        <option value="Fournisseur">Fournisseur</option>
-                                        <option value="Journalier">Journalier</option>
-                                        <option value="Divers">Divers</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Nom / Désignation</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Entrez le nom..."
-                                        value={newName.name}
-                                        onChange={(e) => setNewName({ ...newName, name: e.target.value })}
-                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setShowAddNameModal(false)}
-                                        className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        onClick={handleAddName}
-                                        disabled={!newName.name}
-                                        className="flex-1 h-12 bg-[#4a3426] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
-                                    >
-                                        Ajouter
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 };
@@ -1356,6 +1292,71 @@ export default function FacturationPage() {
                                 )}
                             </div>
                         </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Add Name Modal */}
+            <AnimatePresence>
+                {showAddNameModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setShowAddNameModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
+                        >
+                            <div className="p-6 bg-[#4a3426] text-white">
+                                <h3 className="text-lg font-black uppercase tracking-tight">Ajouter Nouveau</h3>
+                                <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-1">Section: {newName.section}</p>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Section</label>
+                                    <select
+                                        value={newName.section}
+                                        onChange={(e) => setNewName({ ...newName, section: e.target.value as any })}
+                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
+                                    >
+                                        <option value="Fournisseur">Fournisseur</option>
+                                        <option value="Journalier">Journalier</option>
+                                        <option value="Divers">Divers</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Nom / Désignation</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Entrez le nom..."
+                                        value={newName.name}
+                                        onChange={(e) => setNewName({ ...newName, name: e.target.value })}
+                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowAddNameModal(false)}
+                                        className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={handleAddName}
+                                        disabled={!newName.name}
+                                        className="flex-1 h-12 bg-[#4a3426] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+                                    >
+                                        Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
