@@ -321,7 +321,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedDivers.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedDivers.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedExpenses.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedExpenses.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
@@ -386,7 +386,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedAvances.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedAvances.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
@@ -415,7 +415,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedDoublages.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedDoublages.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
@@ -444,7 +444,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedExtras.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedExtras.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
                                             <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedPrimes.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                {aggregates.groupedPrimes.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                             </span>
                                             <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                         </div>
