@@ -6,7 +6,7 @@ import {
     Plus, Trash2, UploadCloud, Save, Search, LogOut, Loader2, Calendar,
     Wallet, TrendingDown, TrendingUp, CreditCard, Banknote, Coins, Calculator, Receipt,
     ChevronLeft, ChevronRight, LayoutDashboard, PieChart as PieChartIcon, BarChart3, LineChart as LineChartIcon,
-    Zap, Sparkles, ChevronDown, User, MessageSquare, FileText, Check
+    Zap, Sparkles, ChevronDown, User, MessageSquare, FileText, Check, Share2, ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -378,6 +378,54 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const handleRemoveExpense = (index: number) => { setHasInteracted(true); setExpenses(expenses.filter((_, i) => i !== index)); };
     const handleRemoveDivers = (index: number) => { setHasInteracted(true); setExpensesDivers(expensesDivers.filter((_, i) => i !== index)); };
     const handleRemoveJournalier = (index: number) => { setHasInteracted(true); setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index)); };
+
+    const handleShareInvoice = async (img: string) => {
+        try {
+            if (img.startsWith('data:')) {
+                const response = await fetch(img);
+                const blob = await response.blob();
+                const file = new File([blob], 'recu.png', { type: blob.type });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Partage de Reçu' });
+                } else {
+                    const link = document.createElement('a');
+                    link.href = img;
+                    link.download = 'recu.png';
+                    link.click();
+                }
+            } else {
+                if (navigator.share) {
+                    await navigator.share({ url: img, title: 'Partage de Reçu' });
+                } else {
+                    window.open(img, '_blank');
+                }
+            }
+        } catch (e) {
+            console.error('Share failed', e);
+        }
+    };
+
+    const handleDeleteInvoice = (idx: number) => {
+        if (!viewingInvoicesTarget || !viewingInvoices) return;
+        const newInvoices = [...viewingInvoices];
+        newInvoices.splice(idx, 1);
+
+        if (viewingInvoicesTarget.type === 'journalier') {
+            const list = [...expensesJournalier];
+            list[viewingInvoicesTarget.index].invoices = newInvoices;
+            setExpensesJournalier(list);
+        } else if (viewingInvoicesTarget.type === 'divers') {
+            const list = [...expensesDivers];
+            list[viewingInvoicesTarget.index].invoices = newInvoices;
+            setExpensesDivers(list);
+        } else {
+            const list = [...expenses];
+            list[viewingInvoicesTarget.index].invoices = newInvoices;
+            setExpenses(list);
+        }
+        setViewingInvoices(newInvoices.length > 0 ? newInvoices : null);
+        if (newInvoices.length === 0) setViewingInvoicesTarget(null);
+    };
 
     const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>, type: 'invoice' | 'recto' | 'verso' = 'invoice', isDivers: boolean = false) => {
         setHasInteracted(true);
@@ -1359,7 +1407,18 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 )}
                             </div>
                             {viewingInvoices.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{viewingInvoices.map((img, idx) => (<div key={idx} className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm"><img src={img} className="w-full h-auto object-contain" /><div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100">Reçu {idx + 1}</div></div>))}</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {viewingInvoices.map((img, idx) => (
+                                        <div key={idx} className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm transition-all hover:shadow-md">
+                                            <img src={img} className="w-full h-auto object-contain bg-gray-50" />
+                                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleShareInvoice(img)} className="p-2 bg-white/90 hover:bg-white text-[#4a3426] rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110"><Share2 size={16} /></button>
+                                                <button onClick={() => handleDeleteInvoice(idx)} className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110"><Trash2 size={16} /></button>
+                                            </div>
+                                            <div className="absolute bottom-2 left-2 bg-black/40 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg">REÇU {idx + 1}</div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : <div className="text-center py-20 text-gray-400"><UploadCloud size={60} className="mx-auto mb-4 opacity-20" /><p>Aucun reçu attaché</p></div>}
                         </motion.div>
                     </motion.div>
