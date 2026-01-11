@@ -7,7 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import {
     LayoutDashboard, Loader2, Calendar,
     Wallet, TrendingUp, TrendingDown, CreditCard, Banknote, Coins, Receipt, Calculator,
-    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, X, Eye, Truck, Download
+    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, Truck, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -66,6 +66,11 @@ export default function DashboardPage() {
 
     // Search filters for each category
     const [searchQuery, setSearchQuery] = useState('');
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+    const toggleSection = (id: string) => {
+        setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+    };
 
     const months = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -309,8 +314,11 @@ export default function DashboardPage() {
                             {/* 2. Unified Grid for All Expense Categories */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* 1.1 Dépenses Journalier (Divers) */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('journalier')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
                                                 <Sparkles size={20} />
@@ -320,26 +328,49 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Désignations Diverses</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedDivers.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
-                                                <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
-                                                <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedDivers.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
-                                        )) : <div className="h-full flex items-center justify-center italic text-[#8c8279] opacity-40 text-sm">Aucune donnée</div>}
-                                    </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['journalier'] ? 180 : 0 }}
+                                                className="text-[#c69f6e]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['journalier'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                            <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 1.2 Dépenses Courantes (Fournisseurs) */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('fournisseurs')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#4a3426]/10 flex items-center justify-center text-[#4a3426]">
                                                 <Truck size={20} />
@@ -349,33 +380,56 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Dépenses & Charges</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedExpenses.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedExpenses.length > 0 ? aggregates.groupedExpenses.map((a: any, i: number) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => setSelectedSupplier(a.name)}
-                                                className="w-full flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-[#4a3426] transition-all"
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedExpenses.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                            </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['fournisseurs'] ? 180 : 0 }}
+                                                className="text-[#4a3426]"
                                             >
-                                                <span className="font-bold text-[#4a3426] text-sm group-hover:text-white transition-colors truncate max-w-[60%]">{a.name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-black text-[#4a3426] group-hover:text-white transition-colors">{a.amount.toFixed(3)}</span>
-                                                    <Eye size={12} className="text-[#c69f6e] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['fournisseurs'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedExpenses.length > 0 ? aggregates.groupedExpenses.map((a: any, i: number) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => setSelectedSupplier(a.name)}
+                                                            className="w-full flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-[#4a3426] transition-all"
+                                                        >
+                                                            <span className="font-bold text-[#4a3426] text-sm group-hover:text-white transition-colors truncate max-w-[60%]">{a.name}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-black text-[#4a3426] group-hover:text-white transition-colors">{a.amount.toFixed(3)}</span>
+                                                                <Eye size={12} className="text-[#c69f6e] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                            </div>
+                                                        </button>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
                                                 </div>
-                                            </button>
-                                        )) : <div className="h-full flex items-center justify-center italic text-[#8c8279] opacity-40 text-sm">Aucune donnée</div>}
-                                    </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 2.1 Accompte */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('accompte')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#a89284]/10 flex items-center justify-center text-[#a89284]">
                                                 <Calculator size={20} />
@@ -385,26 +439,49 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Avances sur salaires</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedAvances.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedAvances.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedAvances.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['accompte'] ? 180 : 0 }}
+                                                className="text-[#a89284]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['accompte'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedAvances.length > 0 ? aggregates.groupedAvances.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                            <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 2.2 Doublage */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('doublage')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#4a3426]/10 flex items-center justify-center text-[#4a3426]">
                                                 <TrendingUp size={20} />
@@ -414,26 +491,49 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Heures supplémentaires</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedDoublages.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedDoublages.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedDoublages.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['doublage'] ? 180 : 0 }}
+                                                className="text-[#4a3426]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['doublage'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedDoublages.length > 0 ? aggregates.groupedDoublages.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                            <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 2.3 Extra */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('extra')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
                                                 <Zap size={20} />
@@ -443,26 +543,49 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Main d'œuvre occasionnelle</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedExtras.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedExtras.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedExtras.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['extra'] ? 180 : 0 }}
+                                                className="text-[#c69f6e]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['extra'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedExtras.length > 0 ? aggregates.groupedExtras.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                            <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 {/* 2.4 Primes */}
-                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
-                                    <div className="flex justify-between items-center mb-6">
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('primes')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#2d6a4f]/10 flex items-center justify-center text-[#2d6a4f]">
                                                 <Sparkles size={20} />
@@ -472,21 +595,41 @@ export default function DashboardPage() {
                                                 <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Récompenses & Bonus</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
-                                            <span className="text-sm font-black text-[#4a3426]">
-                                                {aggregates.groupedPrimes.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
-                                        {aggregates.groupedPrimes.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between items-center p-3 bg-[f9f6f2] rounded-xl border border-transparent">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedPrimes.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['primes'] ? 180 : 0 }}
+                                                className="text-[#2d6a4f]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['primes'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedPrimes.length > 0 ? aggregates.groupedPrimes.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                            <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
 
