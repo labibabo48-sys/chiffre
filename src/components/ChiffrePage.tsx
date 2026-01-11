@@ -6,7 +6,8 @@ import {
     Plus, Trash2, UploadCloud, Save, Search, LogOut, Loader2, Calendar,
     Wallet, TrendingDown, TrendingUp, CreditCard, Banknote, Coins, Calculator, Receipt,
     ChevronLeft, ChevronRight, LayoutDashboard, PieChart as PieChartIcon, BarChart3, LineChart as LineChartIcon,
-    Zap, Sparkles, ChevronDown, User, MessageSquare, FileText, Check, Share2, ExternalLink
+    Zap, Sparkles, ChevronDown, User, MessageSquare, FileText, Check, Share2, ExternalLink,
+    Eye, EyeOff
 } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -207,6 +208,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [showSupplierModal, setShowSupplierModal] = useState(false);
     const [showJournalierModal, setShowJournalierModal] = useState(false);
     const [showDiversModal, setShowDiversModal] = useState(false);
+    const [hideRecetteCaisse, setHideRecetteCaisse] = useState(false);
     const [newSupplierName, setNewSupplierName] = useState('');
     const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -664,15 +666,27 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         <div className="flex items-center justify-center md:justify-end gap-2 mb-2 text-[#8c8279]">
                                             <Wallet size={16} className="text-[#2d6a4f]" strokeWidth={2.5} />
                                             <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#4a3426]">Recette Caisse</span>
+                                            <button
+                                                onClick={() => setHideRecetteCaisse(!hideRecetteCaisse)}
+                                                className="ml-2 p-1 hover:bg-black/5 rounded-full transition-colors text-[#bba282]"
+                                            >
+                                                {hideRecetteCaisse ? <EyeOff size={14} /> : <Eye size={14} />}
+                                            </button>
                                         </div>
                                         <div className="flex items-baseline justify-center md:justify-end gap-3">
-                                            <input
-                                                type="number"
-                                                value={recetteCaisse}
-                                                onChange={(e) => { setRecetteCaisse(e.target.value); setHasInteracted(true); }}
-                                                className="text-6xl md:text-7xl lg:text-8xl font-black bg-transparent text-[#4a3426] outline-none placeholder-[#e6dace] text-center md:text-right w-full md:w-auto min-w-[150px]"
-                                                placeholder="0"
-                                            />
+                                            {hideRecetteCaisse ? (
+                                                <div className="text-6xl md:text-7xl lg:text-8xl font-black text-[#4a3426] py-1">
+                                                    ********
+                                                </div>
+                                            ) : (
+                                                <input
+                                                    type="number"
+                                                    value={recetteCaisse}
+                                                    onChange={(e) => { setRecetteCaisse(e.target.value); setHasInteracted(true); }}
+                                                    className="text-6xl md:text-7xl lg:text-8xl font-black bg-transparent text-[#4a3426] outline-none placeholder-[#e6dace] text-center md:text-right w-full md:w-auto min-w-[150px]"
+                                                    placeholder="0"
+                                                />
+                                            )}
                                             <span className="text-xl md:text-2xl lg:text-3xl font-black text-[#c69f6e] shrink-0">DT</span>
                                         </div>
                                     </div>
@@ -1675,6 +1689,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </button>
                                         <button
                                             onClick={async () => {
+                                                const normalizedNew = designationSearch.trim().toLowerCase();
+                                                const exists = commonDesignations.some((d: string) => d.toLowerCase() === normalizedNew);
+
+                                                if (exists) {
+                                                    setToast({ msg: 'Cette désignation existe déjà', type: 'error' });
+                                                    setTimeout(() => setToast(null), 3000);
+                                                    return;
+                                                }
+
                                                 if (designationSearch.trim()) {
                                                     try {
                                                         await upsertDesignation({ variables: { name: designationSearch.trim() } });
