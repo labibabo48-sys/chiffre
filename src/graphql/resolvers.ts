@@ -339,6 +339,10 @@ export const resolvers = {
 
             const res = await query(`SELECT * FROM bank_deposits ${dateFilter} ORDER BY date DESC`, params);
             return res.rows;
+        },
+        getLockedDates: async () => {
+            const res = await query('SELECT date FROM chiffres WHERE is_locked = true');
+            return res.rows.map(r => r.date);
         }
     },
     Mutation: {

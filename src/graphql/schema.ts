@@ -93,6 +93,7 @@ export const typeDefs = `#graphql
     getInvoices(supplierName: String, startDate: String, endDate: String, month: String): [Invoice]
     getPaymentStats(month: String, startDate: String, endDate: String): PaymentStats
     getBankDeposits(month: String, startDate: String, endDate: String): [BankDeposit]
+    getLockedDates: [String]
   }
 
   type Mutation {

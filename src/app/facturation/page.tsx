@@ -21,7 +21,7 @@ const formatDateToDisplay = (dateStr: string) => {
     return `${d}/${m}/${y}`;
 };
 
-const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { value: string, onChange: (val: string) => void, label: string, colorMode?: 'brown' | 'green' | 'red' }) => {
+const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', lockedDates = [] }: { value: string, onChange: (val: string) => void, label: string, colorMode?: 'brown' | 'green' | 'red', lockedDates?: string[] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
 
@@ -103,6 +103,7 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
                                     const dStr = `${y}-${m}-${d}`;
 
                                     const isSelected = value === dStr;
+                                    const isLocked = lockedDates.includes(dStr);
                                     const now = new Date();
                                     const isToday = now.getFullYear() === day.getFullYear() &&
                                         now.getMonth() === day.getMonth() &&
@@ -111,14 +112,17 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
                                     return (
                                         <button key={i} type="button"
                                             onClick={() => {
+                                                if (isLocked) return;
                                                 onChange(dStr);
                                                 setIsOpen(false);
                                             }}
-                                            className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center
-                                                ${isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`}
-                                                ${isToday && !isSelected ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
+                                            disabled={isLocked}
+                                            className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center relative
+                                                ${isLocked ? 'text-red-300 opacity-40 cursor-not-allowed' : (isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`)}
+                                                ${isToday && !isSelected && !isLocked ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
                                         >
                                             {day.getDate()}
+                                            {isLocked && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />}
                                         </button>
                                     );
                                 })}
@@ -159,6 +163,7 @@ const GET_INVOICES = gql`
       id
       name
     }
+    getLockedDates
   }
 `;
 
@@ -285,8 +290,14 @@ export default function FacturationPage() {
         setInitializing(false);
     }, [router]);
 
+    const lockedDates = data?.getLockedDates || [];
+
     const handleAddInvoice = async () => {
         if (!newInvoice.supplier_name || !newInvoice.amount || !newInvoice.date) return;
+        if (lockedDates.includes(newInvoice.date)) {
+            alert("Cette date est verrouillée. Impossible d'ajouter une facture.");
+            return;
+        }
         try {
             await addInvoice({
                 variables: {
@@ -309,6 +320,10 @@ export default function FacturationPage() {
 
     const handlePayInvoice = async () => {
         if (!showPayModal) return;
+        if (lockedDates.includes(paymentDetails.date)) {
+            alert("Cette date est verrouillée. Impossible de valider le paiement.");
+            return;
+        }
         try {
             await payInvoice({
                 variables: {
@@ -332,10 +347,16 @@ export default function FacturationPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (inv: any) => {
+        const targetDate = inv.status === 'paid' ? inv.paid_date : inv.date;
+        if (lockedDates.includes(targetDate)) {
+            alert("Cette date est verrouillée. Impossible de supprimer cette facture.");
+            return;
+        }
+
         if (!confirm('Bas sûr de vouloir supprimer cette facture ?')) return;
         try {
-            await deleteInvoice({ variables: { id } });
+            await deleteInvoice({ variables: { id: inv.id } });
             refetch();
         } catch (e) {
             console.error(e);
@@ -601,7 +622,7 @@ export default function FacturationPage() {
                                                                 <span>Payer</span>
                                                             </button>
                                                             <button
-                                                                onClick={() => handleDelete(inv.id)}
+                                                                onClick={() => handleDelete(inv)}
                                                                 className="w-11 h-11 border-2 border-red-50 text-red-100 hover:text-red-500 hover:border-red-100 rounded-xl flex items-center justify-center transition-all"
                                                             >
                                                                 <Trash2 size={18} />
@@ -703,7 +724,7 @@ export default function FacturationPage() {
 
                                                         <div className="flex gap-2">
                                                             <button
-                                                                onClick={() => handleDelete(inv.id)}
+                                                                onClick={() => handleDelete(inv)}
                                                                 className="flex-1 h-11 border-2 border-red-50 text-red-100 hover:text-red-500 hover:border-red-100 rounded-xl flex items-center justify-center transition-all px-4 gap-2"
                                                             >
                                                                 <Trash2 size={18} />
@@ -792,6 +813,7 @@ export default function FacturationPage() {
                                             label="Date"
                                             value={newInvoice.date}
                                             onChange={(val) => setNewInvoice({ ...newInvoice, date: val })}
+                                            lockedDates={lockedDates}
                                         />
                                     </div>
                                 </div>
@@ -893,6 +915,7 @@ export default function FacturationPage() {
                                         colorMode="green"
                                         value={paymentDetails.date}
                                         onChange={(val) => setPaymentDetails({ ...paymentDetails, date: val })}
+                                        lockedDates={lockedDates}
                                     />
                                 </div>
 
