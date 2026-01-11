@@ -381,27 +381,44 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     const handleShareInvoice = async (img: string) => {
         try {
-            if (img.startsWith('data:')) {
-                const response = await fetch(img);
-                const blob = await response.blob();
-                const file = new File([blob], 'recu.png', { type: blob.type });
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Partage de Reçu' });
-                } else {
-                    const link = document.createElement('a');
-                    link.href = img;
-                    link.download = 'recu.png';
-                    link.click();
-                }
-            } else {
-                if (navigator.share) {
-                    await navigator.share({ url: img, title: 'Partage de Reçu' });
-                } else {
-                    window.open(img, '_blank');
+            const response = await fetch(img);
+            const blob = await response.blob();
+            const file = new File([blob], 'recu.png', { type: blob.type });
+
+            // 1. Try Native Share (Best for Mobile: WhatsApp, FB, etc.)
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Reçu Riadh Bey',
+                    text: 'Voici un reçu de la caisse Riadh Bey'
+                });
+                return;
+            }
+
+            // 2. Try Clipboard Copy (Best for Desktop: allows Ctrl+V into WhatsApp/FB)
+            if (navigator.clipboard && window.ClipboardItem) {
+                try {
+                    const data = [new ClipboardItem({ [blob.type]: blob })];
+                    await navigator.clipboard.write(data);
+                    setToast({ msg: '📸 Image copiée ! Collez-la (Ctrl+V) dans WhatsApp/FB', type: 'success' });
+                    setTimeout(() => setToast(null), 3000);
+                    return;
+                } catch (err) {
+                    console.warn('Clipboard write failed', err);
                 }
             }
+
+            // 3. Fallback: Download
+            const link = document.createElement('a');
+            link.href = img;
+            link.download = 'recu.png';
+            link.click();
+            setToast({ msg: 'Téléchargement lancé', type: 'success' });
+            setTimeout(() => setToast(null), 3000);
         } catch (e) {
             console.error('Share failed', e);
+            setToast({ msg: 'Échec du partage', type: 'error' });
+            setTimeout(() => setToast(null), 3000);
         }
     };
 
