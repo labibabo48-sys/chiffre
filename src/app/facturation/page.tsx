@@ -21,9 +21,13 @@ const formatDateToDisplay = (dateStr: string) => {
     return `${d}/${m}/${y}`;
 };
 
+import { createPortal } from 'react-dom';
+
 const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', lockedDates = [], allowedDates, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, colorMode?: 'brown' | 'green' | 'red', lockedDates?: string[], allowedDates?: string[], align?: 'left' | 'right' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
+    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     const theme = {
         brown: { text: 'text-[#c69f6e]', bg: 'bg-[#c69f6e]', shadow: 'shadow-[#c69f6e]/30', border: 'border-[#c69f6e]/30', hover: 'hover:border-[#c69f6e]' },
@@ -48,18 +52,85 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', locked
         return days;
     }, [viewDate]);
 
-    // Use a ref to check if the picker is near the bottom of the screen
-    const [openUp, setOpenUp] = useState(false);
-    const containerRef = (node: HTMLDivElement | null) => {
-        if (node) {
-            const rect = node.getBoundingClientRect();
-            setOpenUp(window.innerHeight - rect.bottom < 350);
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            const openUp = window.innerHeight - rect.bottom < 350;
+            setCoords({
+                top: openUp ? rect.top - 340 : rect.bottom + 12,
+                left: align === 'right' ? rect.right - 320 : rect.left
+            });
         }
-    };
+    }, [isOpen, align]);
+
+    const CalendarPopup = (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[9999]">
+                    <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        style={{ top: coords.top, left: coords.left }}
+                        className="fixed bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 w-[320px]"
+                    >
+                        <div className="flex justify-between items-center mb-6 px-1">
+                            <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronLeft size={20} /></button>
+                            <span className="text-sm font-black text-[#4a3426] uppercase tracking-[0.1em]">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+                            <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronRight size={20} /></button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1 mb-3">
+                            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="text-[10px] font-black text-[#bba282] text-center uppercase tracking-widest opacity-40">{d}</div>)}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {daysInMonth.map((day, i) => {
+                                if (!day) return <div key={`empty-${i}`} />;
+
+                                const y = day.getFullYear();
+                                const m = String(day.getMonth() + 1).padStart(2, '0');
+                                const d = String(day.getDate()).padStart(2, '0');
+                                const dStr = `${y}-${m}-${d}`;
+
+                                const isSelected = value === dStr;
+                                const isLocked = lockedDates.includes(dStr);
+                                const isNotAllowed = allowedDates && !allowedDates.includes(dStr);
+                                const isDisabled = isLocked || isNotAllowed;
+
+                                const now = new Date();
+                                const isToday = now.getFullYear() === day.getFullYear() &&
+                                    now.getMonth() === day.getMonth() &&
+                                    now.getDate() === day.getDate();
+
+                                return (
+                                    <button key={i} type="button"
+                                        onClick={() => {
+                                            if (isDisabled) return;
+                                            onChange(dStr);
+                                            setIsOpen(false);
+                                        }}
+                                        disabled={isDisabled}
+                                        className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center relative
+                                            ${isDisabled ? 'text-red-300 opacity-40 cursor-not-allowed' : (isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`)}
+                                            ${isToday && !isSelected && !isDisabled ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
+                                    >
+                                        {day.getDate()}
+                                        {isLocked && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />}
+                                        {isNotAllowed && !isLocked && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
 
     return (
-        <div className="relative" ref={containerRef}>
+        <div className="relative">
             <button
+                ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex items-center gap-3 bg-white hover:bg-white border border-[#e6dace] rounded-2xl px-4 py-2 h-14 transition-all w-full group shadow-sm ${theme.hover}`}
@@ -74,68 +145,7 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', locked
                     </span>
                 </div>
             </button>
-
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
-                        <motion.div
-                            initial={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
-                            className={`absolute ${openUp ? 'bottom-full mb-3' : 'top-full mt-3'} ${align === 'right' ? 'right-0' : 'left-0'} bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 z-[110] w-[320px]`}
-                        >
-                            <div className="flex justify-between items-center mb-6 px-1">
-                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronLeft size={20} /></button>
-                                <span className="text-sm font-black text-[#4a3426] uppercase tracking-[0.1em]">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronRight size={20} /></button>
-                            </div>
-                            <div className="grid grid-cols-7 gap-1 mb-3">
-                                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="text-[10px] font-black text-[#bba282] text-center uppercase tracking-widest opacity-40">{d}</div>)}
-                            </div>
-                            <div className="grid grid-cols-7 gap-1">
-                                {daysInMonth.map((day, i) => {
-                                    if (!day) return <div key={`empty-${i}`} />;
-
-                                    const y = day.getFullYear();
-                                    const m = String(day.getMonth() + 1).padStart(2, '0');
-                                    const d = String(day.getDate()).padStart(2, '0');
-                                    const dStr = `${y}-${m}-${d}`;
-
-                                    const isSelected = value === dStr;
-                                    const isLocked = lockedDates.includes(dStr);
-                                    const isNotAllowed = allowedDates && !allowedDates.includes(dStr);
-                                    const isDisabled = isLocked || isNotAllowed;
-
-                                    const now = new Date();
-                                    const isToday = now.getFullYear() === day.getFullYear() &&
-                                        now.getMonth() === day.getMonth() &&
-                                        now.getDate() === day.getDate();
-
-                                    return (
-                                        <button key={i} type="button"
-                                            onClick={() => {
-                                                if (isDisabled) return;
-                                                onChange(dStr);
-                                                setIsOpen(false);
-                                            }}
-                                            disabled={isDisabled}
-                                            className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center relative
-                                                ${isDisabled ? 'text-red-300 opacity-40 cursor-not-allowed' : (isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`)}
-                                                ${isToday && !isSelected && !isDisabled ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
-                                        >
-                                            {day.getDate()}
-                                            {isLocked && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />}
-                                            {isNotAllowed && !isLocked && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-gray-400 rounded-full" />}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-
+            {typeof document !== 'undefined' && createPortal(CalendarPopup, document.body)}
         </div>
     );
 };
@@ -349,7 +359,7 @@ export default function FacturationPage() {
         amount: '',
         date: todayStr,
         photos: [],
-        doc_type: 'Facture',
+        doc_type: '',
         doc_number: ''
     });
     const [paymentDetails, setPaymentDetails] = useState({
@@ -1009,7 +1019,7 @@ export default function FacturationPage() {
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
                                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-visible shadow-2xl border border-white/20"
+                                className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
                             >
                                 <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
                                     <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
@@ -1086,8 +1096,8 @@ export default function FacturationPage() {
                                                         type="button"
                                                         onClick={() => setNewInvoice({ ...newInvoice, doc_type: t })}
                                                         className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${newInvoice.doc_type === t
-                                                            ? 'bg-[#c69f6e] text-white border-[#c69f6e] shadow-lg shadow-[#c69f6e]/20'
-                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#c69f6e]/30'
+                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-lg shadow-[#d00000]/20'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/30'
                                                             }`}
                                                     >
                                                         {t}
@@ -1160,7 +1170,7 @@ export default function FacturationPage() {
 
                                     <button
                                         onClick={handleAddInvoice}
-                                        disabled={!newInvoice.supplier_name || !newInvoice.amount}
+                                        disabled={!newInvoice.supplier_name || !newInvoice.amount || !newInvoice.doc_type}
                                         className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-[#4a3426]/20"
                                     >
                                         Confirmer l'ajout
@@ -1531,8 +1541,8 @@ export default function FacturationPage() {
                                                         type="button"
                                                         onClick={() => setShowEditModal({ ...showEditModal, doc_type: t })}
                                                         className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${showEditModal.doc_type === t
-                                                            ? 'bg-[#c69f6e] text-white border-[#c69f6e] shadow-lg shadow-[#c69f6e]/20'
-                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#c69f6e]/30'
+                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-lg shadow-[#d00000]/20'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/30'
                                                             }`}
                                                     >
                                                         {t}
