@@ -622,6 +622,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                         setTempDetails(div.details || '');
                                                                         setShowDetailsModal(true);
                                                                     }
+                                                                    setShowDesignationDropdown(null);
                                                                     return currentDivers;
                                                                 });
                                                             }, 200);
@@ -785,6 +786,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                         setTempDetails(exp.details || '');
                                                                         setShowDetailsModal(true);
                                                                     }
+                                                                    setShowSupplierDropdown(null);
                                                                     return currentExpenses;
                                                                 });
                                                             }, 200);
@@ -1142,8 +1144,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                 )}
             </AnimatePresence>
 
-            {/* Click outside to close dropdown */}
+            {/* Click outside to close dropdowns */}
             {showSupplierDropdown !== null && <div className="fixed inset-0 z-40" onClick={() => setShowSupplierDropdown(null)} />}
+            {showDesignationDropdown !== null && <div className="fixed inset-0 z-40" onClick={() => setShowDesignationDropdown(null)} />}
 
             {/* Supplier Modal */}
             {/* Details Modal */}
