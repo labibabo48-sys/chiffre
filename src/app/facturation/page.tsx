@@ -8,7 +8,7 @@ import {
     Loader2, Search, Calendar, Plus,
     CreditCard, Banknote, Coins, Receipt,
     Trash2, UploadCloud, CheckCircle2,
-    Clock, Filter, X, Eye, DollarSign, Bookmark, Edit2,
+    Clock, Filter, X, Eye, DollarSign, Bookmark, Edit2, Package, LayoutGrid,
     ZoomIn, ZoomOut, RotateCcw, Download, Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -310,6 +310,7 @@ export default function FacturationPage() {
     const [showPayModal, setShowPayModal] = useState<any>(null);
     const [showEditModal, setShowEditModal] = useState<any>(null);
     const [showConfirm, setShowConfirm] = useState<{ type: string, title: string, message: string, color: string, onConfirm: () => void } | null>(null);
+    const [showChoiceModal, setShowChoiceModal] = useState(false);
     const [viewingData, setViewingData] = useState<any>(null);
     const [imgZoom, setImgZoom] = useState(1);
     const [imgRotation, setImgRotation] = useState(0);
@@ -628,10 +629,7 @@ export default function FacturationPage() {
 
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                            onClick={() => {
-                                setNewName({ name: '', section: 'Fournisseur' });
-                                setShowAddNameModal(true);
-                            }}
+                            onClick={() => setShowChoiceModal(true)}
                             className="flex-1 md:flex-none h-12 px-6 bg-white text-[#4a3426] border border-[#e6dace] rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#fcfaf8] transition-all shadow-sm"
                         >
                             <Bookmark size={18} />
@@ -1609,6 +1607,63 @@ export default function FacturationPage() {
                 color={showConfirm?.color}
             />
 
+
+
+            {/* Choice Modal for Adding Section */}
+            <AnimatePresence>
+                {showChoiceModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setShowChoiceModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-[#e6dace]"
+                        >
+                            <div className="p-8 bg-[#4a3426] text-white relative">
+                                <h3 className="text-2xl font-black uppercase tracking-tight">Ajouter Section</h3>
+                                <p className="text-xs opacity-60 font-bold uppercase tracking-widest mt-1">Choisissez le type d'élément à ajouter</p>
+                                <button onClick={() => setShowChoiceModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-8 grid grid-cols-1 gap-4">
+                                {[
+                                    { id: 'Fournisseur', label: 'Ajouter Fournisseur', desc: 'Pour les factures de marchandises', icon: Package, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                    { id: 'Journalier', label: 'Ajouter Journalier', desc: 'Pour les dépenses quotidiennes', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
+                                    { id: 'Divers', label: 'Ajouter Divers', desc: 'Pour les charges exceptionnelles', icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-50' }
+                                ].map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            setNewName({ name: '', section: item.id as any });
+                                            setShowChoiceModal(false);
+                                            setShowAddNameModal(true);
+                                        }}
+                                        className="flex items-center gap-6 p-6 rounded-3xl border-2 border-transparent hover:border-[#4a3426] hover:bg-[#fcfaf8] transition-all group text-left"
+                                    >
+                                        <div className={`w-16 h-16 ${item.bg} ${item.color} rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
+                                            <item.icon size={32} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="text-lg font-black text-[#4a3426] uppercase tracking-tight">{item.label}</h4>
+                                            <p className="text-sm text-[#8c8279] font-medium">{item.desc}</p>
+                                        </div>
+                                        <Plus size={24} className="text-[#e6dace] group-hover:text-[#4a3426] transition-colors" />
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Add Name Modal */}
             <AnimatePresence>
                 {showAddNameModal && (
@@ -1616,7 +1671,7 @@ export default function FacturationPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                        className="fixed inset-0 z-[210] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
                         onClick={() => setShowAddNameModal(false)}
                     >
                         <motion.div
@@ -1627,45 +1682,37 @@ export default function FacturationPage() {
                             className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
                         >
                             <div className="p-6 bg-[#4a3426] text-white">
-                                <h3 className="text-lg font-black uppercase tracking-tight">Ajouter Nouveau</h3>
+                                <h3 className="text-lg font-black uppercase tracking-tight">Ajouter {newName.section}</h3>
                                 <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-1">Section: {newName.section}</p>
                             </div>
                             <div className="p-6 space-y-4">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Section</label>
-                                    <select
-                                        value={newName.section}
-                                        onChange={(e) => setNewName({ ...newName, section: e.target.value as any })}
-                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
-                                    >
-                                        <option value="Fournisseur">Fournisseur</option>
-                                        <option value="Journalier">Journalier</option>
-                                        <option value="Divers">Divers</option>
-                                    </select>
-                                </div>
-                                <div>
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Nom / Désignation</label>
                                     <input
                                         type="text"
-                                        placeholder="Entrez le nom..."
+                                        placeholder={`Nom du ${newName.section.toLowerCase()}...`}
                                         value={newName.name}
                                         onChange={(e) => setNewName({ ...newName, name: e.target.value })}
                                         className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                        autoFocus
                                     />
                                 </div>
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 pt-2">
                                     <button
-                                        onClick={() => setShowAddNameModal(false)}
+                                        onClick={() => {
+                                            setShowAddNameModal(false);
+                                            setShowChoiceModal(true);
+                                        }}
                                         className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
                                     >
-                                        Annuler
+                                        Retour
                                     </button>
                                     <button
                                         onClick={handleAddName}
                                         disabled={!newName.name}
                                         className="flex-1 h-12 bg-[#4a3426] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
                                     >
-                                        Ajouter
+                                        Valider
                                     </button>
                                 </div>
                             </div>
@@ -1673,6 +1720,6 @@ export default function FacturationPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }
