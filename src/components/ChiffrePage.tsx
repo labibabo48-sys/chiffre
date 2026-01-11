@@ -707,7 +707,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(journalier.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
@@ -723,7 +723,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
@@ -844,7 +844,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(expense.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{expense.details ? 'Détails OK' : 'Détails'}</span>
@@ -862,7 +862,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
@@ -1040,7 +1040,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(divers.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{divers.details ? 'Détails OK' : 'Détails'}</span>
@@ -1056,7 +1056,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
@@ -1316,7 +1316,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-xl font-bold text-[#4a3426] flex items-center gap-2"><Receipt size={24} className="text-[#c69f6e]" /> Reçus & Factures</h3>
                                 {viewingInvoicesTarget && (
-                                    <label className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-red-700 transition-all shadow-lg shadow-red-200">
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-[#2d6a4f] text-white rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#1b4332] transition-all shadow-lg shadow-green-200">
                                         <Plus size={16} /> Ajouter Photo
                                         <input
                                             type="file"
