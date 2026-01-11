@@ -954,7 +954,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         }}
                                                         onBlur={() => setTimeout(() => setShowSupplierDropdown(null), 200)}
                                                         onChange={(e) => { handleDetailChange(index, 'supplier', e.target.value); setSupplierSearch(e.target.value); }}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${(expense.isFromFacturation || isLocked) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 ${expense.isFromFacturation ? 'pl-[8.5rem]' : 'pl-10'} pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${(expense.isFromFacturation || isLocked) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
                                                     {!expense.isFromFacturation && (
                                                         <button
