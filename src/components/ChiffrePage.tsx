@@ -215,12 +215,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         expensesAdmin
     });
 
-    const [journalierBuffer, setJournalierBuffer] = useState(expensesJournalier);
-
-    useEffect(() => {
-        setJournalierBuffer(expensesJournalier);
-    }, [expensesJournalier]);
-
     // Save draft to localStorage whenever relevant state changes, but only if user has interacted
     useEffect(() => {
         if (isClient && date && hasInteracted) {
@@ -404,15 +398,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     const handleJournalierChange = (index: number, field: string, value: any) => {
         setHasInteracted(true);
-        const newJournalier = [...journalierBuffer];
+        const newJournalier = [...expensesJournalier];
         (newJournalier[index] as any)[field] = value;
-        setJournalierBuffer(newJournalier);
-    };
-
-    const handleApplyJournalier = () => {
-        setExpensesJournalier(journalierBuffer);
-        setToast({ msg: 'Dépenses journalières validées', type: 'success' });
-        setTimeout(() => setToast(null), 2000);
+        setExpensesJournalier(newJournalier);
     };
 
     const handleAdminChange = (index: number, field: string, value: any) => {
@@ -424,11 +412,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     const handleAddExpense = () => { setHasInteracted(true); setExpenses([...expenses, { supplier: '', amount: '0', details: '', invoices: [], photo_cheque: '', photo_verso: '', paymentMethod: 'Espèces' }]); };
     const handleAddDivers = () => { setHasInteracted(true); setExpensesDivers([...expensesDivers, { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
-    const handleAddJournalier = () => { setHasInteracted(true); setJournalierBuffer([...journalierBuffer, { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
+    const handleAddJournalier = () => { setHasInteracted(true); setExpensesJournalier([...expensesJournalier, { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
 
     const handleRemoveExpense = (index: number) => { setHasInteracted(true); setExpenses(expenses.filter((_, i) => i !== index)); };
     const handleRemoveDivers = (index: number) => { setHasInteracted(true); setExpensesDivers(expensesDivers.filter((_, i) => i !== index)); };
-    const handleRemoveJournalier = (index: number) => { setHasInteracted(true); setJournalierBuffer(journalierBuffer.filter((_, i) => i !== index)); };
+    const handleRemoveJournalier = (index: number) => { setHasInteracted(true); setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index)); };
 
     const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>, type: 'invoice' | 'recto' | 'verso' = 'invoice', isDivers: boolean = false) => {
         setHasInteracted(true);
@@ -450,9 +438,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     newDivers[index].invoices = [...newDivers[index].invoices, ...base64s];
                     setExpensesDivers(newDivers);
                 } else if ((isDivers as any) === 'journalier') {
-                    const newJournalier = [...journalierBuffer];
+                    const newJournalier = [...expensesJournalier];
                     newJournalier[index].invoices = [...newJournalier[index].invoices, ...base64s];
-                    setJournalierBuffer(newJournalier);
+                    setExpensesJournalier(newJournalier);
                 } else {
                     const newExpenses = [...expenses];
                     newExpenses[index].invoices = [...newExpenses[index].invoices, ...base64s];
@@ -503,7 +491,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     extra,
                     primes,
                     diponce_divers: JSON.stringify(expensesDivers),
-                    diponce_journalier: JSON.stringify(journalierBuffer),
+                    diponce_journalier: JSON.stringify(expensesJournalier),
                     diponce_admin: JSON.stringify(expensesAdmin),
                 }
             });
@@ -671,32 +659,21 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#c69f6e] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
                                     Dépenses Journalier
                                 </h3>
-                                <div className="flex items-center gap-2">
-                                    {JSON.stringify(journalierBuffer) !== JSON.stringify(expensesJournalier) && (
-                                        <button
-                                            onClick={handleApplyJournalier}
-                                            className="flex items-center gap-2 px-3 py-1.5 bg-[#c69f6e] border border-[#c69f6e] rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-[#b08d5d] transition-all shadow-md animate-pulse"
-                                        >
-                                            <Check size={12} />
-                                            Valider
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => setShowJournalierModal(true)}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
-                                    >
-                                        <Plus size={12} />
-                                        Ajouter Journalier
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={() => setShowJournalierModal(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                >
+                                    <Plus size={12} />
+                                    Ajouter Journalier
+                                </button>
                             </div>
 
                             <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
                                 <div className="space-y-3">
-                                    {journalierBuffer.map((journalier, index) => (
+                                    {expensesJournalier.map((journalier, index) => (
                                         <div key={index} className="group flex flex-col p-2 rounded-xl transition-all border hover:bg-[#f9f6f2] border-transparent hover:border-[#e6dace]">
                                             <div className="flex flex-col md:flex-row items-center gap-3 w-full">
                                                 <div className="flex-1 w-full relative">
@@ -762,7 +739,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
                                                     </label>
-                                                    {(index > 0 || journalierBuffer.length > 1) && (
+                                                    {(index > 0 || expensesJournalier.length > 1) && (
                                                         <button onClick={() => handleRemoveJournalier(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                                                             <Trash2 size={20} />
                                                         </button>
@@ -782,7 +759,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#c69f6e] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
                                     Dépenses Fournisseur
                                 </h3>
                                 <button
@@ -974,7 +951,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#c69f6e] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</div>
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</div>
                                     Dépenses divers
                                 </h3>
                                 <button
@@ -1074,7 +1051,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#c69f6e] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</div>
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</div>
                                     Dépenses Administratif
                                 </h3>
                             </div>
@@ -1396,9 +1373,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 newDivers[modalDetailsTarget.index].details = tempDetails;
                                                 setExpensesDivers(newDivers);
                                             } else if (modalDetailsTarget.type === 'journalier') {
-                                                const newJournalier = [...journalierBuffer];
+                                                const newJournalier = [...expensesJournalier];
                                                 newJournalier[modalDetailsTarget.index].details = tempDetails;
-                                                setJournalierBuffer(newJournalier);
+                                                setExpensesJournalier(newJournalier);
                                             } else {
                                                 const newExpenses = [...expenses];
                                                 newExpenses[modalDetailsTarget.index].details = tempDetails;
@@ -1487,8 +1464,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl border border-[#e6dace] overflow-hidden" >
                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#c69f6e]/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                             <div className="relative">
-                                <h3 className="text-2xl font-black text-[#4a3426] mb-2 text-center uppercase tracking-tight">Choisir une désignation</h3>
-                                <p className="text-center text-[#c69f6e] text-[10px] font-black uppercase tracking-[0.2em] mb-8">Sélection rapide pour gagner du temps</p>
+                                <div className="text-center mb-8">
+                                    <div className="bg-[#fcfaf8] w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#e6dace]">
+                                        <Sparkles size={32} className="text-[#c69f6e]" />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-[#4a3426] tracking-tight uppercase">Choisir une désignation</h3>
+                                    <p className="text-[#c69f6e] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Sélection rapide pour gagner du temps</p>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     {commonDesignations.map((designation) => (
@@ -1496,7 +1478,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             key={designation}
                                             onClick={() => {
                                                 if (showJournalierModal) {
-                                                    setJournalierBuffer([...journalierBuffer, { designation, amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+                                                    setExpensesJournalier([...expensesJournalier, { designation, amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
                                                     setShowJournalierModal(false);
                                                 } else {
                                                     setExpensesDivers([...expensesDivers, { designation, amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
