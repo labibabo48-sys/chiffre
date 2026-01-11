@@ -7,9 +7,120 @@ import Sidebar from '@/components/Sidebar';
 import {
     LayoutDashboard, Loader2, Calendar,
     Wallet, TrendingUp, TrendingDown, CreditCard, Banknote, Coins, Receipt, Calculator,
-    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, Truck, Download, Clock
+    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, Truck, Download, Clock, Filter, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { useRef } from 'react';
+
+// --- Premium Date Picker Component ---
+const PremiumDatePicker = ({ value, onChange, label, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, align?: 'left' | 'right' }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
+    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const months = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+
+    const daysInMonth = useMemo(() => {
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const days = [];
+        const offset = firstDay === 0 ? 6 : firstDay - 1;
+        for (let i = 0; i < offset; i++) days.push(null);
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= lastDay; i++) days.push(new Date(year, month, i));
+        return days;
+    }, [viewDate]);
+
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            const openUp = window.innerHeight - rect.bottom < 350;
+            setCoords({
+                top: openUp ? rect.top - 340 : rect.bottom + 12,
+                left: align === 'right' ? rect.right - 320 : rect.left
+            });
+        }
+    }, [isOpen, align]);
+
+    const CalendarPopup = (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[9999]">
+                    <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        style={{ top: coords.top, left: coords.left }}
+                        className="fixed bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 w-[320px]"
+                    >
+                        <div className="flex justify-between items-center mb-6 px-1">
+                            <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronLeft size={20} /></button>
+                            <span className="text-sm font-black text-[#4a3426] uppercase tracking-[0.1em] text-center flex-1">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+                            <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronRight size={20} /></button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1 mb-3 text-center">
+                            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="text-[10px] font-black text-[#bba282] uppercase tracking-widest opacity-40">{d}</div>)}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {daysInMonth.map((day, i) => {
+                                if (!day) return <div key={`empty-${i}`} />;
+                                const y = day.getFullYear();
+                                const m = String(day.getMonth() + 1).padStart(2, '0');
+                                const d = String(day.getDate()).padStart(2, '0');
+                                const dStr = `${y}-${m}-${d}`;
+                                const isSelected = value === dStr;
+                                return (
+                                    <button key={i} type="button"
+                                        onClick={() => { onChange(dStr); setIsOpen(false); }}
+                                        className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center relative
+                                            ${isSelected ? `bg-[#c69f6e] text-white shadow-lg shadow-[#c69f6e]/30` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`}`}
+                                    >
+                                        {day.getDate()}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+
+    const formatDateToDisplay = (dateStr: string) => {
+        if (!dateStr) return 'JJ/MM/AAAA';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
+    };
+
+    return (
+        <div className="relative">
+            <button
+                ref={buttonRef}
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center gap-3 bg-white hover:bg-[#fcfaf8] border border-[#e6dace] rounded-2xl px-4 py-1.5 h-12 transition-all w-full md:w-44 group shadow-sm hover:border-[#c69f6e]`}
+            >
+                <div className={`w-8 h-8 rounded-xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]`}>
+                    <Calendar size={14} strokeWidth={2.5} />
+                </div>
+                <div className="flex flex-col items-start overflow-hidden">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-[#bba282] opacity-60 leading-none mb-1">{label}</span>
+                    <span className="text-[11px] font-black text-[#4a3426] tracking-tight truncate leading-none">
+                        {formatDateToDisplay(value)}
+                    </span>
+                </div>
+            </button>
+            {typeof document !== 'undefined' && createPortal(CalendarPopup, document.body)}
+        </div>
+    );
+};
 
 const GET_CHIFFRES_MONTHLY = gql`
   query GetChiffresRange($startDate: String!, $endDate: String!) {
@@ -60,11 +171,17 @@ export default function DashboardPage() {
 
     // Default to current month
     const today = new Date();
-    const [month, setMonth] = useState(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
-    const [showMonthPicker, setShowMonthPicker] = useState(false);
     const [pickerYear, setPickerYear] = useState(today.getFullYear());
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
     const [viewingData, setViewingData] = useState<any>(null);
+
+    // Filter dates
+    const startOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const endOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const [startDate, setStartDate] = useState(startOfMonth);
+    const [endDate, setEndDate] = useState(endOfMonth);
 
     // Search filters for each category
     const [searchQuery, setSearchQuery] = useState('');
@@ -95,12 +212,8 @@ export default function DashboardPage() {
     }, [router]);
 
     const dateRange = useMemo(() => {
-        const [year, monthNum] = month.split('-').map(Number);
-        const start = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-        const endDay = new Date(year, monthNum, 0).getDate();
-        const end = `${year}-${String(monthNum).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
-        return { start, end };
-    }, [month]);
+        return { start: startDate, end: endDate };
+    }, [startDate, endDate]);
 
     const { data, loading } = useQuery(GET_CHIFFRES_MONTHLY, {
         variables: { startDate: dateRange.start, endDate: dateRange.end },
@@ -196,87 +309,48 @@ export default function DashboardPage() {
             <Sidebar role={user.role} />
 
             <div className="flex-1 min-w-0">
-                <header className={`sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#e6dace] py-4 md:py-6 px-4 md:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all ${showMonthPicker ? 'z-[100]' : 'z-30'}`}>
+                <header className={`sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#e6dace] py-4 md:py-6 px-4 md:px-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 transition-all z-40`}>
                     <div>
-                        <h1 className="text-xl md:text-2xl font-black text-[#4a3426] tracking-tight uppercase leading-tight">Dashboard Mensuel</h1>
-                        <p className="text-[10px] md:text-xs text-[#8c8279] font-bold uppercase tracking-widest mt-1">Cumulé du {monthDisplay}</p>
+                        <h1 className="text-xl md:text-2xl font-black text-[#4a3426] tracking-tight uppercase leading-tight">Dashboard Analytique</h1>
+                        <p className="text-[10px] md:text-xs text-[#8c8279] font-bold uppercase tracking-widest mt-1">Données du {new Date(startDate).toLocaleDateString('fr-FR')} au {new Date(endDate).toLocaleDateString('fr-FR')}</p>
                     </div>
 
-                    <div className="flex items-center gap-4 relative w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
+                        {/* Search Input */}
                         <div className="relative flex-1 sm:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]/50" size={16} />
                             <input
                                 type="text"
-                                placeholder="Rechercher partout..."
+                                placeholder="Rechercher..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-11 md:h-12 pl-10 pr-4 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl text-xs font-bold text-[#4a3426] outline-none focus:border-[#c69f6e] transition-all"
                             />
                         </div>
 
-                        <button
-                            onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="bg-[#fcfaf8] border border-[#e6dace] rounded-2xl h-11 md:h-12 px-4 md:px-6 flex items-center gap-3 hover:border-[#c69f6e] transition-all group w-full sm:w-auto justify-center sm:justify-start"
-                        >
-                            <Calendar size={16} className="text-[#c69f6e]" />
-                            <span className="font-black text-[#4a3426] uppercase text-[10px] md:text-[11px] tracking-widest">
-                                {months[parseInt(month.split('-')[1]) - 1]} {month.split('-')[0]}
-                            </span>
-                        </button>
+                        {/* PÉRIODE SELECTION - Standard Start/End Date Pickers */}
+                        <div className="flex items-center gap-2 bg-[#f9f7f5]/80 p-2 rounded-3xl border border-[#e6dace]/50 shadow-sm">
+                            <div className="hidden lg:block px-3">
+                                <span className="text-[10px] font-black text-[#c69f6e] uppercase tracking-[0.2em]">Période</span>
+                            </div>
 
-                        <AnimatePresence>
-                            {showMonthPicker && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)} />
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                        className="absolute top-full right-0 mt-3 w-80 bg-white rounded-[2rem] shadow-2xl border border-[#e6dace] p-6 z-50 overflow-hidden"
-                                    >
-                                        <div className="flex justify-between items-center mb-6 px-2">
-                                            <button
-                                                onClick={() => setPickerYear(v => v - 1)}
-                                                className="p-2 hover:bg-[#fcfaf8] rounded-xl text-[#8c8279] transition-colors"
-                                            >
-                                                <ChevronLeft size={20} />
-                                            </button>
-                                            <span className="text-xl font-black text-[#4a3426] tracking-tighter">{pickerYear}</span>
-                                            <button
-                                                onClick={() => setPickerYear(v => v + 1)}
-                                                className="p-2 hover:bg-[#fcfaf8] rounded-xl text-[#8c8279] transition-colors"
-                                            >
-                                                <ChevronRight size={20} />
-                                            </button>
-                                        </div>
+                            <div className="flex items-center gap-2">
+                                <PremiumDatePicker label="DÉBUT" value={startDate} onChange={setStartDate} />
+                                <div className="text-[#e6dace] font-black text-[10px] opacity-60">À</div>
+                                <PremiumDatePicker label="FIN" value={endDate} onChange={setEndDate} align="right" />
+                            </div>
 
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {months.map((m, i) => {
-                                                const currentMonth = `${pickerYear}-${String(i + 1).padStart(2, '0')}`;
-                                                const isActive = month === currentMonth;
-                                                return (
-                                                    <button
-                                                        key={m}
-                                                        onClick={() => {
-                                                            setMonth(currentMonth);
-                                                            setShowMonthPicker(false);
-                                                        }}
-                                                        className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all
-                                                            ${isActive
-                                                                ? 'bg-[#c69f6e] text-white shadow-lg shadow-[#c69f6e]/20'
-                                                                : 'text-[#8c8279] hover:bg-[#fcfaf8] hover:text-[#4a3426] border border-transparent hover:border-[#e6dace]'
-                                                            }
-                                                        `}
-                                                    >
-                                                        {m.substring(0, 3)}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </motion.div>
-                                </>
-                            )}
-                        </AnimatePresence>
+                            <button
+                                onClick={() => {
+                                    setStartDate(startOfMonth);
+                                    setEndDate(endOfMonth);
+                                }}
+                                className="w-10 h-10 rounded-2xl bg-white border border-[#e6dace] flex items-center justify-center text-[#c69f6e] hover:bg-[#c69f6e] hover:text-white transition-all shadow-sm group"
+                                title="Réinitialiser (Ce mois)"
+                            >
+                                <RotateCcw size={16} className="group-active:rotate-180 transition-transform" />
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -296,7 +370,7 @@ export default function DashboardPage() {
                                     <div className="text-center md:text-left flex flex-col gap-1">
                                         <div className="text-[#2d6a4f] text-[10px] md:text-xs font-black uppercase tracking-[0.4em] opacity-40">Performance du mois</div>
                                         <div className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2d6a4f] leading-none tracking-tighter capitalize">
-                                            {monthDisplay}
+                                            Période Sélectionnée
                                         </div>
                                     </div>
 
