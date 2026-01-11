@@ -126,7 +126,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     useEffect(() => {
         setIsClient(true);
         const today = new Date();
-        setDate(today.toISOString().split('T')[0]);
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        setDate(`${y}-${m}-${d}`);
     }, []);
 
     // GraphQL
@@ -539,15 +542,25 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     // Date Navigation
     const changeMonth = (delta: number) => {
-        const curr = new Date(date);
+        const parts = date.split('-');
+        const curr = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         curr.setMonth(curr.getMonth() + delta);
-        setDate(curr.toISOString().split('T')[0]);
+
+        const y = curr.getFullYear();
+        const mm = String(curr.getMonth() + 1).padStart(2, '0');
+        const dd = String(curr.getDate()).padStart(2, '0');
+        setDate(`${y}-${mm}-${dd}`);
     };
 
-    const shiftDate = (days: number) => {
-        const current = new Date(date);
-        current.setDate(current.getDate() + days);
-        const newDateStr = current.toISOString().split('T')[0];
+    const shiftDate = (daysCount: number) => {
+        const parts = date.split('-');
+        const current = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        current.setDate(current.getDate() + daysCount);
+
+        const y = current.getFullYear();
+        const mm = String(current.getMonth() + 1).padStart(2, '0');
+        const dd = String(current.getDate()).padStart(2, '0');
+        const newDateStr = `${y}-${mm}-${dd}`;
         if (role !== 'admin') {
             const today = new Date();
             const yesterday = new Date(today);
@@ -629,7 +642,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                 <button
                                     onClick={() => shiftDate(1)}
-                                    className={`p-2 rounded-full hover:bg-[#ebdccf] text-[#8c8279] hover:text-[#4a3426] transition-all ${role !== 'admin' && new Date(date) >= new Date(new Date().toISOString().split('T')[0]) ? 'opacity-0 pointer-events-none w-0 p-0 overflow-hidden' : ''}`}
+                                    className={`p-2 rounded-full hover:bg-[#ebdccf] text-[#8c8279] hover:text-[#4a3426] transition-all ${role !== 'admin' && (() => {
+                                        const now = new Date();
+                                        const ty = now.getFullYear();
+                                        const tm = String(now.getMonth() + 1).padStart(2, '0');
+                                        const td = String(now.getDate()).padStart(2, '0');
+                                        return date >= `${ty}-${tm}-${td}`;
+                                    })() ? 'opacity-0 pointer-events-none w-0 p-0 overflow-hidden' : ''}`}
                                 >
                                     <ChevronRight size={20} />
                                 </button>
@@ -1502,7 +1521,16 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 {generateCalendarDays(date).map((day, i) => {
                                     if (!day) return <div key={i}></div>;
                                     const isSelected = new Date(date).getDate() === day;
-                                    return (<button key={i} onClick={() => { const newD = new Date(date); newD.setDate(day); setDate(newD.toISOString().split('T')[0]); setShowCalendar(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${isSelected ? 'bg-[#4a3426] text-white shadow-lg' : 'text-[#4a3426] hover:bg-[#f4ece4] hover:text-[#c69f6e]'}`}>{day}</button>);
+                                    return (<button key={i} onClick={() => {
+                                        const parts = date.split('-');
+                                        const newD = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, day);
+                                        const ny = newD.getFullYear();
+                                        const nm = String(newD.getMonth() + 1).padStart(2, '0');
+                                        const nd = String(newD.getDate()).padStart(2, '0');
+                                        setDate(`${ny}-${nm}-${nd}`);
+                                        setShowCalendar(false);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }} className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${isSelected ? 'bg-[#4a3426] text-white shadow-lg' : 'text-[#4a3426] hover:bg-[#f4ece4] hover:text-[#c69f6e]'}`}>{day}</button>);
                                 })}
                             </div>
                         </motion.div>

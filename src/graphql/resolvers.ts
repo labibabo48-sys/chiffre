@@ -88,7 +88,10 @@ export const resolvers = {
                 try {
                     const dateObj = new Date(d);
                     if (isNaN(dateObj.getTime())) return null;
-                    return dateObj.toISOString().split('T')[0];
+                    const y = dateObj.getFullYear();
+                    const mn = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dy = String(dateObj.getDate()).padStart(2, '0');
+                    return `${y}-${mn}-${dy}`;
                 } catch (e) {
                     return null;
                 }

@@ -50,9 +50,14 @@ export default function StatistiquesPage() {
     const [initializing, setInitializing] = useState(true);
 
     // Filter States
-    const today = new Date();
-    const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+    const ty = today.getFullYear();
+    const tm = String(today.getMonth() + 1).padStart(2, '0');
+    const td = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${ty}-${tm}-${td}`;
+
+    // Filter States
+    const [startDate, setStartDate] = useState(`${ty}-${tm}-01`);
+    const [endDate, setEndDate] = useState(todayStr);
     const [aggregation, setAggregation] = useState<'day' | 'month'>('day');
     const [selectedSupplier, setSelectedSupplier] = useState<string>('Tous');
 
@@ -611,7 +616,11 @@ export default function StatistiquesPage() {
                                     {generateCalendarDays(viewDate).map((day, i) => {
                                         if (!day) return <div key={i}></div>;
 
-                                        const currentD = new Date(viewDate.getFullYear(), viewDate.getMonth(), day).toISOString().split('T')[0];
+                                        const y = viewDate.getFullYear();
+                                        const m = String(viewDate.getMonth() + 1).padStart(2, '0');
+                                        const d = String(day).padStart(2, '0');
+                                        const currentD = `${y}-${m}-${d}`;
+
                                         const isSelected = (pickingDate === 'start' ? startDate : endDate) === currentD;
 
                                         return (

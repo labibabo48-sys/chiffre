@@ -95,11 +95,24 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
                             <div className="grid grid-cols-7 gap-1">
                                 {daysInMonth.map((day, i) => {
                                     if (!day) return <div key={`empty-${i}`} />;
-                                    const dStr = day.toISOString().split('T')[0];
+
+                                    const y = day.getFullYear();
+                                    const m = String(day.getMonth() + 1).padStart(2, '0');
+                                    const d = String(day.getDate()).padStart(2, '0');
+                                    const dStr = `${y}-${m}-${d}`;
+
                                     const isSelected = value === dStr;
-                                    const isToday = new Date().toISOString().split('T')[0] === dStr;
+                                    const now = new Date();
+                                    const isToday = now.getFullYear() === day.getFullYear() &&
+                                        now.getMonth() === day.getMonth() &&
+                                        now.getDate() === day.getDate();
+
                                     return (
-                                        <button key={i} type="button" onClick={() => { onChange(dStr); setIsOpen(false); }}
+                                        <button key={i} type="button"
+                                            onClick={() => {
+                                                onChange(dStr);
+                                                setIsOpen(false);
+                                            }}
                                             className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center
                                                 ${isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`}
                                                 ${isToday && !isSelected ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
@@ -189,16 +202,22 @@ export default function FacturationPage() {
     const [showPayModal, setShowPayModal] = useState<any>(null);
     const [viewingData, setViewingData] = useState<any>(null);
 
+    const today = new Date();
+    const ty = today.getFullYear();
+    const tm = String(today.getMonth() + 1).padStart(2, '0');
+    const td = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${ty}-${tm}-${td}`;
+
     // Form state
     const [newInvoice, setNewInvoice] = useState({
         supplier_name: '',
         amount: '',
-        date: new Date().toISOString().split('T')[0],
+        date: todayStr,
         photo_url: ''
     });
     const [paymentDetails, setPaymentDetails] = useState({
         method: 'Espèces',
-        date: new Date().toISOString().split('T')[0],
+        date: todayStr,
         photo_cheque_url: '',
         photo_verso_url: ''
     });
@@ -267,7 +286,7 @@ export default function FacturationPage() {
             setNewInvoice({
                 supplier_name: '',
                 amount: '',
-                date: new Date().toISOString().split('T')[0],
+                date: todayStr,
                 photo_url: ''
             });
             refetch();
@@ -291,7 +310,7 @@ export default function FacturationPage() {
             setShowPayModal(null);
             setPaymentDetails({
                 method: 'Espèces',
-                date: new Date().toISOString().split('T')[0],
+                date: todayStr,
                 photo_cheque_url: '',
                 photo_verso_url: ''
             });

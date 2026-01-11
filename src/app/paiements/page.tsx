@@ -97,9 +97,17 @@ const PremiumDatePicker = ({ value, onChange, label }: { value: string, onChange
                             <div className="grid grid-cols-7 gap-1">
                                 {daysInMonth.map((day, i) => {
                                     if (!day) return <div key={`empty-${i}`} />;
-                                    const dStr = day.toISOString().split('T')[0];
+
+                                    const y = day.getFullYear();
+                                    const m = String(day.getMonth() + 1).padStart(2, '0');
+                                    const d = String(day.getDate()).padStart(2, '0');
+                                    const dStr = `${y}-${m}-${d}`;
+
                                     const isSelected = value === dStr;
-                                    const isToday = new Date().toISOString().split('T')[0] === dStr;
+                                    const now = new Date();
+                                    const isToday = now.getFullYear() === day.getFullYear() &&
+                                        now.getMonth() === day.getMonth() &&
+                                        now.getDate() === day.getDate();
 
                                     return (
                                         <button
@@ -207,14 +215,19 @@ export default function PaiementsPage() {
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
     ];
 
+    const ty = today.getFullYear();
+    const tm = String(today.getMonth() + 1).padStart(2, '0');
+    const td = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${ty}-${tm}-${td}`;
+
     // Forms State
     const [bankAmount, setBankAmount] = useState('');
-    const [bankDate, setBankDate] = useState(today.toISOString().split('T')[0]);
+    const [bankDate, setBankDate] = useState(todayStr);
     const [showBankForm, setShowBankForm] = useState(false);
 
     const [expName, setExpName] = useState('');
     const [expAmount, setExpAmount] = useState('');
-    const [expDate, setExpDate] = useState(today.toISOString().split('T')[0]);
+    const [expDate, setExpDate] = useState(todayStr);
     const [expMethod, setExpMethod] = useState('Espèces');
     const [expPhoto, setExpPhoto] = useState('');
     const [expPhotoCheque, setExpPhotoCheque] = useState('');
@@ -249,8 +262,13 @@ export default function PaiementsPage() {
         const now = new Date();
         const first = now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1); // Monday
 
-        const firstday = new Date(new Date().setDate(first)).toISOString().split('T')[0];
-        const lastday = new Date().toISOString().split('T')[0];
+        const firstD = new Date(new Date().setDate(first));
+        const fy = firstD.getFullYear();
+        const fm = String(firstD.getMonth() + 1).padStart(2, '0');
+        const fd = String(firstD.getDate()).padStart(2, '0');
+        const firstday = `${fy}-${fm}-${fd}`;
+
+        const lastday = todayStr;
 
         setDateRange({ start: firstday, end: lastday });
         setActiveFilter('week');
@@ -260,7 +278,7 @@ export default function PaiementsPage() {
     const setThisYear = () => {
         const now = new Date();
         const firstday = `${now.getFullYear()}-01-01`;
-        const lastday = new Date().toISOString().split('T')[0];
+        const lastday = todayStr;
 
         setDateRange({ start: firstday, end: lastday });
         setActiveFilter('year');
