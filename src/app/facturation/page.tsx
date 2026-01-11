@@ -811,7 +811,7 @@ export default function FacturationPage() {
                                                     layout
                                                     initial={{ opacity: 0, scale: 0.9 }}
                                                     animate={{ opacity: 1, scale: 1 }}
-                                                    className="bg-red-50/40 rounded-[2.5rem] border-2 border-red-100 overflow-hidden group hover:shadow-xl hover:border-red-200 transition-all"
+                                                    className="bg-red-100/50 rounded-[2.5rem] border-2 border-red-200 overflow-hidden group hover:shadow-xl hover:border-red-300 transition-all"
                                                 >
                                                     <div className="relative h-48 bg-[#f9f6f2] border-b border-[#e6dace] flex items-center justify-center overflow-hidden">
                                                         {inv.photo_url ? (
@@ -842,9 +842,9 @@ export default function FacturationPage() {
                                                                 <h3 className="font-black text-2xl text-[#4a3426] tracking-tight">{inv.supplier_name}</h3>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-2xl font-black text-red-500">
+                                                                <div className="text-2xl font-black text-red-600">
                                                                     {parseFloat(inv.amount || '0').toFixed(3)}
-                                                                    <span className="text-[10px] font-bold text-red-400 uppercase ml-1">DT</span>
+                                                                    <span className="text-[10px] font-bold text-red-500 uppercase ml-1">DT</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 bg-[#f9f6f2] px-3 py-1.5 rounded-lg border border-[#e6dace] mt-2 justify-end">
                                                                     <Calendar size={12} className="text-[#c69f6e]" />
@@ -857,10 +857,10 @@ export default function FacturationPage() {
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => setShowPayModal(inv)}
-                                                                className="flex-1 h-11 bg-[#2d6a4f] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1b4332] transition-all"
+                                                                className="flex-1 h-11 bg-red-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
                                                             >
                                                                 <CheckCircle2 size={18} />
-                                                                <span>Payer</span>
+                                                                <span>À Payer</span>
                                                             </button>
                                                             <button
                                                                 onClick={() => {
@@ -904,11 +904,11 @@ export default function FacturationPage() {
                             {(statusFilter === 'all' || statusFilter === 'paid') && (
                                 <section>
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-10 h-10 bg-[#f0faf5] rounded-xl flex items-center justify-center text-[#2d6a4f]">
+                                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-700">
                                             <CheckCircle2 size={22} />
                                         </div>
                                         <h2 className="text-xl font-black text-[#4a3426] uppercase tracking-tight">Historique des Paiements</h2>
-                                        <span className="bg-[#f0faf5] text-[#2d6a4f] px-3 py-1 rounded-full font-black text-sm border border-[#d1e7dd]">
+                                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-black text-sm border border-green-200">
                                             {filteredInvoices.filter((inv: any) => inv.status === 'paid').length}
                                         </span>
                                     </div>
@@ -921,7 +921,7 @@ export default function FacturationPage() {
                                                     layout
                                                     initial={{ opacity: 0, scale: 0.9 }}
                                                     animate={{ opacity: 1, scale: 1 }}
-                                                    className="bg-[#f0faf5]/40 rounded-[2.5rem] border-2 border-[#d1e7dd] overflow-hidden group hover:shadow-xl transition-all"
+                                                    className="bg-green-100/50 rounded-[2.5rem] border-2 border-green-200 overflow-hidden group hover:shadow-xl transition-all"
                                                 >
                                                     <div className="relative h-48 bg-[#f9f6f2] border-b border-[#e6dace] flex items-center justify-center overflow-hidden">
                                                         {inv.photo_url ? (
@@ -940,7 +940,7 @@ export default function FacturationPage() {
                                                                 <span className="text-[10px] font-black uppercase tracking-widest">Pas de photo</span>
                                                             </div>
                                                         )}
-                                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-[#2d6a4f] text-white">
+                                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-green-500 text-white">
                                                             <CheckCircle2 size={12} />
                                                             Payé
                                                         </div>
@@ -952,9 +952,9 @@ export default function FacturationPage() {
                                                                 <h3 className="font-black text-2xl text-[#4a3426] tracking-tight opacity-70">{inv.supplier_name}</h3>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-2xl font-black text-[#2d6a4f]">
+                                                                <div className="text-2xl font-black text-green-700">
                                                                     {parseFloat(inv.amount || '0').toFixed(3)}
-                                                                    <span className="text-[10px] font-bold text-[#2d6a4f]/60 uppercase ml-1">DT</span>
+                                                                    <span className="text-[10px] font-bold text-green-600/60 uppercase ml-1">DT</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 bg-[#f9f6f2] px-3 py-1.5 rounded-lg border border-[#e6dace] mt-2 justify-end">
                                                                     <Calendar size={12} className="text-[#c69f6e]" />
@@ -964,13 +964,13 @@ export default function FacturationPage() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="bg-[#f0faf5] border border-[#d1e7dd] rounded-2xl p-4 mb-4">
-                                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.1em] text-[#2d6a4f]">
+                                                        <div className="bg-green-100 border border-green-200 rounded-2xl p-4 mb-4">
+                                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.1em] text-green-700">
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#2d6a4f]"></div>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
                                                                     {inv.payment_method}
                                                                 </div>
-                                                                <div className="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-lg border border-[#2d6a4f]/10">
+                                                                <div className="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-lg border border-green-700/10">
                                                                     <span className="opacity-50">Réglé le:</span>
                                                                     <span>{new Date(inv.paid_date).toLocaleDateString('fr-FR')}</span>
                                                                 </div>
