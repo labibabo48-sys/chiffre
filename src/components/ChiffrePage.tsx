@@ -1310,14 +1310,26 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         <div className="flex items-center gap-2 opacity-70 mb-2 text-white">
                                             <Calculator size={16} />
                                             <span className="text-xs font-bold uppercase tracking-wider">Total Dépenses</span>
+                                            <button
+                                                onClick={() => setHideRecetteCaisse(!hideRecetteCaisse)}
+                                                className="ml-auto p-1 hover:bg-white/10 rounded-full transition-colors"
+                                            >
+                                                {hideRecetteCaisse ? <EyeOff size={14} /> : <Eye size={14} />}
+                                            </button>
                                         </div>
                                         <div className="flex items-baseline gap-3 text-white mt-1">
-                                            <span className="text-5xl md:text-6xl font-black tracking-tighter">{totalExpenses.toFixed(3)}</span>
+                                            {hideRecetteCaisse ? (
+                                                <span className="text-5xl md:text-6xl font-black tracking-tighter">********</span>
+                                            ) : (
+                                                <span className="text-5xl md:text-6xl font-black tracking-tighter">{totalExpenses.toFixed(3)}</span>
+                                            )}
                                             <span className="text-xl md:text-2xl font-medium opacity-50 uppercase">DT</span>
                                         </div>
-                                        <div className="text-[10px] md:text-xs opacity-40 mt-1 text-white">
-                                            (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal).toFixed(3)})
-                                        </div>
+                                        {!hideRecetteCaisse && (
+                                            <div className="text-[10px] md:text-xs opacity-40 mt-1 text-white">
+                                                (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal).toFixed(3)})
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="pt-2 md:pt-0 md:pl-4">
@@ -1326,9 +1338,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <span className="text-xs font-bold uppercase tracking-wider">Recette Nette</span>
                                         </div>
                                         <div className="flex items-baseline gap-3 mt-1">
-                                            <span className={`text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter transition-all duration-500 ${recetteNett >= 0 ? 'text-[#c69f6e]' : 'text-red-400'}`}>
-                                                {recetteNett.toFixed(3)}
-                                            </span>
+                                            {hideRecetteCaisse ? (
+                                                <span className={`text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-[#c69f6e]`}>
+                                                    ********
+                                                </span>
+                                            ) : (
+                                                <span className={`text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter transition-all duration-500 ${recetteNett >= 0 ? 'text-[#c69f6e]' : 'text-red-400'}`}>
+                                                    {recetteNett.toFixed(3)}
+                                                </span>
+                                            )}
                                             <span className="text-2xl md:text-3xl font-medium opacity-50 text-white uppercase font-black">DT</span>
                                         </div>
                                     </div>
@@ -1339,6 +1357,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             <div className="p-8 pt-6 relative z-10">
                                 <h3 className="font-black text-white/80 mb-6 flex items-center gap-3 uppercase text-xs tracking-[0.2em]">
                                     <Receipt size={16} /> Répartition Finale
+                                    <button
+                                        onClick={() => setHideRecetteCaisse(!hideRecetteCaisse)}
+                                        className="ml-auto p-1 hover:bg-white/10 rounded-full transition-colors"
+                                    >
+                                        {hideRecetteCaisse ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    </button>
                                 </h3>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1352,13 +1376,19 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <label className="text-xs font-black uppercase tracking-[0.15em] text-white/50 ml-2 mb-2 block">{m.label}</label>
                                             <div className="relative">
                                                 <m.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                                                <input
-                                                    type="number"
-                                                    disabled={m.label === 'Espèces'}
-                                                    value={m.val}
-                                                    onChange={(e) => m.set(e.target.value)}
-                                                    className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${m.label === 'Espèces' ? 'bg-white/20 border-white/30' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
-                                                />
+                                                {hideRecetteCaisse ? (
+                                                    <div className="w-full h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-2xl text-white">
+                                                        ********
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type="number"
+                                                        disabled={m.label === 'Espèces'}
+                                                        value={m.val}
+                                                        onChange={(e) => m.set(e.target.value)}
+                                                        className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${m.label === 'Espèces' ? 'bg-white/20 border-white/30' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     ))}
