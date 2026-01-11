@@ -640,7 +640,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={journalier.amount}
                                                         onChange={(e) => handleJournalierChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -787,7 +787,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         disabled={expense.isFromFacturation}
                                                         value={expense.amount}
                                                         onChange={(e) => handleDetailChange(index, 'amount', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -990,7 +990,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={divers.amount}
                                                         onChange={(e) => handleDiversChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -1129,7 +1129,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={admin.amount}
                                                         onChange={(e) => handleAdminChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-right"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-center"
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
