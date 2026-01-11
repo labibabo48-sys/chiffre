@@ -967,7 +967,7 @@ export default function FacturationPage() {
                                     <div className="flex bg-white/10 rounded-2xl p-1 gap-1 border border-white/10">
                                         <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Arrière"><ZoomOut size={20} /></button>
                                         <div className="w-16 flex items-center justify-center font-black text-xs tabular-nums text-[#c69f6e]">{Math.round(imgZoom * 100)}%</div>
-                                        <button onClick={() => setImgZoom(prev => Math.min(3, prev + 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Avant"><ZoomIn size={20} /></button>
+                                        <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Avant"><ZoomIn size={20} /></button>
                                         <div className="w-px h-6 bg-white/10 self-center mx-1"></div>
                                         <button onClick={() => setImgRotation(prev => prev + 90)} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Tourner"><RotateCcw size={20} /></button>
                                         <button onClick={resetView} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Réinitialiser"><Maximize2 size={20} /></button>
@@ -991,7 +991,7 @@ export default function FacturationPage() {
                                         <div
                                             className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
                                             onWheel={(e) => {
-                                                if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
+                                                if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
                                                 else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                             }}
                                         >
@@ -1036,7 +1036,7 @@ export default function FacturationPage() {
                                                 <div
                                                     className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
                                                     onWheel={(e) => {
-                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
+                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
                                                         else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                                     }}
                                                 >
@@ -1074,7 +1074,7 @@ export default function FacturationPage() {
                                                 <div
                                                     className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
                                                     onWheel={(e) => {
-                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
+                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
                                                         else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                                     }}
                                                 >

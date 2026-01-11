@@ -1593,7 +1593,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </label>
                                         <div className="flex bg-[#fcfafb] rounded-2xl p-1 gap-1 border border-gray-100 ml-4 shadow-sm">
                                             <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Arrière"><ZoomOut size={16} /></button>
-                                            <button onClick={() => setImgZoom(prev => Math.min(3, prev + 0.25))} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Avant"><ZoomIn size={16} /></button>
+                                            <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Avant"><ZoomIn size={16} /></button>
                                             <button onClick={() => setImgRotation(prev => prev + 90)} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Tourner"><RotateCcw size={16} /></button>
                                             <button onClick={resetView} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Réinitialiser"><Maximize2 size={16} /></button>
                                         </div>
@@ -1607,7 +1607,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             key={idx}
                                             className="relative group rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl h-[50vh]"
                                             onWheel={(e) => {
-                                                if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
+                                                if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
                                                 else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                             }}
                                         >
