@@ -10,8 +10,10 @@ export async function GET() {
         // Add missing invoice columns
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_cheque_url TEXT;");
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_verso_url TEXT;");
+        await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS doc_type TEXT DEFAULT 'Facture';");
+        await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS doc_number TEXT;");
 
-        return NextResponse.json({ success: true, message: 'Migration successful: extra, primes, and invoice columns added/checked' });
+        return NextResponse.json({ success: true, message: 'Migration successful: Extra columns added' });
     } catch (err: any) {
         console.error('Migration failed:', err);
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });

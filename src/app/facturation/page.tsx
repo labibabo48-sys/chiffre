@@ -8,7 +8,7 @@ import {
     Loader2, Search, Calendar, Plus,
     CreditCard, Banknote, Coins, Receipt,
     Trash2, UploadCloud, CheckCircle2,
-    Clock, Filter, X, Eye, DollarSign, Bookmark, Edit2, Package, LayoutGrid,
+    Clock, Filter, X, Eye, DollarSign, Bookmark, Edit2, Package, LayoutGrid, Hash,
     ZoomIn, ZoomOut, RotateCcw, Download, Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,7 @@ const formatDateToDisplay = (dateStr: string) => {
     return `${d}/${m}/${y}`;
 };
 
-const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', lockedDates = [], allowedDates }: { value: string, onChange: (val: string) => void, label: string, colorMode?: 'brown' | 'green' | 'red', lockedDates?: string[], allowedDates?: string[] }) => {
+const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', lockedDates = [], allowedDates, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, colorMode?: 'brown' | 'green' | 'red', lockedDates?: string[], allowedDates?: string[], align?: 'left' | 'right' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
 
@@ -83,7 +83,7 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', locked
                             initial={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
-                            className={`absolute ${openUp ? 'bottom-full mb-3' : 'top-full mt-3'} left-0 bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 z-[110] w-[320px]`}
+                            className={`absolute ${openUp ? 'bottom-full mb-3' : 'top-full mt-3'} ${align === 'right' ? 'right-0' : 'left-0'} bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 z-[110] w-[320px]`}
                         >
                             <div className="flex justify-between items-center mb-6 px-1">
                                 <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronLeft size={20} /></button>
@@ -164,6 +164,8 @@ const GET_INVOICES = gql`
       payment_method
       paid_date
       photos
+      doc_type
+      doc_number
     }
     getSuppliers {
       id
@@ -198,10 +200,12 @@ const UPSERT_DESIGNATION = gql`
 `;
 
 const ADD_INVOICE = gql`
-  mutation AddInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photos: String) {
-    addInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photos: $photos) {
+  mutation AddInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photos: String, $doc_type: String, $doc_number: String) {
+    addInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photos: $photos, doc_type: $doc_type, doc_number: $doc_number) {
       id
       status
+      doc_type
+      doc_number
     }
   }
 `;
@@ -232,12 +236,14 @@ const UNPAY_INVOICE = gql`
 `;
 
 const UPDATE_INVOICE = gql`
-  mutation UpdateInvoice($id: Int!, $supplier_name: String, $amount: String, $date: String, $photo_url: String, $photos: String) {
-    updateInvoice(id: $id, supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photos: $photos) {
+  mutation UpdateInvoice($id: Int!, $supplier_name: String, $amount: String, $date: String, $photo_url: String, $photos: String, $doc_type: String, $doc_number: String) {
+    updateInvoice(id: $id, supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photos: $photos, doc_type: $doc_type, doc_number: $doc_number) {
       id
       supplier_name
       amount
       date
+      doc_type
+      doc_number
     }
   }
 `;
@@ -338,11 +344,13 @@ export default function FacturationPage() {
     const yesterdayStr = `${y_ty}-${y_tm}-${y_td}`;
 
     // Form state
-    const [newInvoice, setNewInvoice] = useState<{ supplier_name: string, amount: string, date: string, photos: string[] }>({
+    const [newInvoice, setNewInvoice] = useState<{ supplier_name: string, amount: string, date: string, photos: string[], doc_type: string, doc_number: string }>({
         supplier_name: '',
         amount: '',
         date: todayStr,
-        photos: []
+        photos: [],
+        doc_type: 'Facture',
+        doc_number: ''
     });
     const [paymentDetails, setPaymentDetails] = useState({
         method: 'Espèces',
@@ -451,7 +459,9 @@ export default function FacturationPage() {
                             ...newInvoice,
                             amount: newInvoice.amount.toString(),
                             photo_url: newInvoice.photos[0] || '',
-                            photos: JSON.stringify(newInvoice.photos)
+                            photos: JSON.stringify(newInvoice.photos),
+                            doc_type: newInvoice.doc_type,
+                            doc_number: newInvoice.doc_number || null
                         }
                     });
                     setShowAddModal(false);
@@ -459,7 +469,9 @@ export default function FacturationPage() {
                         supplier_name: '',
                         amount: '',
                         date: todayStr,
-                        photos: []
+                        photos: [],
+                        doc_type: 'Facture',
+                        doc_number: ''
                     });
                     refetch();
                 } catch (e) {
@@ -540,7 +552,9 @@ export default function FacturationPage() {
                             amount: invoiceData.amount.toString(),
                             date: invoiceData.date,
                             photo_url: invoiceData.photos[0] || '',
-                            photos: JSON.stringify(invoiceData.photos)
+                            photos: JSON.stringify(invoiceData.photos),
+                            doc_type: invoiceData.doc_type,
+                            doc_number: invoiceData.doc_number || null
                         }
                     });
                     setShowEditModal(null);
@@ -725,6 +739,7 @@ export default function FacturationPage() {
                                     label="Fin"
                                     value={filterEndDate}
                                     onChange={setFilterEndDate}
+                                    align="right"
                                 />
                             </div>
                         </div>
@@ -769,9 +784,14 @@ export default function FacturationPage() {
                                                     className="bg-red-100 rounded-[2.5rem] border-2 border-red-400/50 overflow-hidden group hover:shadow-2xl hover:shadow-red-500/20 transition-all"
                                                 >
                                                     <div className="p-6 pb-0 flex justify-between items-center">
-                                                        <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-red-500 text-white">
-                                                            <Clock size={12} />
-                                                            Non Payé
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-red-500 text-white">
+                                                                <Clock size={12} />
+                                                                Non Payé
+                                                            </div>
+                                                            <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/60 text-red-600 border border-red-200">
+                                                                {inv.doc_type || 'Facture'} {inv.doc_number ? `#${inv.doc_number}` : ''}
+                                                            </div>
                                                         </div>
                                                         {inv.photo_url && (
                                                             <button
@@ -817,7 +837,9 @@ export default function FacturationPage() {
                                                                         supplier_name: inv.supplier_name,
                                                                         amount: inv.amount,
                                                                         date: inv.date,
-                                                                        photos: JSON.parse(inv.photos || '[]')
+                                                                        photos: JSON.parse(inv.photos || '[]'),
+                                                                        doc_type: inv.doc_type || 'Facture',
+                                                                        doc_number: inv.doc_number || ''
                                                                     });
                                                                 }}
                                                                 className="w-11 h-11 border-2 border-[#e6dace] text-[#8c8279] hover:text-[#4a3426] hover:border-[#4a3426] rounded-xl flex items-center justify-center transition-all"
@@ -872,9 +894,14 @@ export default function FacturationPage() {
                                                     className="bg-green-100 rounded-[2.5rem] border-2 border-green-400/50 overflow-hidden group hover:shadow-2xl hover:shadow-green-500/20 transition-all"
                                                 >
                                                     <div className="p-6 pb-0 flex justify-between items-center">
-                                                        <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-green-500 text-white">
-                                                            <CheckCircle2 size={12} />
-                                                            Payé
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 bg-green-500 text-white">
+                                                                <CheckCircle2 size={12} />
+                                                                Payé
+                                                            </div>
+                                                            <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/60 text-green-700 border border-green-200">
+                                                                {inv.doc_type || 'Facture'} {inv.doc_number ? `#${inv.doc_number}` : ''}
+                                                            </div>
                                                         </div>
                                                         {inv.photo_url && (
                                                             <button
@@ -933,7 +960,9 @@ export default function FacturationPage() {
                                                                         supplier_name: inv.supplier_name,
                                                                         amount: inv.amount,
                                                                         date: inv.date,
-                                                                        photos: JSON.parse(inv.photos || '[]')
+                                                                        photos: JSON.parse(inv.photos || '[]'),
+                                                                        doc_type: inv.doc_type || 'Facture',
+                                                                        doc_number: inv.doc_number || ''
                                                                     });
                                                                 }}
                                                                 className="w-11 h-11 border-2 border-[#e6dace] text-[#8c8279] hover:text-[#4a3426] hover:border-[#4a3426] rounded-xl flex items-center justify-center transition-all"
@@ -962,585 +991,656 @@ export default function FacturationPage() {
                         </div>
                     )}
                 </main>
-            </div>
+            </div >
 
             {/* Add Invoice Modal */}
             <AnimatePresence>
-                {showAddModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
-                        onClick={() => setShowAddModal(false)}
-                    >
+                {
+                    showAddModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-visible shadow-2xl border border-white/20"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
+                            onClick={() => setShowAddModal(false)}
                         >
-                            <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
-                                <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                    <Receipt size={28} className="text-[#c69f6e]" />
-                                    Nouveau Reçu
-                                </h2>
-                                <p className="text-xs text-white/60 font-medium mt-1">Enregistrer une nouvelle facture fournisseur</p>
-                                <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
-                            </div>
-
-                            <div className="p-8 space-y-6">
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-4 block ml-1">Section</label>
-                                    <div className="flex gap-2 mb-6">
-                                        {['Fournisseur', 'Journalier', 'Divers'].map((s) => (
-                                            <button
-                                                key={s}
-                                                onClick={() => {
-                                                    setSection(s as any);
-                                                    setNewInvoice({ ...newInvoice, supplier_name: '' });
-                                                }}
-                                                className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${section === s
-                                                    ? 'bg-[#4a3426] text-[#c69f6e] border-[#4a3426] shadow-lg shadow-[#4a3426]/20'
-                                                    : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#4a3426]/30'
-                                                    }`}
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">
-                                        {section === 'Fournisseur' ? 'Fournisseur' : (section === 'Journalier' ? 'Personnel / Service' : 'Désignation')}
-                                    </label>
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
-                                        <select
-                                            value={newInvoice.supplier_name}
-                                            onChange={(e) => setNewInvoice({ ...newInvoice, supplier_name: e.target.value })}
-                                            className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
-                                        >
-                                            <option value="">Sélectionner un élément</option>
-                                            {section === 'Fournisseur' ? (
-                                                data?.getSuppliers.map((s: any) => (
-                                                    <option key={s.id} value={s.name}>{s.name}</option>
-                                                ))
-                                            ) : (
-                                                data?.getDesignations
-                                                    .filter((d: any) => d.type === (section === 'Journalier' ? 'journalier' : 'divers'))
-                                                    .map((d: any) => (
-                                                        <option key={d.id} value={d.name}>{d.name}</option>
-                                                    ))
-                                            )}
-                                        </select>
-                                        <button
-                                            onClick={() => {
-                                                setNewName({ ...newName, section: section });
-                                                setShowAddNameModal(true);
-                                            }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#4a3426] text-white rounded-xl hover:bg-[#38261b] transition-all"
-                                        >
-                                            <Plus size={16} />
-                                        </button>
-                                    </div>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-visible shadow-2xl border border-white/20"
+                            >
+                                <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
+                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                                        <Receipt size={28} className="text-[#c69f6e]" />
+                                        Nouveau Reçu
+                                    </h2>
+                                    <p className="text-xs text-white/60 font-medium mt-1">Enregistrer une nouvelle facture fournisseur</p>
+                                    <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="p-8 space-y-6">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-4 block ml-1">Section</label>
+                                        <div className="flex gap-2 mb-6">
+                                            {['Fournisseur', 'Journalier', 'Divers'].map((s) => (
+                                                <button
+                                                    key={s}
+                                                    onClick={() => {
+                                                        setSection(s as any);
+                                                        setNewInvoice({ ...newInvoice, supplier_name: '' });
+                                                    }}
+                                                    className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${section === s
+                                                        ? 'bg-[#4a3426] text-[#c69f6e] border-[#4a3426] shadow-lg shadow-[#4a3426]/20'
+                                                        : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#4a3426]/30'
+                                                        }`}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">
+                                            {section === 'Fournisseur' ? 'Fournisseur' : (section === 'Journalier' ? 'Personnel / Service' : 'Désignation')}
+                                        </label>
                                         <div className="relative">
-                                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
-                                            <input
-                                                type="number"
-                                                step="0.001"
-                                                placeholder="0.000"
-                                                value={newInvoice.amount}
-                                                onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                                                className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                            <select
+                                                value={newInvoice.supplier_name}
+                                                onChange={(e) => setNewInvoice({ ...newInvoice, supplier_name: e.target.value })}
+                                                className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
+                                            >
+                                                <option value="">Sélectionner un élément</option>
+                                                {section === 'Fournisseur' ? (
+                                                    data?.getSuppliers.map((s: any) => (
+                                                        <option key={s.id} value={s.name}>{s.name}</option>
+                                                    ))
+                                                ) : (
+                                                    data?.getDesignations
+                                                        .filter((d: any) => d.type === (section === 'Journalier' ? 'journalier' : 'divers'))
+                                                        .map((d: any) => (
+                                                            <option key={d.id} value={d.name}>{d.name}</option>
+                                                        ))
+                                                )}
+                                            </select>
+                                            <button
+                                                onClick={() => {
+                                                    setNewName({ ...newName, section: section });
+                                                    setShowAddNameModal(true);
+                                                }}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#4a3426] text-white rounded-xl hover:bg-[#38261b] transition-all"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-4 block ml-1">Type de Document & Numéro</label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1 flex gap-2">
+                                                {['Facture', 'BL'].map((t) => (
+                                                    <button
+                                                        key={t}
+                                                        type="button"
+                                                        onClick={() => setNewInvoice({ ...newInvoice, doc_type: t })}
+                                                        className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${newInvoice.doc_type === t
+                                                            ? 'bg-[#c69f6e] text-white border-[#c69f6e] shadow-lg shadow-[#c69f6e]/20'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#c69f6e]/30'
+                                                            }`}
+                                                    >
+                                                        {t}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="flex-[1.5] relative">
+                                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={18} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="N° (Optionnel)"
+                                                    value={newInvoice.doc_number}
+                                                    onChange={(e) => setNewInvoice({ ...newInvoice, doc_number: e.target.value })}
+                                                    className="w-full h-12 pl-11 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-xs"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                                <input
+                                                    type="number"
+                                                    step="0.001"
+                                                    placeholder="0.000"
+                                                    value={newInvoice.amount}
+                                                    onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+                                                    className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
+                                            <PremiumDatePicker
+                                                label="Date"
+                                                value={newInvoice.date}
+                                                onChange={(val) => setNewInvoice({ ...newInvoice, date: val })}
+                                                lockedDates={lockedDates}
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
-                                        <PremiumDatePicker
-                                            label="Date"
-                                            value={newInvoice.date}
-                                            onChange={(val) => setNewInvoice({ ...newInvoice, date: val })}
-                                            lockedDates={lockedDates}
-                                        />
-                                    </div>
-                                </div>
 
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photo / Reçu</label>
-                                    <div className="grid grid-cols-3 gap-3 mb-3">
-                                        {newInvoice.photos.map((p, idx) => (
-                                            <div key={idx} className="relative aspect-square bg-[#f9f6f2] rounded-xl overflow-hidden group border border-[#e6dace]">
-                                                <img src={p} className="w-full h-full object-cover" />
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDeletePhoto(idx); }}
-                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <X size={14} />
-                                                </button>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photo / Reçu</label>
+                                        <div className="grid grid-cols-3 gap-3 mb-3">
+                                            {newInvoice.photos.map((p, idx) => (
+                                                <div key={idx} className="relative aspect-square bg-[#f9f6f2] rounded-xl overflow-hidden group border border-[#e6dace]">
+                                                    <img src={p} className="w-full h-full object-cover" />
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeletePhoto(idx); }}
+                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div
+                                                onClick={() => document.getElementById('photo-upload')?.click()}
+                                                className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all"
+                                            >
+                                                <UploadCloud className="text-[#c69f6e] opacity-40" size={24} />
+                                                <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest text-center px-1">Ajouter</span>
+                                                <input id="photo-upload" type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
                                             </div>
-                                        ))}
-                                        <div
-                                            onClick={() => document.getElementById('photo-upload')?.click()}
-                                            className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all"
-                                        >
-                                            <UploadCloud className="text-[#c69f6e] opacity-40" size={24} />
-                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest text-center px-1">Ajouter</span>
-                                            <input id="photo-upload" type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
                                         </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    onClick={handleAddInvoice}
-                                    disabled={!newInvoice.supplier_name || !newInvoice.amount}
-                                    className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-[#4a3426]/20"
-                                >
-                                    Confirmer l'ajout
-                                </button>
-                            </div>
+                                    <button
+                                        onClick={handleAddInvoice}
+                                        disabled={!newInvoice.supplier_name || !newInvoice.amount}
+                                        className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-[#4a3426]/20"
+                                    >
+                                        Confirmer l'ajout
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Pay Modal */}
             <AnimatePresence>
-                {showPayModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-[#2d6a4f]/60 backdrop-blur-md flex items-center justify-center p-4"
-                        onClick={() => setShowPayModal(null)}
-                    >
+                {
+                    showPayModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-md overflow-visible shadow-2xl border border-white/20"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] bg-[#2d6a4f]/60 backdrop-blur-md flex items-center justify-center p-4"
+                            onClick={() => setShowPayModal(null)}
                         >
-                            <div className="p-8 bg-[#2d6a4f] text-white relative rounded-t-[2.5rem]">
-                                <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                    <CheckCircle2 size={28} className="text-[#a7c957]" />
-                                    Paiement
-                                </h2>
-                                <p className="text-xs text-white/60 font-medium mt-1">Valider le règlement de la facture</p>
-                                <button onClick={() => setShowPayModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
-                            </div>
-
-                            <div className="p-8 space-y-6">
-                                <div className="bg-[#f0faf5] p-4 rounded-2xl border border-[#d1e7dd]">
-                                    <span className="text-[10px] font-black text-[#2d6a4f] uppercase tracking-widest block mb-1">Détails Facture</span>
-                                    <div className="flex justify-between items-baseline font-black text-[#1b4332]">
-                                        <span className="text-lg">{showPayModal.supplier_name}</span>
-                                        <span className="text-2xl">{parseFloat(showPayModal.amount).toFixed(3)} DT</span>
-                                    </div>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white rounded-[2.5rem] w-full max-w-md overflow-visible shadow-2xl border border-white/20"
+                            >
+                                <div className="p-8 bg-[#2d6a4f] text-white relative rounded-t-[2.5rem]">
+                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                                        <CheckCircle2 size={28} className="text-[#a7c957]" />
+                                        Paiement
+                                    </h2>
+                                    <p className="text-xs text-white/60 font-medium mt-1">Valider le règlement de la facture</p>
+                                    <button onClick={() => setShowPayModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
                                 </div>
 
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Mode de Paiement</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {[
-                                            { id: 'Espèces', icon: Coins },
-                                            { id: 'Tpe', icon: CreditCard },
-                                            { id: 'Chèque', icon: Banknote },
-                                            { id: 'T. Restaurant', icon: Receipt }
-                                        ].map(m => (
-                                            <button
-                                                key={m.id}
-                                                onClick={() => setPaymentDetails({ ...paymentDetails, method: m.id })}
-                                                className={`h-14 rounded-2xl border-2 flex items-center gap-3 px-4 transition-all ${paymentDetails.method === m.id
-                                                    ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white shadow-lg'
-                                                    : 'bg-white border-[#e6dace] text-[#8c8279] hover:border-[#2d6a4f]'
-                                                    }`}
-                                            >
-                                                <m.icon size={18} />
-                                                <span className="font-bold text-xs">{m.id}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date de Règlement</label>
-                                    <PremiumDatePicker
-                                        label="Date"
-                                        colorMode="green"
-                                        value={paymentDetails.date}
-                                        onChange={(val) => setPaymentDetails({ ...paymentDetails, date: val })}
-                                        lockedDates={lockedDates}
-                                        allowedDates={user?.role === 'caissier' ? [todayStr, yesterdayStr] : undefined}
-                                    />
-                                </div>
-
-                                {paymentDetails.method === 'Chèque' && (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Recto</label>
-                                            <div
-                                                onClick={() => document.getElementById('recto-upload')?.click()}
-                                                className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
-                                            >
-                                                {paymentDetails.photo_cheque_url ? (
-                                                    <img src={paymentDetails.photo_cheque_url} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <>
-                                                        <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
-                                                        <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Recto</span>
-                                                    </>
-                                                )}
-                                                <input id="recto-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'recto')} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Verso</label>
-                                            <div
-                                                onClick={() => document.getElementById('verso-upload')?.click()}
-                                                className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
-                                            >
-                                                {paymentDetails.photo_verso_url ? (
-                                                    <img src={paymentDetails.photo_verso_url} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <>
-                                                        <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
-                                                        <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Verso</span>
-                                                    </>
-                                                )}
-                                                <input id="verso-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'verso')} />
-                                            </div>
+                                <div className="p-8 space-y-6">
+                                    <div className="bg-[#f0faf5] p-4 rounded-2xl border border-[#d1e7dd]">
+                                        <span className="text-[10px] font-black text-[#2d6a4f] uppercase tracking-widest block mb-1">Détails Facture</span>
+                                        <div className="flex justify-between items-baseline font-black text-[#1b4332]">
+                                            <span className="text-lg">{showPayModal.supplier_name}</span>
+                                            <span className="text-2xl">{parseFloat(showPayModal.amount).toFixed(3)} DT</span>
                                         </div>
                                     </div>
-                                )}
 
-                                <button
-                                    onClick={handlePayInvoice}
-                                    className="w-full h-16 bg-[#2d6a4f] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#1b4332] transition-all shadow-xl shadow-[#2d6a4f]/20"
-                                >
-                                    Valider et Archiver
-                                </button>
-                            </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Mode de Paiement</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { id: 'Espèces', icon: Coins },
+                                                { id: 'Tpe', icon: CreditCard },
+                                                { id: 'Chèque', icon: Banknote },
+                                                { id: 'T. Restaurant', icon: Receipt }
+                                            ].map(m => (
+                                                <button
+                                                    key={m.id}
+                                                    onClick={() => setPaymentDetails({ ...paymentDetails, method: m.id })}
+                                                    className={`h-14 rounded-2xl border-2 flex items-center gap-3 px-4 transition-all ${paymentDetails.method === m.id
+                                                        ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white shadow-lg'
+                                                        : 'bg-white border-[#e6dace] text-[#8c8279] hover:border-[#2d6a4f]'
+                                                        }`}
+                                                >
+                                                    <m.icon size={18} />
+                                                    <span className="font-bold text-xs">{m.id}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date de Règlement</label>
+                                        <PremiumDatePicker
+                                            label="Date"
+                                            colorMode="green"
+                                            value={paymentDetails.date}
+                                            onChange={(val) => setPaymentDetails({ ...paymentDetails, date: val })}
+                                            lockedDates={lockedDates}
+                                            allowedDates={user?.role === 'caissier' ? [todayStr, yesterdayStr] : undefined}
+                                        />
+                                    </div>
+
+                                    {paymentDetails.method === 'Chèque' && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Recto</label>
+                                                <div
+                                                    onClick={() => document.getElementById('recto-upload')?.click()}
+                                                    className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
+                                                >
+                                                    {paymentDetails.photo_cheque_url ? (
+                                                        <img src={paymentDetails.photo_cheque_url} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <>
+                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
+                                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Recto</span>
+                                                        </>
+                                                    )}
+                                                    <input id="recto-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'recto')} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Verso</label>
+                                                <div
+                                                    onClick={() => document.getElementById('verso-upload')?.click()}
+                                                    className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
+                                                >
+                                                    {paymentDetails.photo_verso_url ? (
+                                                        <img src={paymentDetails.photo_verso_url} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <>
+                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
+                                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Verso</span>
+                                                        </>
+                                                    )}
+                                                    <input id="verso-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'verso')} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handlePayInvoice}
+                                        className="w-full h-16 bg-[#2d6a4f] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#1b4332] transition-all shadow-xl shadow-[#2d6a4f]/20"
+                                    >
+                                        Valider et Archiver
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Image Viewer Overlay */}
             <AnimatePresence>
-                {viewingData && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 overflow-y-auto no-scrollbar"
-                        onClick={() => setViewingData(null)}
-                    >
-                        <div className="w-full max-w-6xl space-y-8 py-10" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center text-white mb-4">
-                                <div>
-                                    <h2 className="text-3xl font-black uppercase tracking-tight">{viewingData.supplier_name}</h2>
-                                    <p className="text-sm font-bold opacity-60 uppercase tracking-[0.3em]">{viewingData.amount} DT • {viewingData.status === 'paid' ? viewingData.payment_method : 'Non Payé'}</p>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex bg-white/10 rounded-2xl p-1 gap-1 border border-white/10">
-                                        <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Arrière"><ZoomOut size={20} /></button>
-                                        <div className="w-16 flex items-center justify-center font-black text-xs tabular-nums text-[#c69f6e]">{Math.round(imgZoom * 100)}%</div>
-                                        <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Avant"><ZoomIn size={20} /></button>
-                                        <div className="w-px h-6 bg-white/10 self-center mx-1"></div>
-                                        <button onClick={() => setImgRotation(prev => prev + 90)} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Tourner"><RotateCcw size={20} /></button>
-                                        <button onClick={resetView} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Réinitialiser"><Maximize2 size={20} /></button>
+                {
+                    viewingData && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 overflow-y-auto no-scrollbar"
+                            onClick={() => setViewingData(null)}
+                        >
+                            <div className="w-full max-w-6xl space-y-8 py-10" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center text-white mb-4">
+                                    <div>
+                                        <h2 className="text-3xl font-black uppercase tracking-tight">{viewingData.supplier_name}</h2>
+                                        <p className="text-sm font-bold opacity-60 uppercase tracking-[0.3em]">{viewingData.amount} DT • {viewingData.status === 'paid' ? viewingData.payment_method : 'Non Payé'}</p>
                                     </div>
-                                    <button onClick={() => setViewingData(null)} className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"><X size={32} /></button>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex bg-white/10 rounded-2xl p-1 gap-1 border border-white/10">
+                                            <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Arrière"><ZoomOut size={20} /></button>
+                                            <div className="w-16 flex items-center justify-center font-black text-xs tabular-nums text-[#c69f6e]">{Math.round(imgZoom * 100)}%</div>
+                                            <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Avant"><ZoomIn size={20} /></button>
+                                            <div className="w-px h-6 bg-white/10 self-center mx-1"></div>
+                                            <button onClick={() => setImgRotation(prev => prev + 90)} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Tourner"><RotateCcw size={20} /></button>
+                                            <button onClick={resetView} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Réinitialiser"><Maximize2 size={20} /></button>
+                                        </div>
+                                        <button onClick={() => setViewingData(null)} className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"><X size={32} /></button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className={`grid grid-cols-1 ${viewingData.payment_method === 'Chèque' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-8`}>
-                                {/* Photo Facture */}
-                                <div className="space-y-8">
-                                    {(() => {
-                                        let invoicePhotos: string[] = [];
-                                        try {
-                                            const parsed = JSON.parse(viewingData.photos || '[]');
-                                            invoicePhotos = Array.isArray(parsed) ? parsed : [];
-                                        } catch (e) {
-                                            invoicePhotos = [];
-                                        }
+                                <div className={`grid grid-cols-1 ${viewingData.payment_method === 'Chèque' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-8`}>
+                                    {/* Photo Facture */}
+                                    <div className="space-y-8">
+                                        {(() => {
+                                            let invoicePhotos: string[] = [];
+                                            try {
+                                                const parsed = JSON.parse(viewingData.photos || '[]');
+                                                invoicePhotos = Array.isArray(parsed) ? parsed : [];
+                                            } catch (e) {
+                                                invoicePhotos = [];
+                                            }
 
-                                        // Include legacy photo_url if exists
-                                        if (viewingData.photo_url && !invoicePhotos.includes(viewingData.photo_url)) {
-                                            invoicePhotos = [viewingData.photo_url, ...invoicePhotos];
-                                        }
+                                            // Include legacy photo_url if exists
+                                            if (viewingData.photo_url && !invoicePhotos.includes(viewingData.photo_url)) {
+                                                invoicePhotos = [viewingData.photo_url, ...invoicePhotos];
+                                            }
 
-                                        if (invoicePhotos.length === 0) {
-                                            return (
-                                                <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold uppercase tracking-widest">Sans Facture</div>
-                                            );
-                                        }
+                                            if (invoicePhotos.length === 0) {
+                                                return (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold uppercase tracking-widest">Sans Facture</div>
+                                                );
+                                            }
 
-                                        return invoicePhotos.map((photo, pIdx) => (
-                                            <div key={pIdx} className="space-y-4">
-                                                <div className="flex justify-between items-center">
-                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Document {pIdx + 1} / Facture</p>
-                                                    <a href={photo} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                                        <Download size={12} /> Télécharger
-                                                    </a>
-                                                </div>
-                                                <div
-                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
-                                                    onWheel={(e) => {
-                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
-                                                        else setImgZoom(prev => Math.max(0.5, prev - 0.1));
-                                                    }}
-                                                >
-                                                    <motion.div
-                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
-                                                        animate={{ scale: imgZoom, rotate: imgRotation }}
-                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        drag={imgZoom > 1}
-                                                        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-                                                        dragElastic={0.1}
+                                            return invoicePhotos.map((photo, pIdx) => (
+                                                <div key={pIdx} className="space-y-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Document {pIdx + 1} / Facture</p>
+                                                        <a href={photo} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} /> Télécharger
+                                                        </a>
+                                                    </div>
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
                                                     >
-                                                        <img
-                                                            src={photo}
-                                                            draggable="false"
-                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
-                                                            alt={`Facture ${pIdx + 1}`}
-                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
-                                                        />
-                                                    </motion.div>
-                                                    <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <span className="bg-black/60 backdrop-blur-md text-[10px] font-black text-[#c69f6e] px-4 py-2 rounded-full border border-[#c69f6e]/20 shadow-lg uppercase tracking-widest">Loupe: {Math.round(imgZoom * 100)}% • Molette pour zoomer</span>
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={photo}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt={`Facture ${pIdx + 1}`}
+                                                                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                        <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className="bg-black/60 backdrop-blur-md text-[10px] font-black text-[#c69f6e] px-4 py-2 rounded-full border border-[#c69f6e]/20 shadow-lg uppercase tracking-widest">Loupe: {Math.round(imgZoom * 100)}% • Molette pour zoomer</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ));
-                                    })()}
-                                </div>
+                                            ));
+                                        })()}
+                                    </div>
 
-                                {/* Photos Chèque */}
-                                {viewingData.payment_method === 'Chèque' && (
-                                    <>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Recto</p>
-                                                {viewingData.photo_cheque_url && (
-                                                    <a href={viewingData.photo_cheque_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                                        <Download size={12} />
-                                                    </a>
+                                    {/* Photos Chèque */}
+                                    {viewingData.payment_method === 'Chèque' && (
+                                        <>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Recto</p>
+                                                    {viewingData.photo_cheque_url && (
+                                                        <a href={viewingData.photo_cheque_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                {viewingData.photo_cheque_url ? (
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={viewingData.photo_cheque_url}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt="Chèque Recto"
+                                                                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Recto</div>
                                                 )}
                                             </div>
-                                            {viewingData.photo_cheque_url ? (
-                                                <div
-                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
-                                                    onWheel={(e) => {
-                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
-                                                        else setImgZoom(prev => Math.max(0.5, prev - 0.1));
-                                                    }}
-                                                >
-                                                    <motion.div
-                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
-                                                        animate={{ scale: imgZoom, rotate: imgRotation }}
-                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        drag={imgZoom > 1}
-                                                        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-                                                        dragElastic={0.1}
-                                                    >
-                                                        <img
-                                                            src={viewingData.photo_cheque_url}
-                                                            draggable="false"
-                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
-                                                            alt="Chèque Recto"
-                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
-                                                        />
-                                                    </motion.div>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Verso</p>
+                                                    {viewingData.photo_verso_url && (
+                                                        <a href={viewingData.photo_verso_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} />
+                                                        </a>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Recto</div>
-                                            )}
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Verso</p>
-                                                {viewingData.photo_verso_url && (
-                                                    <a href={viewingData.photo_verso_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                                        <Download size={12} />
-                                                    </a>
+                                                {viewingData.photo_verso_url ? (
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={viewingData.photo_verso_url}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt="Chèque Verso"
+                                                                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Verso</div>
                                                 )}
                                             </div>
-                                            {viewingData.photo_verso_url ? (
-                                                <div
-                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
-                                                    onWheel={(e) => {
-                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
-                                                        else setImgZoom(prev => Math.max(0.5, prev - 0.1));
-                                                    }}
-                                                >
-                                                    <motion.div
-                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
-                                                        animate={{ scale: imgZoom, rotate: imgRotation }}
-                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                        drag={imgZoom > 1}
-                                                        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-                                                        dragElastic={0.1}
-                                                    >
-                                                        <img
-                                                            src={viewingData.photo_verso_url}
-                                                            draggable="false"
-                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
-                                                            alt="Chèque Verso"
-                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
-                                                        />
-                                                    </motion.div>
-                                                </div>
-                                            ) : (
-                                                <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Verso</div>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Edit Invoice Modal */}
             <AnimatePresence>
-                {showEditModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[150] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
-                        onClick={() => setShowEditModal(null)}
-                    >
+                {
+                    showEditModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-y-auto max-h-[90vh] shadow-2xl border border-white/20 custom-scrollbar"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[150] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
+                            onClick={() => setShowEditModal(null)}
                         >
-                            <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
-                                <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                    <Edit2 size={28} className="text-[#c69f6e]" />
-                                    Modifier Facture
-                                </h2>
-                                <p className="text-xs text-white/60 font-medium mt-1">Mettre à jour les informations de la facture</p>
-                                <button onClick={() => setShowEditModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
-                            </div>
-
-                            <div className="p-8 space-y-6">
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Fournisseur / Elément</label>
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
-                                        <select
-                                            value={showEditModal.supplier_name}
-                                            onChange={(e) => setShowEditModal({ ...showEditModal, supplier_name: e.target.value })}
-                                            className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
-                                        >
-                                            <option value="">Sélectionner</option>
-                                            {data?.getSuppliers.map((s: any) => (<option key={s.id} value={s.name}>{s.name}</option>))}
-                                            {data?.getDesignations.map((d: any) => (<option key={d.id} value={d.name}>{d.name}</option>))}
-                                        </select>
-                                    </div>
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-y-auto max-h-[90vh] shadow-2xl border border-white/20 custom-scrollbar"
+                            >
+                                <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
+                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
+                                        <Edit2 size={28} className="text-[#c69f6e]" />
+                                        Modifier Facture
+                                    </h2>
+                                    <p className="text-xs text-white/60 font-medium mt-1">Mettre à jour les informations de la facture</p>
+                                    <button onClick={() => setShowEditModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="p-8 space-y-6">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Fournisseur / Elément</label>
                                         <div className="relative">
-                                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
-                                            <input
-                                                type="number"
-                                                step="0.001"
-                                                placeholder="0.000"
-                                                value={showEditModal.amount}
-                                                onChange={(e) => setShowEditModal({ ...showEditModal, amount: e.target.value })}
-                                                className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                            <select
+                                                value={showEditModal.supplier_name}
+                                                onChange={(e) => setShowEditModal({ ...showEditModal, supplier_name: e.target.value })}
+                                                className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
+                                            >
+                                                <option value="">Sélectionner</option>
+                                                {data?.getSuppliers.map((s: any) => (<option key={s.id} value={s.name}>{s.name}</option>))}
+                                                {data?.getDesignations.map((d: any) => (<option key={d.id} value={d.name}>{d.name}</option>))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-3 block ml-1">Type de Document & Numéro</label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1 flex gap-2">
+                                                {['Facture', 'BL'].map((t) => (
+                                                    <button
+                                                        key={t}
+                                                        type="button"
+                                                        onClick={() => setShowEditModal({ ...showEditModal, doc_type: t })}
+                                                        className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${showEditModal.doc_type === t
+                                                            ? 'bg-[#c69f6e] text-white border-[#c69f6e] shadow-lg shadow-[#c69f6e]/20'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#c69f6e]/30'
+                                                            }`}
+                                                    >
+                                                        {t}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="flex-[1.5] relative">
+                                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={18} />
+                                                <input
+                                                    type="text"
+                                                    placeholder="N° (Optionnel)"
+                                                    value={showEditModal.doc_number}
+                                                    onChange={(e) => setShowEditModal({ ...showEditModal, doc_number: e.target.value })}
+                                                    className="w-full h-12 pl-11 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-xs"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                                <input
+                                                    type="number"
+                                                    step="0.001"
+                                                    placeholder="0.000"
+                                                    value={showEditModal.amount}
+                                                    onChange={(e) => setShowEditModal({ ...showEditModal, amount: e.target.value })}
+                                                    className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
+                                            <PremiumDatePicker
+                                                label="Date"
+                                                value={showEditModal.date}
+                                                onChange={(val) => setShowEditModal({ ...showEditModal, date: val })}
+                                                lockedDates={lockedDates}
                                             />
                                         </div>
                                     </div>
+
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
-                                        <PremiumDatePicker
-                                            label="Date"
-                                            value={showEditModal.date}
-                                            onChange={(val) => setShowEditModal({ ...showEditModal, date: val })}
-                                            lockedDates={lockedDates}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photos Facture ({showEditModal.photos.length}/5)</label>
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {showEditModal.photos.map((p: string, i: number) => (
-                                            <div key={i} className="aspect-square bg-[#fcfaf8] border border-[#e6dace] rounded-xl relative group overflow-hidden">
-                                                <img src={p} className="w-full h-full object-cover" />
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photos Facture ({showEditModal.photos.length}/5)</label>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {showEditModal.photos.map((p: string, i: number) => (
+                                                <div key={i} className="aspect-square bg-[#fcfaf8] border border-[#e6dace] rounded-xl relative group overflow-hidden">
+                                                    <img src={p} className="w-full h-full object-cover" />
+                                                    <button
+                                                        onClick={() => setShowEditModal({ ...showEditModal, photos: showEditModal.photos.filter((_: any, idx: number) => idx !== i) })}
+                                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {showEditModal.photos.length < 5 && (
                                                 <button
-                                                    onClick={() => setShowEditModal({ ...showEditModal, photos: showEditModal.photos.filter((_: any, idx: number) => idx !== i) })}
-                                                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                    onClick={() => document.getElementById('edit-upload')?.click()}
+                                                    className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex items-center justify-center text-[#c69f6e] hover:border-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
                                                 >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {showEditModal.photos.length < 5 && (
-                                            <button
-                                                onClick={() => document.getElementById('edit-upload')?.click()}
-                                                className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex items-center justify-center text-[#c69f6e] hover:border-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
-                                            >
-                                                <Plus size={24} />
-                                                <input
-                                                    id="edit-upload"
-                                                    type="file"
-                                                    multiple
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={async (e) => {
-                                                        const files = e.target.files;
-                                                        if (files && files.length > 0) {
-                                                            const filePromises = Array.from(files).map(file => {
-                                                                return new Promise<string>((resolve) => {
-                                                                    const reader = new FileReader();
-                                                                    reader.onloadend = () => resolve(reader.result as string);
-                                                                    reader.readAsDataURL(file);
+                                                    <Plus size={24} />
+                                                    <input
+                                                        id="edit-upload"
+                                                        type="file"
+                                                        multiple
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={async (e) => {
+                                                            const files = e.target.files;
+                                                            if (files && files.length > 0) {
+                                                                const filePromises = Array.from(files).map(file => {
+                                                                    return new Promise<string>((resolve) => {
+                                                                        const reader = new FileReader();
+                                                                        reader.onloadend = () => resolve(reader.result as string);
+                                                                        reader.readAsDataURL(file);
+                                                                    });
                                                                 });
-                                                            });
-                                                            const results = await Promise.all(filePromises);
-                                                            setShowEditModal({ ...showEditModal, photos: [...showEditModal.photos, ...results].slice(0, 5) });
-                                                        }
-                                                    }}
-                                                />
-                                            </button>
-                                        )}
+                                                                const results = await Promise.all(filePromises);
+                                                                setShowEditModal({ ...showEditModal, photos: [...showEditModal.photos, ...results].slice(0, 5) });
+                                                            }
+                                                        }}
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    onClick={() => handleUpdateInvoice(showEditModal)}
-                                    className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] transition-all shadow-xl shadow-[#4a3426]/20"
-                                >
-                                    Enregistrer les modifications
-                                </button>
-                            </div>
+                                    <button
+                                        onClick={() => handleUpdateInvoice(showEditModal)}
+                                        className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] transition-all shadow-xl shadow-[#4a3426]/20"
+                                    >
+                                        Enregistrer les modifications
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Confirmation Modal */}
-            <ConfirmModal
-                isOpen={!!showConfirm}
+            < ConfirmModal
+                isOpen={!!showConfirm
+                }
                 onClose={() => setShowConfirm(null)}
                 onConfirm={showConfirm?.onConfirm}
                 title={showConfirm?.title}
@@ -1552,115 +1652,119 @@ export default function FacturationPage() {
 
             {/* Choice Modal for Adding Section */}
             <AnimatePresence>
-                {showChoiceModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setShowChoiceModal(false)}
-                    >
+                {
+                    showChoiceModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-[#e6dace]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                            onClick={() => setShowChoiceModal(false)}
                         >
-                            <div className="p-8 bg-[#4a3426] text-white relative">
-                                <h3 className="text-2xl font-black uppercase tracking-tight">Ajouter Section</h3>
-                                <p className="text-xs opacity-60 font-bold uppercase tracking-widest mt-1">Choisissez le type d'élément à ajouter</p>
-                                <button onClick={() => setShowChoiceModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
-                                    <X size={24} />
-                                </button>
-                            </div>
-                            <div className="p-8 grid grid-cols-1 gap-4">
-                                {[
-                                    { id: 'Fournisseur', label: 'Ajouter Fournisseur', desc: 'Pour les factures de marchandises', icon: Package, color: 'text-blue-500', bg: 'bg-blue-50' },
-                                    { id: 'Journalier', label: 'Ajouter Journalier', desc: 'Pour les dépenses quotidiennes', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
-                                    { id: 'Divers', label: 'Ajouter Divers', desc: 'Pour les charges exceptionnelles', icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-50' }
-                                ].map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            setNewName({ name: '', section: item.id as any });
-                                            setShowChoiceModal(false);
-                                            setShowAddNameModal(true);
-                                        }}
-                                        className="flex items-center gap-6 p-6 rounded-3xl border-2 border-transparent hover:border-[#4a3426] hover:bg-[#fcfaf8] transition-all group text-left"
-                                    >
-                                        <div className={`w-16 h-16 ${item.bg} ${item.color} rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
-                                            <item.icon size={32} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-lg font-black text-[#4a3426] uppercase tracking-tight">{item.label}</h4>
-                                            <p className="text-sm text-[#8c8279] font-medium">{item.desc}</p>
-                                        </div>
-                                        <Plus size={24} className="text-[#e6dace] group-hover:text-[#4a3426] transition-colors" />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-[#e6dace]"
+                            >
+                                <div className="p-8 bg-[#4a3426] text-white relative">
+                                    <h3 className="text-2xl font-black uppercase tracking-tight">Ajouter Section</h3>
+                                    <p className="text-xs opacity-60 font-bold uppercase tracking-widest mt-1">Choisissez le type d'élément à ajouter</p>
+                                    <button onClick={() => setShowChoiceModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors">
+                                        <X size={24} />
                                     </button>
-                                ))}
-                            </div>
+                                </div>
+                                <div className="p-8 grid grid-cols-1 gap-4">
+                                    {[
+                                        { id: 'Fournisseur', label: 'Ajouter Fournisseur', desc: 'Pour les factures de marchandises', icon: Package, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                        { id: 'Journalier', label: 'Ajouter Journalier', desc: 'Pour les dépenses quotidiennes', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
+                                        { id: 'Divers', label: 'Ajouter Divers', desc: 'Pour les charges exceptionnelles', icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-50' }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                setNewName({ name: '', section: item.id as any });
+                                                setShowChoiceModal(false);
+                                                setShowAddNameModal(true);
+                                            }}
+                                            className="flex items-center gap-6 p-6 rounded-3xl border-2 border-transparent hover:border-[#4a3426] hover:bg-[#fcfaf8] transition-all group text-left"
+                                        >
+                                            <div className={`w-16 h-16 ${item.bg} ${item.color} rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
+                                                <item.icon size={32} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-black text-[#4a3426] uppercase tracking-tight">{item.label}</h4>
+                                                <p className="text-sm text-[#8c8279] font-medium">{item.desc}</p>
+                                            </div>
+                                            <Plus size={24} className="text-[#e6dace] group-hover:text-[#4a3426] transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )
+                }
+            </AnimatePresence >
 
             {/* Add Name Modal */}
             <AnimatePresence>
-                {showAddNameModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[210] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setShowAddNameModal(false)}
-                    >
+                {
+                    showAddNameModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[210] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                            onClick={() => setShowAddNameModal(false)}
                         >
-                            <div className="p-6 bg-[#4a3426] text-white">
-                                <h3 className="text-lg font-black uppercase tracking-tight">Ajouter {newName.section}</h3>
-                                <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-1">Section: {newName.section}</p>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Nom / Désignation</label>
-                                    <input
-                                        type="text"
-                                        placeholder={`Nom du ${newName.section.toLowerCase()}...`}
-                                        value={newName.name}
-                                        onChange={(e) => setNewName({ ...newName, name: e.target.value })}
-                                        className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
-                                        autoFocus
-                                    />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
+                            >
+                                <div className="p-6 bg-[#4a3426] text-white">
+                                    <h3 className="text-lg font-black uppercase tracking-tight">Ajouter {newName.section}</h3>
+                                    <p className="text-[10px] opacity-60 font-bold uppercase tracking-widest mt-1">Section: {newName.section}</p>
                                 </div>
-                                <div className="flex gap-3 pt-2">
-                                    <button
-                                        onClick={() => {
-                                            setShowAddNameModal(false);
-                                            setShowChoiceModal(true);
-                                        }}
-                                        className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
-                                    >
-                                        Retour
-                                    </button>
-                                    <button
-                                        onClick={handleAddName}
-                                        disabled={!newName.name}
-                                        className="flex-1 h-12 bg-[#4a3426] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
-                                    >
-                                        Valider
-                                    </button>
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Nom / Désignation</label>
+                                        <input
+                                            type="text"
+                                            placeholder={`Nom du ${newName.section.toLowerCase()}...`}
+                                            value={newName.name}
+                                            onChange={(e) => setNewName({ ...newName, name: e.target.value })}
+                                            className="w-full h-12 px-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowAddNameModal(false);
+                                                setShowChoiceModal(true);
+                                            }}
+                                            className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
+                                        >
+                                            Retour
+                                        </button>
+                                        <button
+                                            onClick={handleAddName}
+                                            disabled={!newName.name}
+                                            className="flex-1 h-12 bg-[#4a3426] text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
+                                        >
+                                            Valider
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )
+                }
+            </AnimatePresence >
         </div >
     );
 }

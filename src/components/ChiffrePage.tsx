@@ -165,7 +165,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         photo_verso?: string,
         paymentMethod: string,
         isFromFacturation?: boolean,
-        invoiceId?: number
+        invoiceId?: number,
+        doc_type?: string,
+        doc_number?: string
     }[]>([
         { supplier: '', amount: '0', details: '', invoices: [], photo_cheque: '', photo_verso: '', paymentMethod: 'Espèces' }
     ]);
@@ -1019,7 +1021,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     >
                                                         <UploadCloud size={14} />
-                                                        <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
+                                                        <span className="font-black uppercase tracking-widest">
+                                                            {expense.isFromFacturation
+                                                                ? `${expense.doc_type || 'Reçu'} ${expense.doc_number ? '#' + expense.doc_number : ''}`
+                                                                : (expense.invoices.length || 'Reçu')}
+                                                        </span>
                                                         {!expense.isFromFacturation && <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice')} />}
                                                     </label>
 
@@ -1545,15 +1551,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             {/* Image Modal */}
             <AnimatePresence>
                 {viewingInvoices && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }}>
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }} className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"><LogOut size={20} className="rotate-180" /></button>
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-bold text-[#4a3426] flex items-center gap-2"><Receipt size={24} className="text-[#c69f6e]" /> Reçus & Factures</h3>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-2" onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#fcfaf8] rounded-[2.5rem] p-6 max-w-[98vw] w-full h-[95vh] overflow-y-auto relative border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }} className="absolute top-6 right-6 p-3 bg-white hover:bg-red-50 text-[#4a3426] hover:text-red-500 rounded-full transition-all z-50 shadow-lg border border-[#e6dace]"><LogOut size={24} className="rotate-180" /></button>
+                            <div className="flex items-center justify-between mb-8 px-2">
+                                <h3 className="text-3xl font-black text-[#4a3426] flex items-center gap-4 uppercase tracking-tight"><Receipt size={32} className="text-[#c69f6e]" /> Reçus & Factures</h3>
                                 {viewingInvoicesTarget && (
-                                    <>
-                                        <label className={`flex items-center gap-2 px-4 py-2 ${isLocked && role !== 'admin' ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-[#2d6a4f] hover:bg-[#1b4332] cursor-pointer'} text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-green-200`}>
-                                            <Plus size={16} /> Ajouter Photo
+                                    <div className="flex items-center gap-4 mr-16">
+                                        <label className={`flex items-center gap-3 px-6 py-3 ${isLocked && role !== 'admin' ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-[#2d6a4f] hover:bg-[#1b4332] cursor-pointer'} text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-[#2d6a4f]/20`}>
+                                            <Plus size={18} /> Ajouter Photo
                                             <input
                                                 type="file"
                                                 multiple
@@ -1593,21 +1599,21 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 }}
                                             />
                                         </label>
-                                        <div className="flex bg-[#fcfafb] rounded-2xl p-1 gap-1 border border-gray-100 ml-4 shadow-sm">
-                                            <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Arrière"><ZoomOut size={16} /></button>
-                                            <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Avant"><ZoomIn size={16} /></button>
-                                            <button onClick={() => setImgRotation(prev => prev + 90)} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Tourner"><RotateCcw size={16} /></button>
-                                            <button onClick={resetView} className="w-8 h-8 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Réinitialiser"><Maximize2 size={16} /></button>
+                                        <div className="flex bg-white rounded-2xl p-1.5 gap-1 border border-[#e6dace] shadow-lg">
+                                            <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-10 h-10 hover:bg-[#fcfaf8] rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Arrière"><ZoomOut size={20} /></button>
+                                            <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-10 h-10 hover:bg-[#fcfaf8] rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Zoom Avant"><ZoomIn size={20} /></button>
+                                            <button onClick={() => setImgRotation(prev => prev + 90)} className="w-10 h-10 hover:bg-[#fcfaf8] rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Tourner"><RotateCcw size={20} /></button>
+                                            <button onClick={resetView} className="w-10 h-10 hover:bg-[#fcfaf8] rounded-xl flex items-center justify-center transition-all text-[#4a3426]" title="Réinitialiser"><Maximize2 size={20} /></button>
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                             {viewingInvoices.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className={`grid grid-cols-1 ${viewingInvoices.length > 1 ? 'md:grid-cols-2' : ''} gap-8`}>
                                     {viewingInvoices.map((img, idx) => (
                                         <div
                                             key={idx}
-                                            className="relative group rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl h-[50vh]"
+                                            className="relative group rounded-[2.5rem] overflow-hidden border border-white/10 bg-black shadow-2xl h-[75vh]"
                                             onWheel={(e) => {
                                                 if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
                                                 else setImgZoom(prev => Math.max(0.5, prev - 0.1));

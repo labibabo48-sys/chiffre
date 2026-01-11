@@ -25,7 +25,9 @@ export const resolvers = {
                     paymentMethod: inv.payment_method,
                     invoices: photos,
                     isFromFacturation: true,
-                    invoiceId: inv.id
+                    invoiceId: inv.id,
+                    doc_type: inv.doc_type,
+                    doc_number: inv.doc_number
                 };
             });
 
@@ -145,7 +147,9 @@ export const resolvers = {
                         paymentMethod: inv.payment_method,
                         invoices: photos,
                         isFromFacturation: true,
-                        invoiceId: inv.id
+                        invoiceId: inv.id,
+                        doc_type: inv.doc_type,
+                        doc_number: inv.doc_number
                     });
                 }
             });
@@ -449,7 +453,9 @@ export const resolvers = {
                 paymentMethod: inv.payment_method,
                 invoices: inv.photo_url ? [inv.photo_url] : [],
                 isFromFacturation: true,
-                invoiceId: inv.id
+                invoiceId: inv.id,
+                doc_type: inv.doc_type,
+                doc_number: inv.doc_number
             }));
 
             const finalDiponce = [...(row.diponce || []), ...paidInvoices];
@@ -462,10 +468,10 @@ export const resolvers = {
                 diponce_admin: typeof row.diponce_admin === 'string' ? row.diponce_admin : JSON.stringify(row.diponce_admin || [])
             };
         },
-        addInvoice: async (_: any, { supplier_name, amount, date, photo_url, photos }: any) => {
+        addInvoice: async (_: any, { supplier_name, amount, date, photo_url, photos, doc_type, doc_number }: any) => {
             const res = await query(
-                'INSERT INTO invoices (supplier_name, amount, date, photo_url, photos) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING *',
-                [supplier_name, amount, date, photo_url, photos || '[]']
+                'INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, doc_type, doc_number) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING *',
+                [supplier_name, amount, date, photo_url, photos || '[]', doc_type || 'Facture', doc_number]
             );
             const row = res.rows[0];
             return {
@@ -499,7 +505,7 @@ export const resolvers = {
                 photos: typeof row.photos === 'string' ? row.photos : JSON.stringify(row.photos || [])
             };
         },
-        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos }: any) => {
+        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos, doc_type, doc_number }: any) => {
             const fields = [];
             const params = [];
             if (supplier_name !== undefined) { params.push(supplier_name); fields.push(`supplier_name = $${params.length}`); }
@@ -507,13 +513,15 @@ export const resolvers = {
             if (date !== undefined) { params.push(date); fields.push(`date = $${params.length}`); }
             if (photo_url !== undefined) { params.push(photo_url); fields.push(`photo_url = $${params.length}`); }
             if (photos !== undefined) { params.push(photos); fields.push(`photos = $${params.length}::jsonb`); }
+            if (doc_type !== undefined) { params.push(doc_type); fields.push(`doc_type = $${params.length}`); }
+            if (doc_number !== undefined) { params.push(doc_number); fields.push(`doc_number = $${params.length}`); }
 
             if (fields.length === 0) {
                 const r = await query('SELECT * FROM invoices WHERE id = $1', [id]);
                 return { ...r.rows[0], photos: typeof r.rows[0].photos === 'string' ? r.rows[0].photos : JSON.stringify(r.rows[0].photos || []) };
             }
 
-            params.push(id.toString());
+            params.push(id);
             const res = await query(
                 `UPDATE invoices SET ${fields.join(', ')} WHERE id = $${params.length} RETURNING *`,
                 params
@@ -557,12 +565,12 @@ export const resolvers = {
         },
         updateDesignation: async (_: any, { id, name, type }: { id: number, name: string, type?: string }) => {
             let sql = 'UPDATE designations SET name = $1';
-            const params = [name.trim()];
+            const params: any[] = [name.trim()];
             if (type) {
                 params.push(type);
                 sql += `, type = $${params.length}`;
             }
-            params.push(id.toString());
+            params.push(id);
             sql += ` WHERE id = $${params.length} RETURNING *`;
             const res = await query(sql, params);
             return res.rows[0];
@@ -579,10 +587,10 @@ export const resolvers = {
             return res.rows[0];
         },
         addPaidInvoice: async (_: any, args: any) => {
-            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date } = args;
+            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number } = args;
             const res = await query(
-                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9) RETURNING *",
-                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date]
+                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11) RETURNING *",
+                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number]
             );
             const row = res.rows[0];
             return {

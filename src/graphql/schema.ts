@@ -68,6 +68,8 @@ export const typeDefs = `#graphql
     status: String
     payment_method: String
     paid_date: String
+    doc_type: String
+    doc_number: String
   }
 
   type BankDeposit {
@@ -130,6 +132,8 @@ export const typeDefs = `#graphql
       date: String!
       photo_url: String
       photos: String
+      doc_type: String
+      doc_number: String
     ): Invoice
 
     payInvoice(
@@ -150,6 +154,8 @@ export const typeDefs = `#graphql
       date: String
       photo_url: String
       photos: String
+      doc_type: String
+      doc_number: String
     ): Invoice
     
     addBankDeposit(
@@ -167,6 +173,8 @@ export const typeDefs = `#graphql
       photo_verso_url: String
       payment_method: String!
       paid_date: String!
+      doc_type: String
+      doc_number: String
     ): Invoice
 
     unlockChiffre(date: String!): Chiffre
