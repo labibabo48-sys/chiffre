@@ -1101,13 +1101,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     {expensesAdmin.map((admin, index) => (
                                         <div key={index} className="group flex flex-col p-2 rounded-xl transition-all border hover:bg-[#f9f6f2] border-transparent hover:border-[#e6dace]">
                                             <div className="flex flex-col md:flex-row items-center gap-3 w-full">
-                                                <div className="w-full md:w-40 relative">
+                                                <div className="w-full md:w-32 relative">
                                                     <input
                                                         type="number"
                                                         placeholder="0.00"
                                                         value={admin.amount}
                                                         onChange={(e) => handleAdminChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-center"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -1124,11 +1124,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     />
                                                 </div>
 
-                                                <div className="w-full md:w-40 relative">
-                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[11px] text-[#4a3426] opacity-70 cursor-not-allowed">
-                                                        <span>💵</span> Espèces
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     ))}
