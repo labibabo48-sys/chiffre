@@ -47,17 +47,31 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
         return days;
     }, [viewDate]);
 
+    // Use a ref to check if the picker is near the bottom of the screen
+    const [openUp, setOpenUp] = useState(false);
+    const containerRef = (node: HTMLDivElement | null) => {
+        if (node) {
+            const rect = node.getBoundingClientRect();
+            setOpenUp(window.innerHeight - rect.bottom < 350);
+        }
+    };
+
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 bg-white/50 hover:bg-white border border-[#e6dace] rounded-xl px-4 py-2 h-12 transition-all min-w-[140px] group ${theme.hover}`}
+                className={`flex items-center gap-3 bg-white hover:bg-white border border-[#e6dace] rounded-2xl px-4 py-2 h-14 transition-all w-full group shadow-sm ${theme.hover}`}
             >
-                <Calendar size={16} className={theme.text} />
-                <span className="text-[11px] font-black text-[#4a3426] tracking-tight truncate">
-                    {formatDateToDisplay(value)}
-                </span>
+                <div className={`p-2 rounded-xl ${theme.bg} bg-opacity-10 ${theme.text}`}>
+                    <Calendar size={18} strokeWidth={2.5} />
+                </div>
+                <div className="flex flex-col items-start overflow-hidden">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#bba282] opacity-60 leading-none mb-1">{label}</span>
+                    <span className="text-sm font-black text-[#4a3426] tracking-tight truncate leading-none">
+                        {formatDateToDisplay(value)}
+                    </span>
+                </div>
             </button>
 
             <AnimatePresence>
@@ -65,18 +79,18 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
                     <>
                         <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
                         <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            initial={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full left-0 mt-3 bg-white rounded-[2rem] shadow-2xl border border-[#e6dace] p-6 z-[110] w-72"
+                            exit={{ opacity: 0, y: openUp ? -10 : 10, scale: 0.95 }}
+                            className={`absolute ${openUp ? 'bottom-full mb-3' : 'top-full mt-3'} left-0 bg-white rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] border border-[#e6dace] p-6 z-[110] w-[320px]`}
                         >
-                            <div className="flex justify-between items-center mb-4 px-1">
-                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2 hover:bg-[#fcfaf8] rounded-xl text-[#8c8279]"><ChevronLeft size={18} /></button>
-                                <span className="text-xs font-black text-[#4a3426] uppercase tracking-[0.1em]">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2 hover:bg-[#fcfaf8] rounded-xl text-[#8c8279]"><ChevronRight size={18} /></button>
+                            <div className="flex justify-between items-center mb-6 px-1">
+                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronLeft size={20} /></button>
+                                <span className="text-sm font-black text-[#4a3426] uppercase tracking-[0.1em]">{months[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+                                <button type="button" onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2.5 hover:bg-[#fcfaf8] rounded-2xl text-[#c69f6e] transition-colors"><ChevronRight size={20} /></button>
                             </div>
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="text-[9px] font-black text-[#c69f6e] text-center uppercase opacity-50">{d}</div>)}
+                            <div className="grid grid-cols-7 gap-1 mb-3">
+                                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i} className="text-[10px] font-black text-[#bba282] text-center uppercase tracking-widest opacity-40">{d}</div>)}
                             </div>
                             <div className="grid grid-cols-7 gap-1">
                                 {daysInMonth.map((day, i) => {
@@ -86,9 +100,9 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
                                     const isToday = new Date().toISOString().split('T')[0] === dStr;
                                     return (
                                         <button key={i} type="button" onClick={() => { onChange(dStr); setIsOpen(false); }}
-                                            className={`h-8 w-8 rounded-xl text-[10px] font-black transition-all flex items-center justify-center
+                                            className={`h-10 w-10 rounded-2xl text-[11px] font-black transition-all flex items-center justify-center
                                                 ${isSelected ? `${theme.bg} text-white shadow-lg ${theme.shadow}` : `text-[#4a3426] hover:bg-[#fcfaf8] border border-transparent hover:border-[#e6dace]`}
-                                                ${isToday && !isSelected ? `${theme.text} !border-[#c69f6e]/30` : ''}`}
+                                                ${isToday && !isSelected ? `${theme.text} bg-opacity-10 ${theme.bg}` : ''}`}
                                         >
                                             {day.getDate()}
                                         </button>
@@ -685,9 +699,9 @@ export default function FacturationPage() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-white/20"
+                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-visible shadow-2xl border border-white/20"
                         >
-                            <div className="p-8 bg-[#4a3426] text-white relative">
+                            <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     <Receipt size={28} className="text-[#c69f6e]" />
                                     Nouveau Reçu
@@ -785,9 +799,9 @@ export default function FacturationPage() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={e => e.stopPropagation()}
-                            className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl border border-white/20"
+                            className="bg-white rounded-[2.5rem] w-full max-w-md overflow-visible shadow-2xl border border-white/20"
                         >
-                            <div className="p-8 bg-[#2d6a4f] text-white relative">
+                            <div className="p-8 bg-[#2d6a4f] text-white relative rounded-t-[2.5rem]">
                                 <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                     <CheckCircle2 size={28} className="text-[#a7c957]" />
                                     Paiement
