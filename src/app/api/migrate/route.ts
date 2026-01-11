@@ -1,0 +1,19 @@
+import { query } from '@/lib/db';
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+    try {
+        console.log('Running migration via API...');
+        await query("ALTER TABLE chiffres ADD COLUMN IF NOT EXISTS extra TEXT DEFAULT '0';");
+        await query("ALTER TABLE chiffres ADD COLUMN IF NOT EXISTS primes TEXT DEFAULT '0';");
+
+        // Add missing invoice columns
+        await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_cheque_url TEXT;");
+        await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_verso_url TEXT;");
+
+        return NextResponse.json({ success: true, message: 'Migration successful: extra, primes, and invoice columns added/checked' });
+    } catch (err: any) {
+        console.error('Migration failed:', err);
+        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    }
+}
