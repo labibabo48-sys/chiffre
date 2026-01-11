@@ -826,7 +826,7 @@ export default function FacturationPage() {
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDelete(inv)}
-                                                                className="w-11 h-11 border-2 border-red-50 text-red-100 hover:text-red-500 hover:border-red-100 rounded-xl flex items-center justify-center transition-all"
+                                                                className="w-11 h-11 border-2 border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 rounded-xl flex items-center justify-center transition-all"
                                                             >
                                                                 <Trash2 size={18} />
                                                             </button>
@@ -942,7 +942,7 @@ export default function FacturationPage() {
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDelete(inv)}
-                                                                className="w-11 h-11 border-2 border-red-50 text-red-100 hover:text-red-500 hover:border-red-100 rounded-xl flex items-center justify-center transition-all"
+                                                                className="w-11 h-11 border-2 border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 rounded-xl flex items-center justify-center transition-all"
                                                             >
                                                                 <Trash2 size={18} />
                                                             </button>
