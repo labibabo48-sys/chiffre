@@ -714,7 +714,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 </button>
 
 
-                                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                                <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
                                                             if (journalier.invoices.length > 0) {
@@ -723,17 +723,19 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
                                                     </label>
-                                                    {(index > 0 || expensesJournalier.length > 1) && (
-                                                        <button onClick={() => handleRemoveJournalier(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                                                            <Trash2 size={20} />
-                                                        </button>
-                                                    )}
+                                                    <div className="w-12 flex justify-center">
+                                                        {(index > 0 || expensesJournalier.length > 1) && (
+                                                            <button onClick={() => handleRemoveJournalier(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                                                                <Trash2 size={20} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -849,7 +851,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 </button>
 
 
-                                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                                <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
                                                             if (expense.invoices.length > 0) {
@@ -860,49 +862,53 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
                                                         {!expense.isFromFacturation && <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice')} />}
                                                     </label>
 
-                                                    {expense.paymentMethod === 'Chèque' && (
-                                                        <>
-                                                            <label
-                                                                onClick={(e) => {
-                                                                    if (expense.photo_cheque) {
-                                                                        setViewingInvoices([expense.photo_cheque]);
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_cheque ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'}`}
-                                                            >
-                                                                <UploadCloud size={14} />
-                                                                <span className="font-black uppercase tracking-widest">{expense.photo_cheque ? 'Recto OK' : 'Recto'}</span>
-                                                                {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'recto')} />}
-                                                            </label>
-                                                            <label
-                                                                onClick={(e) => {
-                                                                    if (expense.photo_verso) {
-                                                                        setViewingInvoices([expense.photo_verso]);
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_verso ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'}`}
-                                                            >
-                                                                <UploadCloud size={14} />
-                                                                <span className="font-black uppercase tracking-widest">{expense.photo_verso ? 'Verso OK' : 'Verso'}</span>
-                                                                {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'verso')} />}
-                                                            </label>
-                                                        </>
-                                                    )}
+                                                    <div className="flex gap-2">
+                                                        {expense.paymentMethod === 'Chèque' && (
+                                                            <>
+                                                                <label
+                                                                    onClick={(e) => {
+                                                                        if (expense.photo_cheque) {
+                                                                            setViewingInvoices([expense.photo_cheque]);
+                                                                            e.preventDefault();
+                                                                        }
+                                                                    }}
+                                                                    className={`h-12 w-20 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_cheque ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'}`}
+                                                                >
+                                                                    <UploadCloud size={14} />
+                                                                    <span className="font-black uppercase tracking-widest">{expense.photo_cheque ? 'Recto OK' : 'Recto'}</span>
+                                                                    {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'recto')} />}
+                                                                </label>
+                                                                <label
+                                                                    onClick={(e) => {
+                                                                        if (expense.photo_verso) {
+                                                                            setViewingInvoices([expense.photo_verso]);
+                                                                            e.preventDefault();
+                                                                        }
+                                                                    }}
+                                                                    className={`h-12 w-20 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_verso ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'}`}
+                                                                >
+                                                                    <UploadCloud size={14} />
+                                                                    <span className="font-black uppercase tracking-widest">{expense.photo_verso ? 'Verso OK' : 'Verso'}</span>
+                                                                    {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'verso')} />}
+                                                                </label>
+                                                            </>
+                                                        )}
 
-                                                    {!expense.isFromFacturation && (index > 0 || expenses.length > 1) && (
-                                                        <button onClick={() => handleRemoveExpense(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                                                            <Trash2 size={20} />
-                                                        </button>
-                                                    )}
+                                                        <div className="w-12 flex justify-center">
+                                                            {!expense.isFromFacturation && (index > 0 || expenses.length > 1) && (
+                                                                <button onClick={() => handleRemoveExpense(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                                                                    <Trash2 size={20} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1041,7 +1047,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 </button>
 
 
-                                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                                <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
                                                             if (divers.invoices.length > 0) {
@@ -1050,16 +1056,18 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
                                                     </label>
-                                                    {(index > 0 || expensesDivers.length > 1) && (
-                                                        <button onClick={() => handleRemoveDivers(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                                                            <Trash2 size={20} />
-                                                        </button>
-                                                    )}
+                                                    <div className="w-12 flex justify-center">
+                                                        {(index > 0 || expensesDivers.length > 1) && (
+                                                            <button onClick={() => handleRemoveDivers(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                                                                <Trash2 size={20} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1111,6 +1119,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         readOnly
                                                         className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 pl-10 pr-4 outline-none font-bold text-[#4a3426] opacity-70 cursor-not-allowed"
                                                     />
+                                                </div>
+
+                                                <div className="hidden md:flex items-center gap-4">
+                                                    <div className="w-32"></div> {/* Spacing for Détails button */}
+                                                    <div className="w-24"></div> {/* Spacing for Reçu button */}
+                                                    <div className="w-12"></div> {/* Spacing for Trash button */}
                                                 </div>
 
                                             </div>
