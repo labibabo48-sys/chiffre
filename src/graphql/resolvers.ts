@@ -505,16 +505,30 @@ export const resolvers = {
             await query('DELETE FROM suppliers WHERE id = $1', [id]);
             return true;
         },
-        upsertDesignation: async (_: any, { name }: { name: string }) => {
+        upsertDesignation: async (_: any, { name, type }: { name: string, type?: string }) => {
             const normalized = name.trim();
             const existing = await query('SELECT * FROM designations WHERE LOWER(name) = LOWER($1)', [normalized]);
-            if (existing.rows.length > 0) return existing.rows[0];
+            if (existing.rows.length > 0) {
+                if (type && existing.rows[0].type !== type) {
+                    const res = await query('UPDATE designations SET type = $1 WHERE id = $2 RETURNING *', [type, existing.rows[0].id]);
+                    return res.rows[0];
+                }
+                return existing.rows[0];
+            }
 
-            const res = await query('INSERT INTO designations (name) VALUES ($1) RETURNING *', [normalized]);
+            const res = await query('INSERT INTO designations (name, type) VALUES ($1, $2) RETURNING *', [normalized, type || 'divers']);
             return res.rows[0];
         },
-        updateDesignation: async (_: any, { id, name }: { id: number, name: string }) => {
-            const res = await query('UPDATE designations SET name = $1 WHERE id = $2 RETURNING *', [name.trim(), id]);
+        updateDesignation: async (_: any, { id, name, type }: { id: number, name: string, type?: string }) => {
+            let sql = 'UPDATE designations SET name = $1';
+            const params = [name.trim()];
+            if (type) {
+                params.push(type);
+                sql += `, type = $${params.length}`;
+            }
+            params.push(id.toString());
+            sql += ` WHERE id = $${params.length} RETURNING *`;
+            const res = await query(sql, params);
             return res.rows[0];
         },
         deleteDesignation: async (_: any, { id }: { id: number }) => {

@@ -43,6 +43,7 @@ export const typeDefs = `#graphql
   type Designation {
     id: Int
     name: String
+    type: String
   }
 
   type SalaryHistory {
@@ -119,8 +120,8 @@ export const typeDefs = `#graphql
     updateSupplier(id: Int!, name: String!): Supplier
     deleteSupplier(id: Int!): Boolean
 
-    upsertDesignation(name: String!): Designation
-    updateDesignation(id: Int!, name: String!): Designation
+    upsertDesignation(name: String!, type: String): Designation
+    updateDesignation(id: Int!, name: String!, type: String): Designation
     deleteDesignation(id: Int!): Boolean
 
     addInvoice(

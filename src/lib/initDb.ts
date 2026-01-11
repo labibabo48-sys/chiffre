@@ -95,17 +95,33 @@ const initDb = async () => {
       CREATE TABLE IF NOT EXISTS public.designations (
         id serial NOT NULL,
         name character varying(255) NOT NULL,
+        type character varying(50) DEFAULT 'divers',
         CONSTRAINT designations_pkey PRIMARY KEY (id),
         CONSTRAINT designations_name_key UNIQUE (name)
       );
     `);
 
+    // Ensure type column exists if table was already created
+    await query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='designations' AND column_name='type') THEN
+          ALTER TABLE public.designations ADD COLUMN type character varying(50) DEFAULT 'divers';
+        END IF;
+      END $$;
+    `);
+
     // Seed default designations if empty
     const ds = await query('SELECT count(*) FROM public.designations');
     if (parseInt(ds.rows[0].count) === 0) {
-      const defaults = ["Fruits", "khodhra", "Entretien", "Outils", "Transport", "Petit déjeuner", "Divers"];
-      for (const d of defaults) {
-        await query('INSERT INTO public.designations (name) VALUES ($1)', [d]);
+      const journalier = ["Fruits", "khodhra", "Transport", "Petit déjeuner"];
+      const divers = ["Entretien", "Outils", "Divers"];
+
+      for (const d of journalier) {
+        await query('INSERT INTO public.designations (name, type) VALUES ($1, $2)', [d, 'journalier']);
+      }
+      for (const d of divers) {
+        await query('INSERT INTO public.designations (name, type) VALUES ($1, $2)', [d, 'divers']);
       }
     }
 
