@@ -713,11 +713,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
-                                                <div className="w-full md:w-36 relative">
-                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
-                                                        <span>💵</span> Espèces
-                                                    </div>
-                                                </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
                                                     <label
@@ -853,11 +848,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{expense.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
-                                                <div className="w-full md:w-36 relative">
-                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
-                                                        <span>💵</span> Espèces
-                                                    </div>
-                                                </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
                                                     <label
@@ -1050,11 +1040,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{divers.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
-                                                <div className="w-full md:w-36 relative">
-                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
-                                                        <span>💵</span> Espèces
-                                                    </div>
-                                                </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
                                                     <label
