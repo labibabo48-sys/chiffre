@@ -565,16 +565,18 @@ export default function FacturationPage() {
                                                     <div className="p-6">
                                                         <div className="flex justify-between items-start mb-4">
                                                             <div>
-                                                                <h3 className="font-black text-xl text-[#4a3426] tracking-tight">{inv.supplier_name}</h3>
-                                                                <div className="flex items-center gap-2 text-[#8c8279] text-[10px] font-black uppercase tracking-widest mt-1">
-                                                                    <Calendar size={12} className="text-[#c69f6e]" />
-                                                                    <span>Reçu le:</span>
-                                                                    <span className="text-[#4a3426]">{new Date(inv.date).toLocaleDateString('fr-FR')}</span>
-                                                                </div>
+                                                                <h3 className="font-black text-2xl text-[#4a3426] tracking-tight">{inv.supplier_name}</h3>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-2xl font-black text-red-500">{parseFloat(inv.amount || '0').toFixed(3)}</div>
-                                                                <div className="text-[10px] font-bold text-red-400 uppercase ml-1">DT</div>
+                                                                <div className="text-2xl font-black text-red-500">
+                                                                    {parseFloat(inv.amount || '0').toFixed(3)}
+                                                                    <span className="text-[10px] font-bold text-red-400 uppercase ml-1">DT</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 bg-[#f9f6f2] px-3 py-1.5 rounded-lg border border-[#e6dace] mt-2 justify-end">
+                                                                    <Calendar size={12} className="text-[#c69f6e]" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Reçu le:</span>
+                                                                    <span className="text-[10px] font-black text-[#4a3426]">{new Date(inv.date).toLocaleDateString('fr-FR')}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -659,16 +661,18 @@ export default function FacturationPage() {
                                                     <div className="p-6">
                                                         <div className="flex justify-between items-start mb-4">
                                                             <div>
-                                                                <h3 className="font-black text-xl text-[#4a3426] tracking-tight opacity-70">{inv.supplier_name}</h3>
-                                                                <div className="flex items-center gap-2 text-[#8c8279] text-[10px] font-black uppercase tracking-widest mt-1">
-                                                                    <Calendar size={12} className="text-[#c69f6e]" />
-                                                                    <span>Reçu le:</span>
-                                                                    <span className="text-[#4a3426]">{new Date(inv.date).toLocaleDateString('fr-FR')}</span>
-                                                                </div>
+                                                                <h3 className="font-black text-2xl text-[#4a3426] tracking-tight opacity-70">{inv.supplier_name}</h3>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-2xl font-black text-[#2d6a4f]">{parseFloat(inv.amount || '0').toFixed(3)}</div>
-                                                                <div className="text-[10px] font-bold text-[#2d6a4f]/60 uppercase ml-1">DT</div>
+                                                                <div className="text-2xl font-black text-[#2d6a4f]">
+                                                                    {parseFloat(inv.amount || '0').toFixed(3)}
+                                                                    <span className="text-[10px] font-bold text-[#2d6a4f]/60 uppercase ml-1">DT</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 bg-[#f9f6f2] px-3 py-1.5 rounded-lg border border-[#e6dace] mt-2 justify-end">
+                                                                    <Calendar size={12} className="text-[#c69f6e]" />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Reçu le:</span>
+                                                                    <span className="text-[10px] font-black text-[#4a3426]">{new Date(inv.date).toLocaleDateString('fr-FR')}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
 
