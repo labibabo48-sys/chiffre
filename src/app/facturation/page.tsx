@@ -8,7 +8,7 @@ import {
     Loader2, Search, Calendar, Plus,
     CreditCard, Banknote, Coins, Receipt,
     Trash2, UploadCloud, CheckCircle2,
-    Clock, Filter, ChevronRight, X, Eye, DollarSign
+    Clock, Filter, X, Eye, DollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -103,8 +103,12 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown' }: { va
     );
 };
 
-const ChevronLeft = ({ size, className }: { size: number, className: string }) => (
+const ChevronLeft = ({ size, className }: { size: number, className?: string }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6" /></svg>
+);
+
+const ChevronRight = ({ size, className }: { size: number, className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6" /></svg>
 );
 
 // --- End Helpers ---
