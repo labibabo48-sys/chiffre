@@ -6,7 +6,7 @@ import {
     Plus, Trash2, UploadCloud, Save, Search, LogOut, Loader2, Calendar,
     Wallet, TrendingDown, TrendingUp, CreditCard, Banknote, Coins, Calculator, Receipt,
     ChevronLeft, ChevronRight, LayoutDashboard, PieChart as PieChartIcon, BarChart3, LineChart as LineChartIcon,
-    Zap, Sparkles, ChevronDown
+    Zap, Sparkles, ChevronDown, User, MessageSquare, FileText
 } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +32,8 @@ const GET_CHIFFRE = gql`
         extras_details { username montant }
         primes_details { username montant }
         diponce_divers
+        diponce_journalier
+        diponce_admin
     }
 }
 `;
@@ -59,6 +61,8 @@ const SAVE_CHIFFRE = gql`
     $extra: String!
     $primes: String!
     $diponce_divers: String!
+    $diponce_journalier: String!
+    $diponce_admin: String!
 ) {
     saveChiffre(
         date: $date
@@ -73,6 +77,8 @@ const SAVE_CHIFFRE = gql`
       extra: $extra
       primes: $primes
       diponce_divers: $diponce_divers
+      diponce_journalier: $diponce_journalier
+      diponce_admin: $diponce_admin
     ) {
         id
     }
@@ -137,6 +143,24 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     }[]>([
         { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }
     ]);
+    const [expensesJournalier, setExpensesJournalier] = useState<{
+        designation: string,
+        amount: string,
+        details: string,
+        invoices: string[],
+        paymentMethod: string
+    }[]>([
+        { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }
+    ]);
+    const [expensesAdmin, setExpensesAdmin] = useState<{
+        designation: string,
+        amount: string,
+        paymentMethod: string
+    }[]>([
+        { designation: 'Riadh', amount: '0', paymentMethod: 'Espèces' },
+        { designation: 'Malika', amount: '0', paymentMethod: 'Espèces' },
+        { designation: 'Salaires', amount: '0', paymentMethod: 'Espèces' }
+    ]);
     const [tpe, setTpe] = useState('0');
     const [cheque, setCheque] = useState('0');
     const [especes, setEspeces] = useState('0');
@@ -161,10 +185,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [designationSearch, setDesignationSearch] = useState('');
     const [newSupplierName, setNewSupplierName] = useState('');
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [showJournalierModal, setShowJournalierModal] = useState(false);
+    const [showDiversModal, setShowDiversModal] = useState(false);
 
     // Modal Details States
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [modalDetailsTarget, setModalDetailsTarget] = useState<{ index: number, type: 'expense' | 'divers' } | null>(null);
+    const [modalDetailsTarget, setModalDetailsTarget] = useState<{ index: number, type: 'expense' | 'divers' | 'journalier' } | null>(null);
     const [tempDetails, setTempDetails] = useState('');
     const [lastFocusedValue, setLastFocusedValue] = useState('');
 
@@ -184,7 +210,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         doublagesList,
         extrasList,
         primesList,
-        expensesDivers
+        expensesDivers,
+        expensesJournalier,
+        expensesAdmin
     });
 
     // Save draft to localStorage whenever relevant state changes, but only if user has interacted
@@ -239,7 +267,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             setDoublagesList(d.doublagesList);
                             setExtrasList(d.extrasList);
                             setPrimesList(d.primesList);
-                            setExpensesDivers(d.expensesDivers || [{ designation: '', amount: '0', invoices: [], paymentMethod: 'Espèces' }]);
+                            setExpensesDivers(d.expensesDivers || [{ designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+                            setExpensesJournalier(d.expensesJournalier || [{ designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+                            setExpensesAdmin(d.expensesAdmin || [
+                                { designation: 'Riadh', amount: '0', paymentMethod: 'Espèces' },
+                                { designation: 'Malika', amount: '0', paymentMethod: 'Espèces' },
+                                { designation: 'Salaires', amount: '0', paymentMethod: 'Espèces' }
+                            ]);
 
                             setToast({ msg: 'Session locale récupérée', type: 'success' });
                             setTimeout(() => setToast(null), 3000);
@@ -263,6 +297,16 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             setExtrasList(c.extras_details || []);
             setPrimesList(c.primes_details || []);
             setExpensesDivers(JSON.parse(c.diponce_divers || '[]').map((d: any) => ({ ...d, details: d.details || '' })));
+            setExpensesJournalier(JSON.parse(c.diponce_journalier || '[]').map((j: any) => ({ ...j, details: j.details || '' })));
+            let adminData = JSON.parse(c.diponce_admin || '[]');
+            if (adminData.length === 0) {
+                adminData = [
+                    { designation: 'Riadh', amount: '0', paymentMethod: 'Espèces' },
+                    { designation: 'Malika', amount: '0', paymentMethod: 'Espèces' },
+                    { designation: 'Salaires', amount: '0', paymentMethod: 'Espèces' }
+                ];
+            }
+            setExpensesAdmin(adminData);
             setHasInteracted(false); // Reset interaction flag after loading from server
         } else {
             // Check for draft even if no server data
@@ -320,7 +364,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     const totalExpensesDynamic = expenses.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesDivers = expensesDivers.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + acompte + doublage + extraTotal + primesTotal;
+    const totalExpensesJournalier = expensesJournalier.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    const totalExpensesAdmin = expensesAdmin.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + totalExpensesJournalier + totalExpensesAdmin + acompte + doublage + extraTotal + primesTotal;
     const recetteNett = (parseFloat(recetteCaisse) || 0) - totalExpenses;
 
     // Auto-balance logic
@@ -350,11 +396,27 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         setExpensesDivers(newDivers);
     };
 
+    const handleJournalierChange = (index: number, field: string, value: any) => {
+        setHasInteracted(true);
+        const newJournalier = [...expensesJournalier];
+        (newJournalier[index] as any)[field] = value;
+        setExpensesJournalier(newJournalier);
+    };
+
+    const handleAdminChange = (index: number, field: string, value: any) => {
+        setHasInteracted(true);
+        const newAdmin = [...expensesAdmin];
+        (newAdmin[index] as any)[field] = value;
+        setExpensesAdmin(newAdmin);
+    };
+
     const handleAddExpense = () => { setHasInteracted(true); setExpenses([...expenses, { supplier: '', amount: '0', details: '', invoices: [], photo_cheque: '', photo_verso: '', paymentMethod: 'Espèces' }]); };
     const handleAddDivers = () => { setHasInteracted(true); setExpensesDivers([...expensesDivers, { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
+    const handleAddJournalier = () => { setHasInteracted(true); setExpensesJournalier([...expensesJournalier, { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
 
     const handleRemoveExpense = (index: number) => { setHasInteracted(true); setExpenses(expenses.filter((_, i) => i !== index)); };
     const handleRemoveDivers = (index: number) => { setHasInteracted(true); setExpensesDivers(expensesDivers.filter((_, i) => i !== index)); };
+    const handleRemoveJournalier = (index: number) => { setHasInteracted(true); setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index)); };
 
     const handleFileUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>, type: 'invoice' | 'recto' | 'verso' = 'invoice', isDivers: boolean = false) => {
         setHasInteracted(true);
@@ -370,14 +432,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                 });
             });
             const base64s = await Promise.all(loaders);
-            if (isDivers) {
-                const newDivers = [...expensesDivers];
-                newDivers[index].invoices = [...newDivers[index].invoices, ...base64s];
-                setExpensesDivers(newDivers);
-            } else {
-                const newExpenses = [...expenses];
-                newExpenses[index].invoices = [...newExpenses[index].invoices, ...base64s];
-                setExpenses(newExpenses);
+            if (type === 'invoice') {
+                if (isDivers === true) {
+                    const newDivers = [...expensesDivers];
+                    newDivers[index].invoices = [...newDivers[index].invoices, ...base64s];
+                    setExpensesDivers(newDivers);
+                } else if ((isDivers as any) === 'journalier') {
+                    const newJournalier = [...expensesJournalier];
+                    newJournalier[index].invoices = [...newJournalier[index].invoices, ...base64s];
+                    setExpensesJournalier(newJournalier);
+                } else {
+                    const newExpenses = [...expenses];
+                    newExpenses[index].invoices = [...newExpenses[index].invoices, ...base64s];
+                    setExpenses(newExpenses);
+                }
             }
         } else {
             const file = files[0];
@@ -423,6 +491,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     extra,
                     primes,
                     diponce_divers: JSON.stringify(expensesDivers),
+                    diponce_journalier: JSON.stringify(expensesJournalier),
+                    diponce_admin: JSON.stringify(expensesAdmin),
                 }
             });
             setToast({ msg: 'Session enregistrée avec succès', type: 'success' });
@@ -585,13 +655,120 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             </div>
                         </section>
 
-                        {/* 1. Dépenses Divers */}
+                        {/* 1. Dépenses Journalier */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
                                     <div className="bg-[#c69f6e] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
+                                    Dépenses Journalier
+                                </h3>
+                                <button
+                                    onClick={() => setShowJournalierModal(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                >
+                                    <Plus size={12} />
+                                    Ajouter Journalier
+                                </button>
+                            </div>
+
+                            <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
+                                <div className="space-y-3">
+                                    {expensesJournalier.map((journalier, index) => (
+                                        <div key={index} className="group flex flex-col p-2 rounded-xl transition-all border hover:bg-[#f9f6f2] border-transparent hover:border-[#e6dace]">
+                                            <div className="flex flex-col md:flex-row items-center gap-3 w-full">
+                                                <div className="flex-1 w-full relative">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                        <Search className="text-[#bba282]" size={16} />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Désignation Journalière..."
+                                                        value={journalier.designation}
+                                                        onChange={(e) => handleJournalierChange(index, 'designation', e.target.value)}
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-4 focus:border-[#c69f6e] outline-none font-medium transition-all"
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    onClick={() => {
+                                                        setModalDetailsTarget({ index, type: 'journalier' });
+                                                        setTempDetails(journalier.details || '');
+                                                        setShowDetailsModal(true);
+                                                    }}
+                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${journalier.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                >
+                                                    <FileText size={16} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">{journalier.details ? 'Détails OK' : 'Détails'}</span>
+                                                </button>
+
+                                                <div className="w-full md:w-32 relative">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="0.00"
+                                                        value={journalier.amount}
+                                                        onChange={(e) => handleJournalierChange(index, 'amount', e.target.value)}
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right"
+                                                    />
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
+                                                </div>
+
+                                                <div className="w-full md:w-36 relative">
+                                                    <select
+                                                        value={journalier.paymentMethod || 'Espèces'}
+                                                        onChange={(e) => handleJournalierChange(index, 'paymentMethod', e.target.value)}
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6"
+                                                    >
+                                                        <option value="Espèces">💵 Espèces</option>
+                                                        <option value="Chèque">✍️ Chèque</option>
+                                                        <option value="TPE (Carte)">💳 TPE (Carte)</option>
+                                                        <option value="Ticket Restaurant">🎫 T. Restaurant</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                                                    <label
+                                                        onClick={(e) => {
+                                                            if (journalier.invoices.length > 0) {
+                                                                setViewingInvoices(journalier.invoices);
+                                                                e.preventDefault();
+                                                            }
+                                                        }}
+                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
+                                                    >
+                                                        <UploadCloud size={14} />
+                                                        <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
+                                                        <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
+                                                    </label>
+                                                    {(index > 0 || expensesJournalier.length > 1) && (
+                                                        <button onClick={() => handleRemoveJournalier(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                                                            <Trash2 size={20} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={handleAddJournalier} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
+                                    <Plus size={18} /> Nouvelle Ligne (Journalier)
+                                </button>
+                            </section>
+                        </div>
+
+                        {/* 2. Dépenses Divers */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
+                                    <div className="bg-[#bba282] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
                                     Dépenses divers
                                 </h3>
+                                <button
+                                    onClick={() => setShowDiversModal(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                >
+                                    <Plus size={12} />
+                                    Ajouter Divers
+                                </button>
                             </div>
 
                             <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
@@ -605,78 +782,47 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        placeholder="Désignation (ex: Fruits, Appel...)"
+                                                        placeholder="Désignation Divers..."
                                                         value={divers.designation}
-                                                        onFocus={() => {
-                                                            setShowDesignationDropdown(index);
-                                                            setDesignationSearch(divers.designation);
-                                                            setLastFocusedValue(divers.designation);
-                                                        }}
-                                                        onBlur={() => {
-                                                            setTimeout(() => {
-                                                                // Use the freshest state in the timeout
-                                                                setExpensesDivers(currentDivers => {
-                                                                    const div = currentDivers[index];
-                                                                    if (div.designation && div.designation !== lastFocusedValue) {
-                                                                        setModalDetailsTarget({ index, type: 'divers' });
-                                                                        setTempDetails(div.details || '');
-                                                                        setShowDetailsModal(true);
-                                                                    }
-                                                                    setShowDesignationDropdown(null);
-                                                                    return currentDivers;
-                                                                });
-                                                            }, 200);
-                                                        }}
-                                                        onChange={(e) => { handleDiversChange(index, 'designation', e.target.value); setDesignationSearch(e.target.value); }}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all"
+                                                        onChange={(e) => handleDiversChange(index, 'designation', e.target.value)}
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-4 focus:border-[#c69f6e] outline-none font-medium transition-all"
                                                     />
-                                                    <button
-                                                        onClick={() => setShowDesignationDropdown(showDesignationDropdown === index ? null : index)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors"
-                                                    >
-                                                        <ChevronDown size={18} />
-                                                    </button>
-                                                    {showDesignationDropdown === index && (
-                                                        <div className="absolute top-full left-0 w-full bg-white shadow-xl rounded-xl z-50 mt-1 max-h-48 overflow-y-auto border border-[#e6dace]">
-                                                            {commonDesignations.filter(d => d.toLowerCase().includes(designationSearch.toLowerCase())).map((d, i) => (
-                                                                <div key={i} className="p-3 hover:bg-[#f9f6f2] cursor-pointer" onClick={() => { handleDiversChange(index, 'designation', d); setShowDesignationDropdown(null); }}>
-                                                                    {d}
-                                                                </div>
-                                                            ))}
-                                                            {designationSearch && !commonDesignations.find(d => d.toLowerCase() === designationSearch.toLowerCase()) && (
-                                                                <div className="p-3 hover:bg-[#f9f6f2] cursor-pointer text-[#c69f6e] font-bold" onClick={() => setShowDesignationDropdown(null)}>
-                                                                    Utiliser "{designationSearch}"
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
                                                 </div>
 
-                                                <div className="w-full md:w-40 relative">
+                                                <button
+                                                    onClick={() => {
+                                                        setModalDetailsTarget({ index, type: 'divers' });
+                                                        setTempDetails(divers.details || '');
+                                                        setShowDetailsModal(true);
+                                                    }}
+                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${divers.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                >
+                                                    <FileText size={16} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">{divers.details ? 'Détails OK' : 'Détails'}</span>
+                                                </button>
+
+                                                <div className="w-full md:w-32 relative">
                                                     <input
                                                         type="number"
                                                         placeholder="0.00"
                                                         value={divers.amount}
                                                         onChange={(e) => handleDiversChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-right"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right"
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
 
-                                                <div className="w-full md:w-40 relative">
+                                                <div className="w-full md:w-36 relative">
                                                     <select
                                                         value={divers.paymentMethod || 'Espèces'}
                                                         onChange={(e) => handleDiversChange(index, 'paymentMethod', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-bold text-[11px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-8"
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6"
                                                     >
                                                         <option value="Espèces">💵 Espèces</option>
                                                         <option value="Chèque">✍️ Chèque</option>
                                                         <option value="TPE (Carte)">💳 TPE (Carte)</option>
                                                         <option value="Ticket Restaurant">🎫 T. Restaurant</option>
                                                     </select>
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-30">
-                                                        <ChevronDown size={14} />
-                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -687,13 +833,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
-                                                    >
+                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
                                                     </label>
-
                                                     {(index > 0 || expensesDivers.length > 1) && (
                                                         <button onClick={() => handleRemoveDivers(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                                                             <Trash2 size={20} />
@@ -701,45 +845,21 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     )}
                                                 </div>
                                             </div>
-
-                                            <AnimatePresence>
-                                                {divers.details && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                        animate={{ height: 'auto', opacity: 1, marginTop: 8 }}
-                                                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                        onClick={() => {
-                                                            setModalDetailsTarget({ index, type: 'divers' });
-                                                            setTempDetails(divers.details);
-                                                            setShowDetailsModal(true);
-                                                        }}
-                                                        className="overflow-hidden w-full flex items-center gap-2 cursor-pointer hover:bg-[#fcfaf8]"
-                                                    >
-                                                        <div className="w-8 flex justify-center text-[#c69f6e]">
-                                                            <Sparkles size={14} />
-                                                        </div>
-                                                        <span className="text-xs text-[#8c8279] font-medium italic">
-                                                            {divers.details}
-                                                        </span>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
                                         </div>
                                     ))}
                                 </div>
-
                                 <button onClick={handleAddDivers} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
                                     <Plus size={18} /> Nouvelle Ligne (Divers)
                                 </button>
                             </section>
                         </div>
 
-                        {/* 2. Dépenses & Charges */}
+                        {/* 3. Dépenses Fournisseur */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
-                                    Dépenses & Charges
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</div>
+                                    Dépenses Fournisseur
                                 </h3>
                                 <button
                                     onClick={() => setShowSupplierModal(true)}
@@ -776,21 +896,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 setLastFocusedValue(expense.supplier);
                                                             }
                                                         }}
-                                                        onBlur={() => {
-                                                            setTimeout(() => {
-                                                                // Use the freshest state in the timeout
-                                                                setExpenses(currentExpenses => {
-                                                                    const exp = currentExpenses[index];
-                                                                    if (!exp.isFromFacturation && exp.supplier && exp.supplier !== lastFocusedValue) {
-                                                                        setModalDetailsTarget({ index, type: 'expense' });
-                                                                        setTempDetails(exp.details || '');
-                                                                        setShowDetailsModal(true);
-                                                                    }
-                                                                    setShowSupplierDropdown(null);
-                                                                    return currentExpenses;
-                                                                });
-                                                            }, 200);
-                                                        }}
+                                                        onBlur={() => setShowSupplierDropdown(null)}
                                                         onChange={(e) => { handleDetailChange(index, 'supplier', e.target.value); setSupplierSearch(e.target.value); }}
                                                         className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
@@ -818,33 +924,42 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     )}
                                                 </div>
 
-                                                <div className="w-full md:w-40 relative">
+                                                <button
+                                                    onClick={() => {
+                                                        setModalDetailsTarget({ index, type: 'expense' });
+                                                        setTempDetails(expense.details || '');
+                                                        setShowDetailsModal(true);
+                                                    }}
+                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${expense.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                >
+                                                    <FileText size={16} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">{expense.details ? 'Détails OK' : 'Détails'}</span>
+                                                </button>
+
+                                                <div className="w-full md:w-32 relative">
                                                     <input
                                                         type="number"
                                                         placeholder="0.00"
                                                         disabled={expense.isFromFacturation}
                                                         value={expense.amount}
                                                         onChange={(e) => handleDetailChange(index, 'amount', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-right ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-right ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
 
-                                                <div className="w-full md:w-40 relative">
+                                                <div className="w-full md:w-36 relative">
                                                     <select
                                                         value={expense.paymentMethod || 'Espèces'}
                                                         disabled={expense.isFromFacturation}
                                                         onChange={(e) => handleDetailChange(index, 'paymentMethod', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-bold text-[11px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-8 ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6 ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     >
                                                         <option value="Espèces">💵 Espèces</option>
                                                         <option value="Chèque">✍️ Chèque</option>
                                                         <option value="TPE (Carte)">💳 TPE (Carte)</option>
                                                         <option value="Ticket Restaurant">🎫 T. Restaurant</option>
                                                     </select>
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-30">
-                                                        <ChevronDown size={14} />
-                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -936,6 +1051,54 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         </div>
 
                         {/* 3. Fixes Grid */}
+                        {/* 4. Dépenses Administratif */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</div>
+                                    Dépenses Administratif
+                                </h3>
+                            </div>
+
+                            <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
+                                <div className="space-y-3">
+                                    {expensesAdmin.map((admin, index) => (
+                                        <div key={index} className="group flex flex-col p-2 rounded-xl transition-all border hover:bg-[#f9f6f2] border-transparent hover:border-[#e6dace]">
+                                            <div className="flex flex-col md:flex-row items-center gap-3 w-full">
+                                                <div className="flex-1 w-full relative">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                        <User className="text-[#bba282]" size={16} />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={admin.designation}
+                                                        readOnly
+                                                        className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 pl-10 pr-4 outline-none font-bold text-[#4a3426] opacity-70 cursor-not-allowed"
+                                                    />
+                                                </div>
+
+                                                <div className="w-full md:w-40 relative">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="0.00"
+                                                        value={admin.amount}
+                                                        onChange={(e) => handleAdminChange(index, 'amount', e.target.value)}
+                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-14 px-3 font-black text-2xl outline-none focus:border-[#c69f6e] text-right"
+                                                    />
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
+                                                </div>
+
+                                                <div className="w-full md:w-40 relative">
+                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[11px] text-[#4a3426] opacity-70 cursor-not-allowed">
+                                                        <span>💵</span> Espèces
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
                         {/* 3. Fixes Grid (2x2) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* 2.2 Accompte */}
@@ -1035,7 +1198,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <span className="text-xl md:text-2xl font-medium opacity-50 uppercase">DT</span>
                                         </div>
                                         <div className="text-[10px] md:text-xs opacity-40 mt-1 text-white">
-                                            (Courantes: {totalExpensesDynamic.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal).toFixed(3)})
+                                            (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal).toFixed(3)})
                                         </div>
                                     </div>
 
@@ -1213,6 +1376,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 const newDivers = [...expensesDivers];
                                                 newDivers[modalDetailsTarget.index].details = tempDetails;
                                                 setExpensesDivers(newDivers);
+                                            } else if (modalDetailsTarget.type === 'journalier') {
+                                                const newJournalier = [...expensesJournalier];
+                                                newJournalier[modalDetailsTarget.index].details = tempDetails;
+                                                setExpensesJournalier(newJournalier);
                                             } else {
                                                 const newExpenses = [...expenses];
                                                 newExpenses[modalDetailsTarget.index].details = tempDetails;
@@ -1285,6 +1452,57 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         className="flex-1 h-14 rounded-2xl bg-[#c69f6e] text-white font-black uppercase text-xs tracking-widest hover:bg-[#b08d5d] transition-all shadow-lg shadow-[#c69f6e]/20 disabled:opacity-50"
                                     >
                                         Confirmer
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Selection Modals Journalier/Divers */}
+            <AnimatePresence>
+                {(showJournalierModal || showDiversModal) && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowJournalierModal(false); setShowDiversModal(false); }} className="absolute inset-0 bg-[#4a3426]/40 backdrop-blur-md" />
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl border border-[#e6dace] overflow-hidden" >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#c69f6e]/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                            <div className="relative">
+                                <h3 className="text-2xl font-black text-[#4a3426] mb-2 text-center uppercase tracking-tight">Choisir une désignation</h3>
+                                <p className="text-center text-[#c69f6e] text-[10px] font-black uppercase tracking-[0.2em] mb-8">Sélection rapide pour gagner du temps</p>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    {commonDesignations.map((designation) => (
+                                        <button
+                                            key={designation}
+                                            onClick={() => {
+                                                if (showJournalierModal) {
+                                                    setExpensesJournalier([...expensesJournalier, { designation, amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+                                                    setShowJournalierModal(false);
+                                                } else {
+                                                    setExpensesDivers([...expensesDivers, { designation, amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+                                                    setShowDiversModal(false);
+                                                }
+                                            }}
+                                            className="group relative overflow-hidden py-6 px-4 rounded-2xl bg-[#fcfaf8] border border-[#e6dace] hover:border-[#c69f6e] hover:shadow-lg hover:shadow-[#c69f6e]/10 transition-all text-[#4a3426] font-black text-sm uppercase tracking-widest text-center"
+                                        >
+                                            <div className="absolute inset-0 bg-[#c69f6e] translate-y-full group-hover:translate-y-0 transition-transform duration-300 opacity-[0.03]"></div>
+                                            {designation}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => {
+                                            if (showJournalierModal) {
+                                                handleAddJournalier();
+                                                setShowJournalierModal(false);
+                                            } else {
+                                                handleAddDivers();
+                                                setShowDiversModal(false);
+                                            }
+                                        }}
+                                        className="py-6 px-4 rounded-2xl bg-white border-2 border-dashed border-[#c69f6e] hover:bg-[#c69f6e] hover:text-white transition-all text-[#c69f6e] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 group"
+                                    >
+                                        <Plus size={18} className="group-hover:rotate-90 transition-transform" /> Autre
                                     </button>
                                 </div>
                             </div>

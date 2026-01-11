@@ -7,7 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import {
     LayoutDashboard, Loader2, Calendar,
     Wallet, TrendingUp, TrendingDown, CreditCard, Banknote, Coins, Receipt, Calculator,
-    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, X, Eye
+    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, X, Eye, Truck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -28,6 +28,7 @@ const GET_CHIFFRES_MONTHLY = gql`
       doublages_details { username montant }
       extras_details { username montant }
       primes_details { username montant }
+      diponce_divers
     }
   }
 `;
@@ -61,7 +62,9 @@ export default function DashboardPage() {
     const [pickerYear, setPickerYear] = useState(today.getFullYear());
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
     const [viewingData, setViewingData] = useState<any>(null);
-    const [searchSupplierName, setSearchSupplierName] = useState('');
+
+    // Search filters for each category
+    const [searchQuery, setSearchQuery] = useState('');
 
     const months = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -117,12 +120,14 @@ export default function DashboardPage() {
                 allDoublages: [...acc.allDoublages, ...curr.doublages_details],
                 allExtras: [...acc.allExtras, ...curr.extras_details],
                 allPrimes: [...acc.allPrimes, ...curr.primes_details],
+                allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]')],
             };
         }, {
             recette_de_caisse: 0, total_diponce: 0, recette_net: 0,
             tpe: 0, cheque_bancaire: 0, espaces: 0, tickets_restaurant: 0,
             extra: 0, primes: 0,
-            allExpenses: [], allAvances: [], allDoublages: [], allExtras: [], allPrimes: []
+            allExpenses: [], allAvances: [], allDoublages: [], allExtras: [], allPrimes: [],
+            allDivers: []
         });
 
         // Grouping function
@@ -140,16 +145,21 @@ export default function DashboardPage() {
                 .sort((a, b) => b.amount - a.amount);
         };
 
+        const filterByName = (list: any[]) => {
+            if (!searchQuery) return list;
+            return list.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        };
+
         return {
             ...base,
-            groupedExpenses: aggregateGroup(base.allExpenses, 'supplier', 'amount')
-                .filter(e => e.name.toLowerCase().includes(searchSupplierName.toLowerCase())),
-            groupedAvances: aggregateGroup(base.allAvances, 'username', 'montant'),
-            groupedDoublages: aggregateGroup(base.allDoublages, 'username', 'montant'),
-            groupedExtras: aggregateGroup(base.allExtras, 'username', 'montant'),
-            groupedPrimes: aggregateGroup(base.allPrimes, 'username', 'montant'),
+            groupedExpenses: filterByName(aggregateGroup(base.allExpenses, 'supplier', 'amount')),
+            groupedDivers: filterByName(aggregateGroup(base.allDivers, 'designation', 'amount')),
+            groupedAvances: filterByName(aggregateGroup(base.allAvances, 'username', 'montant')),
+            groupedDoublages: filterByName(aggregateGroup(base.allDoublages, 'username', 'montant')),
+            groupedExtras: filterByName(aggregateGroup(base.allExtras, 'username', 'montant')),
+            groupedPrimes: filterByName(aggregateGroup(base.allPrimes, 'username', 'montant')),
         };
-    }, [data, searchSupplierName]);
+    }, [data, searchQuery]);
 
     // Query for selected supplier invoices
     const { data: invoiceData, loading: loadingInvoices } = useQuery(GET_INVOICES, {
@@ -181,6 +191,17 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-4 relative w-full sm:w-auto">
+                        <div className="relative flex-1 sm:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]/50" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher partout..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full h-11 md:h-12 pl-10 pr-4 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl text-xs font-bold text-[#4a3426] outline-none focus:border-[#c69f6e] transition-all"
+                            />
+                        </div>
+
                         <button
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
                             className="bg-[#fcfaf8] border border-[#e6dace] rounded-2xl h-11 md:h-12 px-4 md:px-6 flex items-center gap-3 hover:border-[#c69f6e] transition-all group w-full sm:w-auto justify-center sm:justify-start"
@@ -254,7 +275,7 @@ export default function DashboardPage() {
                             <p className="font-bold text-[#8c8279] animate-pulse">Calcul des statistiques du mois...</p>
                         </div>
                     ) : aggregates ? (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             {/* 1. Recette De Caisse (Hero) */}
                             <section className="bg-[#f0faf5] rounded-[2.5rem] p-6 md:p-10 lg:p-12 luxury-shadow border border-[#d1fae5] relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/40 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
@@ -284,110 +305,95 @@ export default function DashboardPage() {
                                 </div>
                             </section>
 
-                            {/* 2. Depenses List Aggregated */}
-                            <div>
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                                    <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                        <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
-                                        Dépenses & Charges (Mensuel)
-                                    </h3>
+                            {/* 2. Unified Grid for All Expense Categories */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* 1.1 Dépenses Journalier (Divers) */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
+                                                <Sparkles size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Journalier</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Désignations Diverses</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedDivers.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
+                                            </div>
+                                        )) : <div className="h-full flex items-center justify-center italic text-[#8c8279] opacity-40 text-sm">Aucune donnée</div>}
+                                    </div>
+                                </div>
 
-                                    <div className="relative w-full sm:w-64">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e] opacity-40" size={14} />
-                                        <input
-                                            type="text"
-                                            placeholder="Rechercher fournisseur..."
-                                            value={searchSupplierName}
-                                            onChange={(e) => setSearchSupplierName(e.target.value)}
-                                            className="w-full h-10 pl-9 pr-4 bg-white/50 border border-[#e6dace] rounded-xl text-xs font-bold text-[#4a3426] outline-none focus:border-[#c69f6e] focus:bg-white transition-all shadow-sm"
-                                        />
-                                        {searchSupplierName && (
+                                {/* 1.2 Dépenses Courantes (Fournisseurs) */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#4a3426]/10 flex items-center justify-center text-[#4a3426]">
+                                                <Truck size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Fournisseurs</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Dépenses & Charges</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedExpenses.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedExpenses.length > 0 ? aggregates.groupedExpenses.map((a, i) => (
                                             <button
-                                                onClick={() => setSearchSupplierName('')}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8c8279] hover:text-red-500 transition-colors"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
-                                    <h4 className="text-xs font-bold text-[#8c8279] uppercase tracking-widest px-2">1.1 Dépenses Courantes Par Fournisseur</h4>
-
-                                    <div className="space-y-2">
-                                        {aggregates.groupedExpenses.length > 0 ? aggregates.groupedExpenses.map((exp: any, i: number) => (
-                                            <div
                                                 key={i}
-                                                onClick={() => setSelectedSupplier(exp.name)}
-                                                className="flex items-center gap-4 p-3 rounded-xl bg-[#fcfaf8] border border-[#e6dace]/50 hover:bg-[#ebdccf]/30 hover:border-[#c69f6e]/30 cursor-pointer transition-all group"
+                                                onClick={() => setSelectedSupplier(a.name)}
+                                                className="w-full flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-[#4a3426] transition-all"
                                             >
-                                                <div className="bg-[#4a3426] text-white p-2 rounded-lg group-hover:bg-[#c69f6e] transition-colors shrink-0"><Search size={14} /></div>
-                                                <div className="flex-1 font-bold text-[#4a3426] truncate group-hover:text-[#c69f6e] transition-colors text-sm sm:text-base">{exp.name}</div>
-                                                <div className="text-lg sm:text-2xl font-black text-[#4a3426] flex items-baseline gap-1 shrink-0">
-                                                    {exp.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                                    <span className="text-[10px] sm:text-xs font-bold text-[#c69f6e]">DT</span>
+                                                <span className="font-bold text-[#4a3426] text-sm group-hover:text-white transition-colors truncate max-w-[60%]">{a.name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-[#4a3426] group-hover:text-white transition-colors">{a.amount.toFixed(3)}</span>
+                                                    <Eye size={12} className="text-[#c69f6e] opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </div>
-                                            </div>
-                                        )) : (
-                                            <p className="text-center py-6 text-[#8c8279] italic">Aucune dépense ce mois-ci</p>
-                                        )}
-                                    </div>
-                                </section>
-                            </div>
-
-                            {/* 3. Bey Details Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* 1.2 Accompte */}
-                                <div className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50">
-                                    <div className="flex justify-between items-center mb-4 text-white">
-                                        <h4 className="font-bold text-[#8c8279] text-[10px] md:text-xs uppercase tracking-wider">1.2 Accompte</h4>
-                                        <span className="bg-[#f4ece4] text-[#4a3426] px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-black text-sm md:text-xl">
-                                            {(aggregates.groupedAvances.reduce((a: any, b: any) => a + b.amount, 0)).toFixed(3)} DT
-                                        </span>
-                                    </div>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                        {aggregates.groupedAvances.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between p-2 bg-[#f9f6f2] rounded-lg items-center">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
-                                            </div>
-                                        ))}
+                                            </button>
+                                        )) : <div className="h-full flex items-center justify-center italic text-[#8c8279] opacity-40 text-sm">Aucune donnée</div>}
                                     </div>
                                 </div>
 
-                                {/* 1.3 Doublage */}
-                                <div className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h4 className="font-bold text-[#8c8279] text-[10px] md:text-xs uppercase tracking-wider">1.3 Doublage</h4>
-                                        <span className="bg-[#f4ece4] text-[#4a3426] px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-black text-sm md:text-xl">
-                                            {(aggregates.groupedDoublages.reduce((a: any, b: any) => a + b.amount, 0)).toFixed(3)} DT
-                                        </span>
-                                    </div>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                        {aggregates.groupedDoublages.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between p-2 bg-[#f9f6f2] rounded-lg items-center">
-                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
-                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                {/* 2.1 Accompte */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#a89284]/10 flex items-center justify-center text-[#a89284]">
+                                                <Calculator size={20} />
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* 1.4 Extra */}
-                                <div className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <Zap size={14} className="text-[#c69f6e]" />
-                                            <h4 className="font-bold text-[#8c8279] text-[10px] md:text-xs uppercase tracking-wider">1.4 Extra</h4>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Accompte</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Avances sur salaires</p>
+                                            </div>
                                         </div>
-                                        <span className="bg-[#f4ece4] text-[#4a3426] px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-black text-sm md:text-xl">
-                                            {(aggregates.groupedExtras.reduce((a: any, b: any) => a + b.amount, 0)).toFixed(3)} DT
-                                        </span>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedAvances.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                        {aggregates.groupedExtras.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between p-2 bg-[#f9f6f2] rounded-lg items-center">
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedAvances.map((a, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
                                                 <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
                                                 <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                             </div>
@@ -395,20 +401,86 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
 
-                                {/* 1.5 Primes */}
-                                <div className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles size={14} className="text-[#2d6a4f]" />
-                                            <h4 className="font-bold text-[#8c8279] text-[10px] md:text-xs uppercase tracking-wider">1.5 Primes</h4>
+                                {/* 2.2 Doublage */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#4a3426]/10 flex items-center justify-center text-[#4a3426]">
+                                                <TrendingUp size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Doublage</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Heures supplémentaires</p>
+                                            </div>
                                         </div>
-                                        <span className="bg-[#f4ece4] text-[#4a3426] px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-black text-sm md:text-xl">
-                                            {(aggregates.groupedPrimes.reduce((a: any, b: any) => a + b.amount, 0)).toFixed(3)} DT
-                                        </span>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedDoublages.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                                        {aggregates.groupedPrimes.map((a: any, i: number) => (
-                                            <div key={i} className="flex justify-between p-2 bg-[#f9f6f2] rounded-lg items-center">
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedDoublages.map((a, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 2.3 Extra */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
+                                                <Zap size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Extra</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Main d'œuvre occasionnelle</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedExtras.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedExtras.map((a, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 2.4 Primes */}
+                                <div className="bg-white rounded-[2.5rem] p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col min-h-[400px]">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#2d6a4f]/10 flex items-center justify-center text-[#2d6a4f]">
+                                                <Sparkles size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Primes</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Récompenses & Bonus</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-4 py-2 rounded-xl">
+                                            <span className="text-sm font-black text-[#4a3426]">
+                                                {aggregates.groupedPrimes.reduce((a, b) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                                        {aggregates.groupedPrimes.map((a, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 bg-[f9f6f2] rounded-xl border border-transparent">
                                                 <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
                                                 <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                             </div>
@@ -600,34 +672,9 @@ export default function DashboardPage() {
                                                             <span>Aucun visuel</span>
                                                         </div>
                                                     )}
-
-                                                    <div className="mt-6 pt-4 border-t border-[#e6dace]/30 flex justify-between items-center">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-lg bg-[#fcfaf8] border border-[#e6dace] flex items-center justify-center">
-                                                                {inv.payment_method === 'Espèces' ? <Coins size={12} className="text-[#c69f6e]" /> : <CreditCard size={12} className="text-[#c69f6e]" />}
-                                                            </div>
-                                                            <span className="text-[10px] font-bold text-[#4a3426] opacity-60 uppercase">{inv.payment_method}</span>
-                                                        </div>
-                                                        <span className="text-[9px] font-bold text-[#8c8279] italic">{new Date(inv.paid_date).toLocaleDateString('fr-FR')}</span>
-                                                    </div>
                                                 </div>
                                             </motion.div>
                                         ))}
-
-                                        {(!invoiceData?.getInvoices || invoiceData.getInvoices.filter((inv: any) => inv.status === 'paid').length === 0) && (
-                                            <div className="col-span-full py-32 flex flex-col items-center text-center">
-                                                <div className="relative mb-8">
-                                                    <div className="absolute inset-0 bg-[#c69f6e]/5 blur-3xl rounded-full scale-150"></div>
-                                                    <div className="relative bg-white rounded-[2.5rem] border border-[#e6dace] p-10 shadow-xl luxury-shadow">
-                                                        <Receipt size={80} className="text-[#e6dace]" />
-                                                    </div>
-                                                </div>
-                                                <h3 className="text-2xl font-black text-[#4a3426] uppercase tracking-tight mb-2">Aucun règlement</h3>
-                                                <p className="max-w-xs text-[#8c8279] font-medium text-sm leading-relaxed">
-                                                    Il n'y a pas encore de factures ou de règlements enregistrés pour <span className="text-[#c69f6e] font-bold">{selectedSupplier}</span> sur la période du {monthDisplay}.
-                                                </p>
-                                            </div>
-                                        )}
                                     </div>
                                 )}
                             </div>
@@ -636,65 +683,52 @@ export default function DashboardPage() {
                 )}
             </AnimatePresence>
 
-            {/* Image Viewer Overlay */}
+            {/* Viewing Data Modal (Photos) */}
             <AnimatePresence>
                 {viewingData && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 overflow-y-auto no-scrollbar"
+                        className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4"
                         onClick={() => setViewingData(null)}
                     >
-                        <div className="w-full max-w-6xl space-y-8 py-10" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center text-white mb-4">
-                                <div>
-                                    <h2 className="text-3xl font-black uppercase tracking-tight">{viewingData.supplier_name}</h2>
-                                    <p className="text-sm font-bold opacity-60 uppercase tracking-[0.3em]">{viewingData.amount} DT • {viewingData.status === 'paid' ? viewingData.payment_method : 'En attente'}</p>
-                                </div>
-                                <button onClick={() => setViewingData(null)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all"><X size={32} /></button>
-                            </div>
-
-                            <div className={`grid grid-cols-1 ${viewingData.payment_method === 'Chèque' || viewingData.photo_cheque_url ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-8`}>
-                                {/* Photo Facture */}
-                                <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] text-center italic">Document Principal / Facture</p>
-                                    {viewingData.photo_url ? (
-                                        <div className="bg-white/5 p-4 rounded-[2rem] border border-white/10 shadow-2xl">
-                                            <img src={viewingData.photo_url} className="w-full h-auto rounded-xl object-contain" alt="Facture" />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-[3rem] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button onClick={() => setViewingData(null)} className="absolute top-8 right-8 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"><X size={24} /></button>
+                            <h3 className="text-2xl font-black mb-8 text-[#4a3426] flex items-center gap-3 uppercase tracking-tighter"><Receipt size={28} className="text-[#c69f6e]" /> Justificatifs de Paiement</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {viewingData.photo_url && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e] ml-2">Facture / Reçu</p>
+                                        <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-xl bg-gray-50">
+                                            <img src={viewingData.photo_url} className="w-full h-auto object-contain" alt="Facture" />
                                         </div>
-                                    ) : (
-                                        <div className="aspect-video bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Facture</div>
-                                    )}
-                                </div>
-
-                                {/* Photos Chèque */}
-                                {(viewingData.payment_method === 'Chèque' || viewingData.photo_cheque_url || viewingData.photo_verso_url) && (
-                                    <>
-                                        <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] text-center italic">Chèque Recto</p>
-                                            {viewingData.photo_cheque_url ? (
-                                                <div className="bg-white/5 p-4 rounded-[2rem] border border-white/10 shadow-2xl">
-                                                    <img src={viewingData.photo_cheque_url} className="w-full h-auto rounded-xl object-contain" alt="Chèque Recto" />
-                                                </div>
-                                            ) : (
-                                                <div className="aspect-video bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Recto</div>
-                                            )}
+                                    </div>
+                                )}
+                                {viewingData.photo_cheque_url && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e] ml-2">Photo Chèque (Recto)</p>
+                                        <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-xl bg-gray-50">
+                                            <img src={viewingData.photo_cheque_url} className="w-full h-auto object-contain" alt="Chèque Recto" />
                                         </div>
-                                        <div className="space-y-4">
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] text-center italic">Chèque Verso</p>
-                                            {viewingData.photo_verso_url ? (
-                                                <div className="bg-white/5 p-4 rounded-[2rem] border border-white/10 shadow-2xl">
-                                                    <img src={viewingData.photo_verso_url} className="w-full h-auto rounded-xl object-contain" alt="Chèque Verso" />
-                                                </div>
-                                            ) : (
-                                                <div className="aspect-video bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Verso</div>
-                                            )}
+                                    </div>
+                                )}
+                                {viewingData.photo_verso_url && (
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e] ml-2">Photo Chèque (Verso)</p>
+                                        <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-xl bg-gray-50">
+                                            <img src={viewingData.photo_verso_url} className="w-full h-auto object-contain" alt="Chèque Verso" />
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -43,6 +43,8 @@ export const resolvers = {
                 ...data,
                 diponce: JSON.stringify(combinedDiponce),
                 diponce_divers: typeof data.diponce_divers === 'string' ? data.diponce_divers : JSON.stringify(data.diponce_divers || []),
+                diponce_journalier: typeof data.diponce_journalier === 'string' ? data.diponce_journalier : JSON.stringify(data.diponce_journalier || []),
+                diponce_admin: typeof data.diponce_admin === 'string' ? data.diponce_admin : JSON.stringify(data.diponce_admin || []),
                 avances_details: avances.rows.map(r => ({ username: r.username, montant: r.montant.toString() })),
                 doublages_details: doublages.rows.map(r => ({ username: r.username, montant: r.montant.toString() })),
                 extras_details: extraDetails.map(r => ({ username: r.username, montant: r.montant.toString() })),
@@ -132,7 +134,9 @@ export const resolvers = {
                     tickets_restaurant: '0',
                     extra: '0',
                     primes: '0',
-                    diponce_divers: '[]'
+                    diponce_divers: '[]',
+                    diponce_journalier: '[]',
+                    diponce_admin: '[]'
                 };
 
                 const dayAvances = avances.rows.filter(r => normalizeDate(r.date) === dayStr);
@@ -151,7 +155,21 @@ export const resolvers = {
                 const combinedDiponce = [...diponceList, ...dayPaidInvoices];
 
                 // Calculate cumulative total diponce including facturation
-                const totalDiponce = combinedDiponce.reduce((sum: number, item: any) => sum + (parseFloat(item.amount) || 0), 0);
+                // Compute totals for all categories to get accurate daily stats
+                let diversList = [], journalierList = [], adminList = [];
+                try { diversList = typeof row.diponce_divers === 'string' ? JSON.parse(row.diponce_divers) : (row.diponce_divers || []); } catch (e) { }
+                try { journalierList = typeof row.diponce_journalier === 'string' ? JSON.parse(row.diponce_journalier) : (row.diponce_journalier || []); } catch (e) { }
+                try { adminList = typeof row.diponce_admin === 'string' ? JSON.parse(row.diponce_admin) : (row.diponce_admin || []); } catch (e) { }
+
+                const sumDiponce = combinedDiponce.reduce((s: number, i: any) => s + (parseFloat(i.amount) || 0), 0);
+                const sumDivers = diversList.reduce((s: number, i: any) => s + (parseFloat(i.amount) || 0), 0);
+                const sumJournalier = journalierList.reduce((s: number, i: any) => s + (parseFloat(i.amount) || 0), 0);
+                const sumAdmin = adminList.reduce((s: number, i: any) => s + (parseFloat(i.amount) || 0), 0);
+                const sumAvances = dayAvances.reduce((s: number, i: any) => s + (parseFloat(i.montant) || 0), 0);
+                const sumDoublages = dayDoublages.reduce((s: number, i: any) => s + (parseFloat(i.montant) || 0), 0);
+                const sumExtrasPrimes = dayExtrasPrimes.reduce((s: number, i: any) => s + (parseFloat(i.montant) || 0), 0);
+
+                const totalDiponce = sumDiponce + sumDivers + sumJournalier + sumAdmin + sumAvances + sumDoublages + sumExtrasPrimes;
                 const recetteCaisse = parseFloat(row.recette_de_caisse) || 0;
                 const recetteNet = recetteCaisse - totalDiponce;
 
@@ -164,6 +182,8 @@ export const resolvers = {
                     recette_net: recetteNet.toString(),
                     diponce: JSON.stringify(combinedDiponce),
                     diponce_divers: typeof row.diponce_divers === 'string' ? row.diponce_divers : JSON.stringify(row.diponce_divers || []),
+                    diponce_journalier: typeof row.diponce_journalier === 'string' ? row.diponce_journalier : JSON.stringify(row.diponce_journalier || []),
+                    diponce_admin: typeof row.diponce_admin === 'string' ? row.diponce_admin : JSON.stringify(row.diponce_admin || []),
                     avances_details: dayAvances.map(r => ({ username: r.username, montant: r.montant.toString() })),
                     doublages_details: dayDoublages.map(r => ({ username: r.username, montant: r.montant.toString() })),
                     extras_details: extraDetails.map(r => ({ username: r.username, montant: r.montant.toString() })),
@@ -327,6 +347,8 @@ export const resolvers = {
                 extra,
                 primes,
                 diponce_divers,
+                diponce_journalier,
+                diponce_admin,
             } = args;
 
             // Remove invoices that came from facturation before saving to avoid duplication
@@ -338,6 +360,8 @@ export const resolvers = {
 
             const diponceToSave = JSON.stringify(diponceList);
             const diponceDiversToSave = diponce_divers;
+            const diponceJournalierToSave = diponce_journalier;
+            const diponceAdminToSave = diponce_admin;
 
             // Check if it exists
             const existing = await query('SELECT id FROM chiffres WHERE date = $1', [date]);
@@ -357,16 +381,18 @@ export const resolvers = {
             tickets_restaurant = $8,
             extra = $9,
             primes = $10,
-            diponce_divers = $11
-          WHERE date = $12 RETURNING *`,
-                    [recette_de_caisse, total_diponce, diponceToSave, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponceDiversToSave, date]
+            diponce_divers = $11::jsonb, 
+            diponce_journalier = $12::jsonb, 
+            diponce_admin = $13::jsonb
+          WHERE date = $14 RETURNING *`,
+                    [recette_de_caisse, total_diponce, diponceToSave, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponceDiversToSave, diponceJournalierToSave, diponceAdminToSave, date]
                 );
             } else {
                 // Insert
                 res = await query(
-                    `INSERT INTO chiffres (date, recette_de_caisse, total_diponce, diponce, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponce_divers)
-           VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12::jsonb) RETURNING *`,
-                    [date, recette_de_caisse, total_diponce, diponceToSave, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponceDiversToSave]
+                    `INSERT INTO chiffres (date, recette_de_caisse, total_diponce, diponce, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponce_divers, diponce_journalier, diponce_admin)
+           VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb) RETURNING *`,
+                    [date, recette_de_caisse, total_diponce, diponceToSave, recette_net, tpe, cheque_bancaire, espaces, tickets_restaurant, extra, primes, diponceDiversToSave, diponceJournalierToSave, diponceAdminToSave]
                 );
             }
             const row = res.rows[0];
@@ -387,7 +413,9 @@ export const resolvers = {
             return {
                 ...row,
                 diponce: JSON.stringify(finalDiponce),
-                diponce_divers: typeof row.diponce_divers === 'string' ? row.diponce_divers : JSON.stringify(row.diponce_divers || [])
+                diponce_divers: typeof row.diponce_divers === 'string' ? row.diponce_divers : JSON.stringify(row.diponce_divers || []),
+                diponce_journalier: typeof row.diponce_journalier === 'string' ? row.diponce_journalier : JSON.stringify(row.diponce_journalier || []),
+                diponce_admin: typeof row.diponce_admin === 'string' ? row.diponce_admin : JSON.stringify(row.diponce_admin || [])
             };
         },
         addInvoice: async (_: any, { supplier_name, amount, date, photo_url }: any) => {

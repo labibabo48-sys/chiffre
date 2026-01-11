@@ -38,7 +38,9 @@ const initDb = async () => {
       { name: 'tickets_restaurant', type: 'character varying(255)', default: "'0'" },
       { name: 'extra', type: 'character varying(255)', default: "'0'" },
       { name: 'primes', type: 'character varying(255)', default: "'0'" },
-      { name: 'diponce_divers', type: 'jsonb', default: null }
+      { name: 'diponce_divers', type: 'jsonb', default: null },
+      { name: 'diponce_journalier', type: 'jsonb', default: null },
+      { name: 'diponce_admin', type: 'jsonb', default: null }
     ];
 
     for (const col of columns) {
