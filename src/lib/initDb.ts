@@ -71,11 +71,24 @@ const initDb = async () => {
         amount character varying(255) NOT NULL,
         date character varying(255) NOT NULL,
         photo_url text,
+        photos jsonb DEFAULT '[]',
         status character varying(50) DEFAULT 'unpaid',
         payment_method character varying(50),
         paid_date character varying(255),
+        photo_cheque_url text,
+        photo_verso_url text,
         CONSTRAINT invoices_pkey PRIMARY KEY (id)
       );
+    `);
+
+    // Ensure photos column exists
+    await query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invoices' AND column_name='photos') THEN
+          ALTER TABLE public.invoices ADD COLUMN photos jsonb DEFAULT '[]';
+        END IF;
+      END $$;
     `);
 
     await query(`

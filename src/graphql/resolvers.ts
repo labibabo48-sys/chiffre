@@ -8,14 +8,26 @@ export const resolvers = {
 
             // Fetch paid invoices for this date
             const paidInvoicesRes = await query("SELECT * FROM invoices WHERE status = 'paid' AND paid_date = $1", [date]);
-            const paidInvoices = paidInvoicesRes.rows.map(inv => ({
-                supplier: inv.supplier_name,
-                amount: inv.amount,
-                paymentMethod: inv.payment_method,
-                invoices: inv.photo_url ? [inv.photo_url] : [],
-                isFromFacturation: true,
-                invoiceId: inv.id
-            }));
+            const paidInvoices = paidInvoicesRes.rows.map(inv => {
+                let photos = [];
+                try {
+                    photos = typeof inv.photos === 'string' ? JSON.parse(inv.photos) : (Array.isArray(inv.photos) ? inv.photos : []);
+                } catch (e) { photos = []; }
+
+                // Merge photo_url if it exists and is not in photos
+                if (inv.photo_url && !photos.includes(inv.photo_url)) {
+                    photos = [inv.photo_url, ...photos];
+                }
+
+                return {
+                    supplier: inv.supplier_name,
+                    amount: inv.amount,
+                    paymentMethod: inv.payment_method,
+                    invoices: photos,
+                    isFromFacturation: true,
+                    invoiceId: inv.id
+                };
+            });
 
             // Fetch from bey database
             const [avances, doublages, extrasPrimes] = await Promise.all([
@@ -73,7 +85,10 @@ export const resolvers = {
             }
             sql += ' ORDER BY date DESC, id DESC';
             const res = await query(sql, params);
-            return res.rows;
+            return res.rows.map(r => ({
+                ...r,
+                photos: typeof r.photos === 'string' ? r.photos : JSON.stringify(r.photos || [])
+            }));
         },
         getChiffresByRange: async (_: any, { startDate, endDate }: { startDate: string, endDate: string }) => {
             const [res, avances, doublages, extrasPrimes, paidInvoicesRes] = await Promise.all([
@@ -114,11 +129,21 @@ export const resolvers = {
                 const d = normalizeDate(inv.paid_date);
                 if (d) {
                     if (!paidInvoicesByDate[d]) paidInvoicesByDate[d] = [];
+
+                    let photos = [];
+                    try {
+                        photos = typeof inv.photos === 'string' ? JSON.parse(inv.photos) : (Array.isArray(inv.photos) ? inv.photos : []);
+                    } catch (e) { photos = []; }
+
+                    if (inv.photo_url && !photos.includes(inv.photo_url)) {
+                        photos = [inv.photo_url, ...photos];
+                    }
+
                     paidInvoicesByDate[d].push({
                         supplier: inv.supplier_name,
                         amount: inv.amount,
                         paymentMethod: inv.payment_method,
-                        invoices: inv.photo_url ? [inv.photo_url] : [],
+                        invoices: photos,
                         isFromFacturation: true,
                         invoiceId: inv.id
                     });
@@ -437,19 +462,27 @@ export const resolvers = {
                 diponce_admin: typeof row.diponce_admin === 'string' ? row.diponce_admin : JSON.stringify(row.diponce_admin || [])
             };
         },
-        addInvoice: async (_: any, { supplier_name, amount, date, photo_url }: any) => {
+        addInvoice: async (_: any, { supplier_name, amount, date, photo_url, photos }: any) => {
             const res = await query(
-                'INSERT INTO invoices (supplier_name, amount, date, photo_url) VALUES ($1, $2, $3, $4) RETURNING *',
-                [supplier_name, amount, date, photo_url]
+                'INSERT INTO invoices (supplier_name, amount, date, photo_url, photos) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING *',
+                [supplier_name, amount, date, photo_url, photos || '[]']
             );
-            return res.rows[0];
+            const row = res.rows[0];
+            return {
+                ...row,
+                photos: JSON.stringify(row.photos || [])
+            };
         },
         payInvoice: async (_: any, { id, payment_method, paid_date, photo_cheque_url, photo_verso_url }: any) => {
             const res = await query(
                 "UPDATE invoices SET status = 'paid', payment_method = $1, paid_date = $2, photo_cheque_url = $3, photo_verso_url = $4 WHERE id = $5 RETURNING *",
                 [payment_method, paid_date, photo_cheque_url, photo_verso_url, id]
             );
-            return res.rows[0];
+            const row = res.rows[0];
+            return {
+                ...row,
+                photos: JSON.stringify(row.photos || [])
+            };
         },
         deleteInvoice: async (_: any, { id }: { id: number }) => {
             await query('DELETE FROM invoices WHERE id = $1', [id]);
@@ -496,12 +529,16 @@ export const resolvers = {
             return res.rows[0];
         },
         addPaidInvoice: async (_: any, args: any) => {
-            const { supplier_name, amount, date, photo_url, photo_cheque_url, photo_verso_url, payment_method, paid_date } = args;
+            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date } = args;
             const res = await query(
-                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photo_cheque_url, photo_verso_url, status, payment_method, paid_date) VALUES ($1, $2, $3, $4, $5, $6, 'paid', $7, $8) RETURNING *",
-                [supplier_name, amount, date, photo_url, photo_cheque_url, photo_verso_url, payment_method, paid_date]
+                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9) RETURNING *",
+                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date]
             );
-            return res.rows[0];
+            const row = res.rows[0];
+            return {
+                ...row,
+                photos: JSON.stringify(row.photos || [])
+            };
         },
         unlockChiffre: async (_: any, { date }: { date: string }) => {
             const res = await query('UPDATE chiffres SET is_locked = false WHERE date = $1 RETURNING *', [date]);

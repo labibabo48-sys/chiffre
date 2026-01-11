@@ -158,6 +158,7 @@ const GET_INVOICES = gql`
       status
       payment_method
       paid_date
+      photos
     }
     getSuppliers {
       id
@@ -168,8 +169,8 @@ const GET_INVOICES = gql`
 `;
 
 const ADD_INVOICE = gql`
-  mutation AddInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String) {
-    addInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url) {
+  mutation AddInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photos: String) {
+    addInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photos: $photos) {
       id
       status
     }
@@ -226,11 +227,11 @@ export default function FacturationPage() {
     const todayStr = `${ty}-${tm}-${td}`;
 
     // Form state
-    const [newInvoice, setNewInvoice] = useState({
+    const [newInvoice, setNewInvoice] = useState<{ supplier_name: string, amount: string, date: string, photos: string[] }>({
         supplier_name: '',
         amount: '',
         date: todayStr,
-        photo_url: ''
+        photos: []
     });
     const [paymentDetails, setPaymentDetails] = useState({
         method: 'Espèces',
@@ -302,7 +303,9 @@ export default function FacturationPage() {
             await addInvoice({
                 variables: {
                     ...newInvoice,
-                    amount: newInvoice.amount.toString()
+                    amount: newInvoice.amount.toString(),
+                    photo_url: newInvoice.photos[0] || '',
+                    photos: JSON.stringify(newInvoice.photos)
                 }
             });
             setShowAddModal(false);
@@ -310,7 +313,7 @@ export default function FacturationPage() {
                 supplier_name: '',
                 amount: '',
                 date: todayStr,
-                photo_url: ''
+                photos: []
             });
             refetch();
         } catch (e) {
@@ -363,17 +366,41 @@ export default function FacturationPage() {
         }
     };
 
-    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'invoice' | 'recto' | 'verso' = 'invoice') => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const res = reader.result as string;
-            if (field === 'invoice') setNewInvoice({ ...newInvoice, photo_url: res });
-            else if (field === 'recto') setPaymentDetails({ ...paymentDetails, photo_cheque_url: res });
-            else if (field === 'verso') setPaymentDetails({ ...paymentDetails, photo_verso_url: res });
-        };
-        reader.readAsDataURL(file);
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'invoice' | 'recto' | 'verso' = 'invoice') => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        if (field === 'invoice') {
+            const filePromises = Array.from(files).map(file => {
+                return new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            const results = await Promise.all(filePromises);
+            setNewInvoice(prev => ({
+                ...prev,
+                photos: [...prev.photos, ...results]
+            }));
+        } else {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const res = reader.result as string;
+                if (field === 'recto') setPaymentDetails({ ...paymentDetails, photo_cheque_url: res });
+                else if (field === 'verso') setPaymentDetails({ ...paymentDetails, photo_verso_url: res });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleDeletePhoto = (index: number) => {
+        setNewInvoice(prev => ({
+            ...prev,
+            photos: prev.photos.filter((_, i) => i !== index)
+        }));
     };
 
     if (initializing || !user) return (
@@ -820,19 +847,26 @@ export default function FacturationPage() {
 
                                 <div>
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photo / Reçu</label>
-                                    <div
-                                        onClick={() => document.getElementById('photo-upload')?.click()}
-                                        className="relative w-full h-32 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all overflow-hidden"
-                                    >
-                                        {newInvoice.photo_url ? (
-                                            <img src={newInvoice.photo_url} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <>
-                                                <UploadCloud className="text-[#c69f6e] opacity-40" size={32} />
-                                                <span className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest">Cliquer pour uploader</span>
-                                            </>
-                                        )}
-                                        <input id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                        {newInvoice.photos.map((p, idx) => (
+                                            <div key={idx} className="relative aspect-square bg-[#f9f6f2] rounded-xl overflow-hidden group border border-[#e6dace]">
+                                                <img src={p} className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeletePhoto(idx); }}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <div
+                                            onClick={() => document.getElementById('photo-upload')?.click()}
+                                            className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all"
+                                        >
+                                            <UploadCloud className="text-[#c69f6e] opacity-40" size={24} />
+                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest text-center px-1">Ajouter</span>
+                                            <input id="photo-upload" type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1001,46 +1035,65 @@ export default function FacturationPage() {
 
                             <div className={`grid grid-cols-1 ${viewingData.payment_method === 'Chèque' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-8`}>
                                 {/* Photo Facture */}
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Document Principal / Facture</p>
-                                        {viewingData.photo_url && (
-                                            <a href={viewingData.photo_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                                <Download size={12} /> Télécharger
-                                            </a>
-                                        )}
-                                    </div>
-                                    {viewingData.photo_url ? (
-                                        <div
-                                            className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
-                                            onWheel={(e) => {
-                                                if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
-                                                else setImgZoom(prev => Math.max(0.5, prev - 0.1));
-                                            }}
-                                        >
-                                            <motion.div
-                                                className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
-                                                animate={{ scale: imgZoom, rotate: imgRotation }}
-                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                drag={imgZoom > 1}
-                                                dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
-                                                dragElastic={0.1}
-                                            >
-                                                <img
-                                                    src={viewingData.photo_url}
-                                                    draggable="false"
-                                                    className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
-                                                    alt="Facture"
-                                                    style={{ pointerEvents: 'none', userSelect: 'none' }}
-                                                />
-                                            </motion.div>
-                                            <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span className="bg-black/60 backdrop-blur-md text-[10px] font-black text-[#c69f6e] px-4 py-2 rounded-full border border-[#c69f6e]/20 shadow-lg uppercase tracking-widest">Loupe: {Math.round(imgZoom * 100)}% • Molette pour zoomer</span>
+                                <div className="space-y-8">
+                                    {(() => {
+                                        let invoicePhotos: string[] = [];
+                                        try {
+                                            const parsed = JSON.parse(viewingData.photos || '[]');
+                                            invoicePhotos = Array.isArray(parsed) ? parsed : [];
+                                        } catch (e) {
+                                            invoicePhotos = [];
+                                        }
+
+                                        // Include legacy photo_url if exists
+                                        if (viewingData.photo_url && !invoicePhotos.includes(viewingData.photo_url)) {
+                                            invoicePhotos = [viewingData.photo_url, ...invoicePhotos];
+                                        }
+
+                                        if (invoicePhotos.length === 0) {
+                                            return (
+                                                <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold uppercase tracking-widest">Sans Facture</div>
+                                            );
+                                        }
+
+                                        return invoicePhotos.map((photo, pIdx) => (
+                                            <div key={pIdx} className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Document {pIdx + 1} / Facture</p>
+                                                    <a href={photo} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                        <Download size={12} /> Télécharger
+                                                    </a>
+                                                </div>
+                                                <div
+                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
+                                                    onWheel={(e) => {
+                                                        if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                        else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                    }}
+                                                >
+                                                    <motion.div
+                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                        animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                        drag={imgZoom > 1}
+                                                        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                        dragElastic={0.1}
+                                                    >
+                                                        <img
+                                                            src={photo}
+                                                            draggable="false"
+                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                            alt={`Facture ${pIdx + 1}`}
+                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
+                                                        />
+                                                    </motion.div>
+                                                    <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className="bg-black/60 backdrop-blur-md text-[10px] font-black text-[#c69f6e] px-4 py-2 rounded-full border border-[#c69f6e]/20 shadow-lg uppercase tracking-widest">Loupe: {Math.round(imgZoom * 100)}% • Molette pour zoomer</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold uppercase tracking-widest">Sans Facture</div>
-                                    )}
+                                        ));
+                                    })()}
                                 </div>
 
                                 {/* Photos Chèque */}

@@ -61,6 +61,7 @@ export const typeDefs = `#graphql
     amount: String
     date: String
     photo_url: String
+    photos: String # Stringified JSON array
     photo_cheque_url: String
     photo_verso_url: String
     status: String
@@ -127,6 +128,7 @@ export const typeDefs = `#graphql
       amount: String!
       date: String!
       photo_url: String
+      photos: String
     ): Invoice
 
     payInvoice(
@@ -149,6 +151,7 @@ export const typeDefs = `#graphql
       amount: String!
       date: String!
       photo_url: String
+      photos: String
       photo_cheque_url: String
       photo_verso_url: String
       payment_method: String!
