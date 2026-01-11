@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
@@ -989,24 +989,26 @@ export default function FacturationPage() {
                                     </div>
                                     {viewingData.photo_url ? (
                                         <div
-                                            className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative cursor-zoom-in"
+                                            className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
                                             onWheel={(e) => {
                                                 if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
                                                 else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                             }}
                                         >
                                             <motion.div
-                                                className="w-full h-full flex items-center justify-center p-4"
+                                                className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
                                                 animate={{ scale: imgZoom, rotate: imgRotation }}
                                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                 drag={imgZoom > 1}
                                                 dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                dragElastic={0.1}
                                             >
                                                 <img
                                                     src={viewingData.photo_url}
-                                                    className={`max-w-full max-h-full rounded-xl object-contain shadow-2xl transition-all ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                                                    draggable="false"
+                                                    className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
                                                     alt="Facture"
-                                                    style={{ pointerEvents: imgZoom > 1 ? 'auto' : 'none' }}
+                                                    style={{ pointerEvents: 'none', userSelect: 'none' }}
                                                 />
                                             </motion.div>
                                             <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1032,24 +1034,26 @@ export default function FacturationPage() {
                                             </div>
                                             {viewingData.photo_cheque_url ? (
                                                 <div
-                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative cursor-zoom-in"
+                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
                                                     onWheel={(e) => {
                                                         if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
                                                         else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                                     }}
                                                 >
                                                     <motion.div
-                                                        className="w-full h-full flex items-center justify-center p-4"
+                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
                                                         animate={{ scale: imgZoom, rotate: imgRotation }}
                                                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                         drag={imgZoom > 1}
                                                         dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                        dragElastic={0.1}
                                                     >
                                                         <img
                                                             src={viewingData.photo_cheque_url}
-                                                            className={`max-w-full max-h-full rounded-xl object-contain shadow-2xl transition-all ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                                                            draggable="false"
+                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
                                                             alt="Chèque Recto"
-                                                            style={{ pointerEvents: imgZoom > 1 ? 'auto' : 'none' }}
+                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
                                                         />
                                                     </motion.div>
                                                 </div>
@@ -1068,24 +1072,26 @@ export default function FacturationPage() {
                                             </div>
                                             {viewingData.photo_verso_url ? (
                                                 <div
-                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative cursor-zoom-in"
+                                                    className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
                                                     onWheel={(e) => {
                                                         if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
                                                         else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                                     }}
                                                 >
                                                     <motion.div
-                                                        className="w-full h-full flex items-center justify-center p-4"
+                                                        className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
                                                         animate={{ scale: imgZoom, rotate: imgRotation }}
                                                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                         drag={imgZoom > 1}
                                                         dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                        dragElastic={0.1}
                                                     >
                                                         <img
                                                             src={viewingData.photo_verso_url}
-                                                            className={`max-w-full max-h-full rounded-xl object-contain shadow-2xl transition-all ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                                                            draggable="false"
+                                                            className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
                                                             alt="Chèque Verso"
-                                                            style={{ pointerEvents: imgZoom > 1 ? 'auto' : 'none' }}
+                                                            style={{ pointerEvents: 'none', userSelect: 'none' }}
                                                         />
                                                     </motion.div>
                                                 </div>

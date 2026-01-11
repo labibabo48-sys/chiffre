@@ -27,6 +27,7 @@ export const typeDefs = `#graphql
     tickets_restaurant: String
     extra: String
     primes: String
+    is_locked: Boolean
     # Bey Database Fields
     avances_details: [DetailItem]
     doublages_details: [DetailItem]
@@ -152,5 +153,7 @@ export const typeDefs = `#graphql
       payment_method: String!
       paid_date: String!
     ): Invoice
+
+    unlockChiffre(date: String!): Chiffre
   }
 `;

@@ -7,7 +7,7 @@ import {
     Wallet, TrendingDown, TrendingUp, CreditCard, Banknote, Coins, Calculator, Receipt,
     ChevronLeft, ChevronRight, LayoutDashboard, PieChart as PieChartIcon, BarChart3, LineChart as LineChartIcon,
     Zap, Sparkles, ChevronDown, User, MessageSquare, FileText, Check, Share2, ExternalLink,
-    Eye, EyeOff, ZoomIn, ZoomOut, RotateCcw, Maximize2, Download
+    Eye, EyeOff, ZoomIn, ZoomOut, RotateCcw, Maximize2, Download, Lock as LockIcon, Unlock as UnlockIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +35,16 @@ const GET_CHIFFRE = gql`
         diponce_divers
         diponce_journalier
         diponce_admin
+        is_locked
+    }
+}
+`;
+
+const UNLOCK_CHIFFRE = gql`
+  mutation UnlockChiffre($date: String!) {
+    unlockChiffre(date: $date) {
+        id
+        is_locked
     }
 }
 `;
@@ -140,6 +150,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const { data: suppliersData, refetch: refetchSuppliers } = useQuery(GET_SUPPLIERS);
     const { data: designationsData, refetch: refetchDesignations } = useQuery(GET_DESIGNATIONS);
     const [saveChiffre, { loading: saving }] = useMutation(SAVE_CHIFFRE);
+    const [unlockChiffre, { loading: unlocking }] = useMutation(UNLOCK_CHIFFRE);
     const [upsertSupplier] = useMutation(UPSERT_SUPPLIER);
     const [upsertDesignation] = useMutation(UPSERT_DESIGNATION);
 
@@ -225,6 +236,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [hideRecetteCaisse, setHideRecetteCaisse] = useState(false);
     const [newSupplierName, setNewSupplierName] = useState('');
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
     // Modal Details States
     const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -262,6 +274,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
 
             setRecetteCaisse(c.recette_de_caisse);
+            setIsLocked(c.is_locked || false);
             setExpenses(JSON.parse(c.diponce || '[]').map((e: any) => ({ ...e, details: e.details || '' })));
             setTpe(c.tpe);
             setCheque(c.cheque_bancaire);
@@ -329,6 +342,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             setExtrasList([]);
             setPrimesList([]);
             setExpensesDivers([{ designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
+            setIsLocked(false);
             setHasInteracted(false);
         }
     }, [chiffreData, date]);
@@ -387,13 +401,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         setExpensesAdmin(newAdmin);
     };
 
-    const handleAddExpense = () => { setHasInteracted(true); setExpenses([...expenses, { supplier: '', amount: '0', details: '', invoices: [], photo_cheque: '', photo_verso: '', paymentMethod: 'Espèces' }]); };
-    const handleAddDivers = (designation?: string) => { setHasInteracted(true); setExpensesDivers([...expensesDivers, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
-    const handleAddJournalier = (designation?: string) => { setHasInteracted(true); setExpensesJournalier([...expensesJournalier, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
+    const handleAddExpense = () => { if (isLocked) return; setHasInteracted(true); setExpenses([...expenses, { supplier: '', amount: '0', details: '', invoices: [], photo_cheque: '', photo_verso: '', paymentMethod: 'Espèces' }]); };
+    const handleAddDivers = (designation?: string) => { if (isLocked) return; setHasInteracted(true); setExpensesDivers([...expensesDivers, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
+    const handleAddJournalier = (designation?: string) => { if (isLocked) return; setHasInteracted(true); setExpensesJournalier([...expensesJournalier, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]); };
 
-    const handleRemoveExpense = (index: number) => { setHasInteracted(true); setExpenses(expenses.filter((_, i) => i !== index)); };
-    const handleRemoveDivers = (index: number) => { setHasInteracted(true); setExpensesDivers(expensesDivers.filter((_, i) => i !== index)); };
-    const handleRemoveJournalier = (index: number) => { setHasInteracted(true); setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index)); };
+    const handleRemoveExpense = (index: number) => { if (isLocked) return; setHasInteracted(true); setExpenses(expenses.filter((_, i) => i !== index)); };
+    const handleRemoveDivers = (index: number) => { if (isLocked) return; setHasInteracted(true); setExpensesDivers(expensesDivers.filter((_, i) => i !== index)); };
+    const handleRemoveJournalier = (index: number) => { if (isLocked) return; setHasInteracted(true); setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index)); };
 
     const handleShareInvoice = async (img: string) => {
         try {
@@ -680,13 +694,18 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 {/* Date Side */}
                                 <div className="text-center md:text-left flex flex-col gap-1">
                                     <div className="text-[#2d6a4f] text-[10px] md:text-xs font-black uppercase tracking-[0.4em] opacity-40">Session du</div>
-                                    <div className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2d6a4f] leading-none tracking-tighter">
+                                    <div className="text-3xl md:text-4xl lg:text-5xl font-black text-[#2d6a4f] leading-none tracking-tighter flex items-center gap-4">
                                         <span className="md:hidden">
                                             {new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                                         </span>
                                         <span className="hidden md:inline">
                                             {new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
                                         </span>
+                                        {isLocked && (
+                                            <div className="flex items-center gap-1.5 px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full text-red-600 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
+                                                <LockIcon size={12} /> Verrouillée
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -712,8 +731,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <input
                                                     type="number"
                                                     value={recetteCaisse}
+                                                    disabled={isLocked}
                                                     onChange={(e) => { setRecetteCaisse(e.target.value); setHasInteracted(true); }}
-                                                    className="text-6xl md:text-7xl lg:text-8xl font-black bg-transparent text-[#4a3426] outline-none placeholder-[#e6dace] text-center md:text-right w-full md:w-auto min-w-[150px]"
+                                                    className={`text-6xl md:text-7xl lg:text-8xl font-black bg-transparent text-[#4a3426] outline-none placeholder-[#e6dace] text-center md:text-right w-full md:w-auto min-w-[150px] ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     placeholder="0"
                                                 />
                                             )}
@@ -732,8 +752,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     Dépenses Journalier
                                 </h3>
                                 <button
-                                    onClick={() => setShowJournalierModal(true)}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                    onClick={() => {
+                                        if (isLocked) return;
+                                        setShowJournalierModal(true);
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <Plus size={12} />
                                     Ajouter Journalier
@@ -750,8 +773,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="number"
                                                         placeholder="0.00"
                                                         value={journalier.amount}
+                                                        disabled={isLocked}
                                                         onChange={(e) => handleJournalierChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -764,6 +788,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="text"
                                                         placeholder="Désignation Journalière..."
                                                         value={journalier.designation}
+                                                        disabled={isLocked}
                                                         onFocus={() => {
                                                             setShowJournalierDropdown(index);
                                                             setDesignationSearch(journalier.designation);
@@ -773,11 +798,14 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                             handleJournalierChange(index, 'designation', e.target.value);
                                                             setDesignationSearch(e.target.value);
                                                         }}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all"
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
                                                     <button
-                                                        onClick={() => setShowJournalierDropdown(showJournalierDropdown === index ? null : index)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors"
+                                                        onClick={() => {
+                                                            if (isLocked) return;
+                                                            setShowJournalierDropdown(showJournalierDropdown === index ? null : index);
+                                                        }}
+                                                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     >
                                                         <ChevronDown size={18} />
                                                     </button>
@@ -813,11 +841,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
+                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'journalier' });
                                                         setTempDetails(journalier.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
@@ -827,17 +856,18 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (journalier.invoices.length > 0) {
+                                                            if (isLocked) e.preventDefault();
+                                                            else if (journalier.invoices.length > 0) {
                                                                 setViewingInvoices(journalier.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'journalier' });
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
-                                                        <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
+                                                        <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
                                                     </label>
                                                     <div className="w-12 flex justify-center">
                                                         {(index > 0 || expensesJournalier.length > 1) && (
@@ -851,7 +881,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddJournalier()} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
+                                <button
+                                    onClick={() => handleAddJournalier()}
+                                    disabled={isLocked}
+                                    className={`mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
                                     <Plus size={18} /> Nouvelle Ligne (Journalier)
                                 </button>
                                 <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
@@ -869,8 +903,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     Dépenses Fournisseur
                                 </h3>
                                 <button
-                                    onClick={() => setShowSupplierModal(true)}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                    onClick={() => {
+                                        if (isLocked) return;
+                                        setShowSupplierModal(true);
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <Plus size={12} />
                                     Ajouter Fournisseur
@@ -886,10 +923,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     <input
                                                         type="number"
                                                         placeholder="0.00"
-                                                        disabled={expense.isFromFacturation}
+                                                        disabled={expense.isFromFacturation || isLocked}
                                                         value={expense.amount}
                                                         onChange={(e) => handleDetailChange(index, 'amount', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${(expense.isFromFacturation || isLocked) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -903,7 +940,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="text"
                                                         placeholder="Fournisseur..."
                                                         value={expense.supplier}
-                                                        disabled={expense.isFromFacturation}
+                                                        disabled={expense.isFromFacturation || isLocked}
                                                         onFocus={() => {
                                                             if (!expense.isFromFacturation) {
                                                                 setShowSupplierDropdown(index);
@@ -913,12 +950,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         }}
                                                         onBlur={() => setTimeout(() => setShowSupplierDropdown(null), 200)}
                                                         onChange={(e) => { handleDetailChange(index, 'supplier', e.target.value); setSupplierSearch(e.target.value); }}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${(expense.isFromFacturation || isLocked) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
                                                     {!expense.isFromFacturation && (
                                                         <button
-                                                            onClick={() => setShowSupplierDropdown(showSupplierDropdown === index ? null : index)}
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors"
+                                                            onClick={() => {
+                                                                if (isLocked) return;
+                                                                setShowSupplierDropdown(showSupplierDropdown === index ? null : index);
+                                                            }}
+                                                            className={`absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                         >
                                                             <ChevronDown size={18} />
                                                         </button>
@@ -950,11 +990,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
+                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'expense' });
                                                         setTempDetails(expense.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{expense.details ? 'Détails OK' : 'Détails'}</span>
@@ -964,7 +1005,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (expense.invoices.length > 0) {
+                                                            if (isLocked) e.preventDefault();
+                                                            else if (expense.invoices.length > 0) {
                                                                 setViewingInvoices(expense.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'expense' });
                                                                 e.preventDefault();
@@ -972,11 +1014,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
-                                                        {!expense.isFromFacturation && <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice')} />}
+                                                        {!expense.isFromFacturation && <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice')} />}
                                                     </label>
 
                                                     <div className="flex gap-2">
@@ -993,7 +1035,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 >
                                                                     <UploadCloud size={14} />
                                                                     <span className="font-black uppercase tracking-widest">{expense.photo_cheque ? 'Recto OK' : 'Recto'}</span>
-                                                                    {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'recto')} />}
+                                                                    {!expense.isFromFacturation && <input type="file" disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'recto')} />}
                                                                 </label>
                                                                 <label
                                                                     onClick={(e) => {
@@ -1001,19 +1043,23 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                             setViewingInvoices([expense.photo_verso]);
                                                                             e.preventDefault();
                                                                         }
+                                                                        if (isLocked) e.preventDefault();
                                                                     }}
-                                                                    className={`h-12 w-20 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_verso ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'}`}
+                                                                    className={`h-12 w-20 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.photo_verso ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-red-200 text-red-300 hover:bg-red-50'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <UploadCloud size={14} />
                                                                     <span className="font-black uppercase tracking-widest">{expense.photo_verso ? 'Verso OK' : 'Verso'}</span>
-                                                                    {!expense.isFromFacturation && <input type="file" className="hidden" onChange={(e) => handleFileUpload(index, e, 'verso')} />}
+                                                                    {!expense.isFromFacturation && <input type="file" disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'verso')} />}
                                                                 </label>
                                                             </>
                                                         )}
 
                                                         <div className="w-12 flex justify-center">
-                                                            {!expense.isFromFacturation && (index > 0 || expenses.length > 1) && (
-                                                                <button onClick={() => handleRemoveExpense(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                                                            {(!isLocked || role === 'admin') && (
+                                                                <button
+                                                                    onClick={() => handleRemoveExpense(index)}
+                                                                    className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                                                >
                                                                     <Trash2 size={20} />
                                                                 </button>
                                                             )}
@@ -1047,7 +1093,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={handleAddExpense} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
+                                <button
+                                    onClick={handleAddExpense}
+                                    disabled={isLocked}
+                                    className={`mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
                                     <Plus size={18} /> Nouvelle Ligne
                                 </button>
                                 <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
@@ -1065,8 +1115,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     Dépenses divers
                                 </h3>
                                 <button
-                                    onClick={() => setShowDiversModal(true)}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                    onClick={() => {
+                                        if (isLocked) return;
+                                        setShowDiversModal(true);
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <Plus size={12} />
                                     Ajouter Divers
@@ -1083,8 +1136,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="number"
                                                         placeholder="0.00"
                                                         value={divers.amount}
+                                                        disabled={isLocked}
                                                         onChange={(e) => handleDiversChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -1097,6 +1151,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="text"
                                                         placeholder="Désignation Divers..."
                                                         value={divers.designation}
+                                                        disabled={isLocked}
                                                         onFocus={() => {
                                                             setShowDiversDropdown(index);
                                                             setDesignationSearch(divers.designation);
@@ -1106,11 +1161,14 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                             handleDiversChange(index, 'designation', e.target.value);
                                                             setDesignationSearch(e.target.value);
                                                         }}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all"
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-10 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
                                                     <button
-                                                        onClick={() => setShowDiversDropdown(showDiversDropdown === index ? null : index)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors"
+                                                        onClick={() => {
+                                                            if (isLocked) return;
+                                                            setShowDiversDropdown(showDiversDropdown === index ? null : index);
+                                                        }}
+                                                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     >
                                                         <ChevronDown size={18} />
                                                     </button>
@@ -1146,11 +1204,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
+                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'divers' });
                                                         setTempDetails(divers.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{divers.details ? 'Détails OK' : 'Détails'}</span>
@@ -1160,19 +1219,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (divers.invoices.length > 0) {
+                                                            if (isLocked) e.preventDefault();
+                                                            else if (divers.invoices.length > 0) {
                                                                 setViewingInvoices(divers.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'divers' });
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
-                                                        <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
+                                                        <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
                                                     </label>
                                                     <div className="w-12 flex justify-center">
-                                                        {(index > 0 || expensesDivers.length > 1) && (
+                                                        {(!isLocked || role === 'admin') && (index > 0 || expensesDivers.length > 1) && (
                                                             <button onClick={() => handleRemoveDivers(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                                                                 <Trash2 size={20} />
                                                             </button>
@@ -1183,7 +1243,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => handleAddDivers()} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
+                                <button
+                                    onClick={() => handleAddDivers()}
+                                    disabled={isLocked}
+                                    className={`mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
                                     <Plus size={18} /> Nouvelle Ligne (Divers)
                                 </button>
                                 <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
@@ -1213,8 +1277,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="number"
                                                         placeholder="0.00"
                                                         value={admin.amount}
+                                                        disabled={isLocked}
                                                         onChange={(e) => handleAdminChange(index, 'amount', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center"
+                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
                                                 </div>
@@ -1413,10 +1478,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 ) : (
                                                     <input
                                                         type="number"
-                                                        disabled={m.label === 'Espèces'}
+                                                        disabled={m.label === 'Espèces' || isLocked}
                                                         value={m.val}
                                                         onChange={(e) => m.set(e.target.value)}
-                                                        className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${m.label === 'Espèces' ? 'bg-white/20 border-white/30' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
+                                                        className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${(m.label === 'Espèces' || isLocked) ? 'bg-white/20 border-white/30 cursor-not-allowed' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
                                                     />
                                                 )}
                                             </div>
@@ -1427,14 +1492,42 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         </div>
 
                         {/* Centered Save Button (Integrated in content) */}
-                        <div className="flex justify-center pt-8">
-                            <button
-                                onClick={handleSave}
-                                className="gold-gradient text-white px-12 py-5 rounded-[2.5rem] shadow-2xl shadow-[#c69f6e]/30 flex items-center gap-3 font-black text-xl hover:scale-105 active:scale-95 transition-all w-full max-w-md justify-center border border-white/20"
-                                disabled={saving}
-                            >
-                                {saving ? <Loader2 className="animate-spin" /> : <Save size={24} />} Enregistrer la Session
-                            </button>
+                        <div className="flex flex-col items-center gap-4 pt-8">
+                            {isLocked && (
+                                <div className="flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 font-bold animate-pulse">
+                                    <LockIcon size={18} />
+                                    Cette session est clôturée et verrouillée
+                                </div>
+                            )}
+                            <div className="flex gap-4 w-full max-w-md">
+                                {isLocked && role === 'admin' && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await unlockChiffre({ variables: { date } });
+                                                setToast({ msg: 'Session déverrouillée', type: 'success' });
+                                                setTimeout(() => setToast(null), 3000);
+                                                refetchChiffre();
+                                            } catch (e) {
+                                                setToast({ msg: 'Échec du déverrouillage', type: 'error' });
+                                                setTimeout(() => setToast(null), 3000);
+                                            }
+                                        }}
+                                        disabled={unlocking}
+                                        className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white px-8 py-5 rounded-[2.5rem] flex items-center gap-3 font-black text-lg transition-all border border-white/20 shadow-xl"
+                                    >
+                                        {unlocking ? <Loader2 className="animate-spin" /> : <UnlockIcon size={24} />} Déverrouiller
+                                    </button>
+                                )}
+                                <button
+                                    onClick={handleSave}
+                                    className={`${isLocked ? 'bg-gray-500/50 cursor-not-allowed opacity-50' : 'gold-gradient'} text-white px-12 py-5 rounded-[2.5rem] shadow-2xl shadow-[#c69f6e]/30 flex items-center gap-3 font-black text-xl hover:scale-105 active:scale-95 transition-all flex-1 justify-center border border-white/20`}
+                                    disabled={saving || isLocked}
+                                >
+                                    {saving ? <Loader2 className="animate-spin" /> : (isLocked ? <LockIcon size={24} /> : <Save size={24} />)}
+                                    {isLocked ? 'Session Clôturée' : 'Enregistrer la Session'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </main>
@@ -1457,11 +1550,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 <h3 className="text-xl font-bold text-[#4a3426] flex items-center gap-2"><Receipt size={24} className="text-[#c69f6e]" /> Reçus & Factures</h3>
                                 {viewingInvoicesTarget && (
                                     <>
-                                        <label className="flex items-center gap-2 px-4 py-2 bg-[#2d6a4f] text-white rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-[#1b4332] transition-all shadow-lg shadow-green-200">
+                                        <label className={`flex items-center gap-2 px-4 py-2 ${isLocked && role !== 'admin' ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-[#2d6a4f] hover:bg-[#1b4332] cursor-pointer'} text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-green-200`}>
                                             <Plus size={16} /> Ajouter Photo
                                             <input
                                                 type="file"
                                                 multiple
+                                                disabled={isLocked && role !== 'admin'}
                                                 className="hidden"
                                                 onChange={async (e) => {
                                                     const files = e.target.files;
@@ -1511,29 +1605,39 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     {viewingInvoices.map((img, idx) => (
                                         <div
                                             key={idx}
-                                            className="relative group rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl h-[50vh] cursor-zoom-in"
+                                            className="relative group rounded-3xl overflow-hidden border border-white/10 bg-black shadow-2xl h-[50vh]"
                                             onWheel={(e) => {
                                                 if (e.deltaY < 0) setImgZoom(prev => Math.min(3, prev + 0.1));
                                                 else setImgZoom(prev => Math.max(0.5, prev - 0.1));
                                             }}
                                         >
                                             <motion.div
-                                                className="w-full h-full flex items-center justify-center p-4"
+                                                className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
                                                 animate={{ scale: imgZoom, rotate: imgRotation }}
                                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                 drag={imgZoom > 1}
                                                 dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                dragElastic={0.1}
                                             >
                                                 <img
                                                     src={img}
-                                                    className={`max-w-full max-h-full rounded-xl object-contain shadow-2xl ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                                                    style={{ pointerEvents: imgZoom > 1 ? 'auto' : 'none' }}
+                                                    draggable="false"
+                                                    className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                    style={{ pointerEvents: 'none', userSelect: 'none' }}
                                                 />
                                             </motion.div>
                                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                                 <a href={img} download target="_blank" className="p-2 bg-white/90 hover:bg-white text-[#4a3426] rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110"><Download size={16} /></a>
                                                 <button onClick={() => handleShareInvoice(img)} className="p-2 bg-white/90 hover:bg-white text-[#4a3426] rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110"><Share2 size={16} /></button>
-                                                <button onClick={() => handleDeleteInvoice(idx)} className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110"><Trash2 size={16} /></button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (isLocked && role !== 'admin') return;
+                                                        handleDeleteInvoice(idx);
+                                                    }}
+                                                    className={`p-2 bg-white/90 hover:bg-white text-red-600 rounded-lg shadow-lg backdrop-blur-sm transition-all hover:scale-110 ${isLocked && role !== 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                             <div className="absolute bottom-4 left-4 bg-black/40 backdrop-blur-md text-[#c69f6e] text-[10px] font-black px-3 py-1.5 rounded-full border border-[#c69f6e]/20 uppercase tracking-widest">Reçu {idx + 1} • Zoom: {Math.round(imgZoom * 100)}%</div>
                                         </div>

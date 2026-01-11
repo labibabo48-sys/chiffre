@@ -40,7 +40,8 @@ const initDb = async () => {
       { name: 'primes', type: 'character varying(255)', default: "'0'" },
       { name: 'diponce_divers', type: 'jsonb', default: null },
       { name: 'diponce_journalier', type: 'jsonb', default: null },
-      { name: 'diponce_admin', type: 'jsonb', default: null }
+      { name: 'diponce_admin', type: 'jsonb', default: null },
+      { name: 'is_locked', type: 'boolean', default: 'false' }
     ];
 
     for (const col of columns) {
