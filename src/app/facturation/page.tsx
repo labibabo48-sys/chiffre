@@ -134,7 +134,7 @@ const PremiumDatePicker = ({ value, onChange, label, colorMode = 'brown', locked
                 ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-3 bg-white hover:bg-white border border-[#e6dace] rounded-2xl px-4 py-2 h-14 transition-all w-full group shadow-sm ${theme.hover}`}
+                className={`flex items-center gap-3 bg-white hover:bg-white border border-[#e6dace] rounded-2xl px-4 py-1.5 h-12 transition-all w-full group shadow-sm ${theme.hover}`}
             >
                 <div className={`p-2 rounded-xl ${theme.bg} bg-opacity-10 ${theme.text}`}>
                     <Calendar size={18} strokeWidth={2.5} />
@@ -1047,21 +1047,22 @@ export default function FacturationPage() {
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
                                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
+                                className="bg-white rounded-[1.5rem] w-full max-w-lg max-h-[96vh] overflow-y-auto shadow-2xl border border-white/20 custom-scrollbar m-auto"
                             >
-                                <div className="p-5 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                        <Receipt size={28} className="text-[#c69f6e]" />
+                                <div className="p-3 bg-[#4a3426] text-white relative rounded-t-[1.5rem]">
+                                    <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                                        <Receipt size={20} className="text-[#c69f6e]" />
                                         Nouveau Reçu
                                     </h2>
-                                    <p className="text-xs text-white/60 font-medium mt-1">Enregistrer une nouvelle facture fournisseur</p>
-                                    <button onClick={() => setShowAddModal(false)} className="absolute top-5 right-5 text-white/40 hover:text-white"><X size={24} /></button>
+                                    <button onClick={() => setShowAddModal(false)} className="absolute top-3 right-3 text-white/40 hover:text-white transition-colors">
+                                        <X size={20} />
+                                    </button>
                                 </div>
 
-                                <div className="p-5 space-y-3">
+                                <div className="p-4 space-y-3">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Section</label>
-                                        <div className="flex gap-2 mb-3">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Section</label>
+                                        <div className="flex gap-1.5 mb-1.5">
                                             {['Fournisseur', 'Journalier', 'Divers'].map((s) => (
                                                 <button
                                                     key={s}
@@ -1069,9 +1070,9 @@ export default function FacturationPage() {
                                                         setSection(s as any);
                                                         setNewInvoice({ ...newInvoice, supplier_name: '' });
                                                     }}
-                                                    className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${section === s
-                                                        ? 'bg-[#4a3426] text-[#c69f6e] border-[#4a3426] shadow-lg shadow-[#4a3426]/20'
-                                                        : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#4a3426]/30'
+                                                    className={`flex-1 h-8 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border ${section === s
+                                                        ? 'bg-[#4a3426] text-[#c69f6e] border-[#4a3426] shadow-md shadow-[#4a3426]/10'
+                                                        : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#4a3426]/20'
                                                         }`}
                                                 >
                                                     {s}
@@ -1079,17 +1080,17 @@ export default function FacturationPage() {
                                             ))}
                                         </div>
 
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">
-                                            {section === 'Fournisseur' ? 'Fournisseur' : (section === 'Journalier' ? 'Personnel / Service' : 'Désignation')}
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">
+                                            {section === 'Fournisseur' ? 'Fournisseur' : (section === 'Journalier' ? 'Personnel' : 'Désignation')}
                                         </label>
                                         <div className="relative">
-                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={16} />
                                             <select
                                                 value={newInvoice.supplier_name}
                                                 onChange={(e) => setNewInvoice({ ...newInvoice, supplier_name: e.target.value })}
-                                                className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
+                                                className="w-full h-10 pl-10 pr-10 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none text-xs"
                                             >
-                                                <option value="">Sélectionner un élément</option>
+                                                <option value="">Sélectionner</option>
                                                 {section === 'Fournisseur' ? (
                                                     data?.getSuppliers.map((s: any) => (
                                                         <option key={s.id} value={s.name}>{s.name}</option>
@@ -1107,90 +1108,92 @@ export default function FacturationPage() {
                                                     setNewName({ ...newName, section: section });
                                                     setShowAddNameModal(true);
                                                 }}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-[#4a3426] text-white rounded-xl hover:bg-[#38261b] transition-all"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#4a3426] text-white rounded-lg hover:bg-[#38261b] transition-all"
                                             >
-                                                <Plus size={16} />
+                                                <Plus size={14} />
                                             </button>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Type de Document & Numéro</label>
-                                        <div className="flex gap-4">
-                                            <div className="flex-1 flex gap-2">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Document & N°</label>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 flex gap-1">
                                                 {['Facture', 'BL'].map((t) => (
                                                     <button
                                                         key={t}
                                                         type="button"
                                                         onClick={() => setNewInvoice({ ...newInvoice, doc_type: t })}
-                                                        className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${newInvoice.doc_type === t
-                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-lg shadow-[#d00000]/20'
-                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/30'
+                                                        className={`flex-1 h-8 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border ${newInvoice.doc_type === t
+                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-md shadow-[#d00000]/10'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/20'
                                                             }`}
                                                     >
                                                         {t}
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className="flex-[1.5] relative">
-                                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={18} />
+                                            <div className="flex-[1.2] relative">
+                                                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={14} />
                                                 <input
                                                     type="text"
-                                                    placeholder="N° (Optionnel)"
+                                                    placeholder="N° optional"
                                                     value={newInvoice.doc_number}
                                                     onChange={(e) => setNewInvoice({ ...newInvoice, doc_number: e.target.value })}
-                                                    className="w-full h-12 pl-11 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-xs"
+                                                    className="w-full h-8 pl-9 pr-3 bg-[#f9f6f2] border border-[#e6dace] rounded-lg font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-[11px]"
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Montant (DT)</label>
                                             <div className="relative">
-                                                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={16} />
                                                 <input
                                                     type="number"
                                                     step="0.001"
                                                     placeholder="0.000"
                                                     value={newInvoice.amount}
                                                     onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                                                    className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                                    className="w-full h-10 pl-9 pr-3 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-sm"
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
-                                            <PremiumDatePicker
-                                                label="Date"
-                                                value={newInvoice.date}
-                                                onChange={(val) => setNewInvoice({ ...newInvoice, date: val })}
-                                                lockedDates={lockedDates}
-                                            />
+                                        <div className="space-y-0.5">
+                                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Date Facture</label>
+                                            <div className="scale-[0.85] origin-top-left -mb-4">
+                                                <PremiumDatePicker
+                                                    label="Date"
+                                                    value={newInvoice.date}
+                                                    onChange={(val) => setNewInvoice({ ...newInvoice, date: val })}
+                                                    lockedDates={lockedDates}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photo / Reçu</label>
-                                        <div className="grid grid-cols-3 gap-3 mb-3">
+                                    <div className="mt-[-8px]">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Photos</label>
+                                        <div className="grid grid-cols-6 gap-1.5 mb-1.5">
                                             {newInvoice.photos.map((p, idx) => (
-                                                <div key={idx} className="relative aspect-square bg-[#f9f6f2] rounded-xl overflow-hidden group border border-[#e6dace]">
+                                                <div key={idx} className="relative aspect-square bg-[#f9f6f2] rounded-lg overflow-hidden group border border-[#e6dace]">
                                                     <img src={p} className="w-full h-full object-cover" />
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleDeletePhoto(idx); }}
-                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-opacity"
                                                     >
-                                                        <X size={14} />
+                                                        <X size={10} />
                                                     </button>
                                                 </div>
                                             ))}
                                             <div
                                                 onClick={() => document.getElementById('photo-upload')?.click()}
-                                                className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all"
+                                                className="aspect-square bg-[#fcfaf8] border border-dashed border-[#e6dace] rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:border-[#c69f6e] hover:bg-[#fff9f2] transition-all"
                                             >
-                                                <UploadCloud className="text-[#c69f6e] opacity-40" size={24} />
-                                                <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest text-center px-1">Ajouter</span>
+                                                <UploadCloud className="text-[#c69f6e] opacity-40" size={16} />
+                                                <span className="text-[6px] font-black text-[#8c8279] uppercase tracking-widest text-center">Ajouter</span>
                                                 <input id="photo-upload" type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
                                             </div>
                                         </div>
@@ -1199,7 +1202,7 @@ export default function FacturationPage() {
                                     <button
                                         onClick={handleAddInvoice}
                                         disabled={!newInvoice.supplier_name || !newInvoice.amount || !newInvoice.doc_type}
-                                        className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-[#4a3426]/20"
+                                        className="w-full h-11 bg-[#4a3426] text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#38261b] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg"
                                     >
                                         Confirmer l'ajout
                                     </button>
@@ -1226,29 +1229,30 @@ export default function FacturationPage() {
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
                                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-white rounded-[2.5rem] w-full max-w-md overflow-visible shadow-2xl border border-white/20"
+                                className="bg-white rounded-[1.5rem] w-full max-w-md max-h-[96vh] overflow-y-auto shadow-2xl border border-white/20 custom-scrollbar m-auto"
                             >
-                                <div className="p-8 bg-[#2d6a4f] text-white relative rounded-t-[2.5rem]">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                        <CheckCircle2 size={28} className="text-[#a7c957]" />
+                                <div className="p-3 bg-[#2d6a4f] text-white relative rounded-t-[1.5rem]">
+                                    <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                                        <CheckCircle2 size={24} className="text-[#a7c957]" />
                                         Paiement
                                     </h2>
-                                    <p className="text-xs text-white/60 font-medium mt-1">Valider le règlement de la facture</p>
-                                    <button onClick={() => setShowPayModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
+                                    <button onClick={() => setShowPayModal(null)} className="absolute top-3 right-3 text-white/40 hover:text-white transition-colors">
+                                        <X size={20} />
+                                    </button>
                                 </div>
 
-                                <div className="p-8 space-y-6">
-                                    <div className="bg-[#f0faf5] p-4 rounded-2xl border border-[#d1e7dd]">
-                                        <span className="text-[10px] font-black text-[#2d6a4f] uppercase tracking-widest block mb-1">Détails Facture</span>
+                                <div className="p-4 space-y-3">
+                                    <div className="bg-[#f0faf5] p-2.5 rounded-xl border border-[#d1e7dd]">
+                                        <span className="text-[9px] font-black text-[#2d6a4f] uppercase tracking-widest block mb-0.5">Détails Facture</span>
                                         <div className="flex justify-between items-baseline font-black text-[#1b4332]">
-                                            <span className="text-lg">{showPayModal.supplier_name}</span>
-                                            <span className="text-2xl">{parseFloat(showPayModal.amount).toFixed(3)} DT</span>
+                                            <span className="text-sm">{showPayModal.supplier_name}</span>
+                                            <span className="text-lg">{parseFloat(showPayModal.amount).toFixed(3)} DT</span>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Mode de Paiement</label>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Mode de Paiement</label>
+                                        <div className="grid grid-cols-2 gap-1.5">
                                             {[
                                                 { id: 'Espèces', icon: Coins },
                                                 { id: 'Tpe', icon: CreditCard },
@@ -1258,61 +1262,63 @@ export default function FacturationPage() {
                                                 <button
                                                     key={m.id}
                                                     onClick={() => setPaymentDetails({ ...paymentDetails, method: m.id })}
-                                                    className={`h-14 rounded-2xl border-2 flex items-center gap-3 px-4 transition-all ${paymentDetails.method === m.id
-                                                        ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white shadow-lg'
+                                                    className={`h-9 rounded-lg border-2 flex items-center gap-2 px-2 transition-all ${paymentDetails.method === m.id
+                                                        ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white shadow-md'
                                                         : 'bg-white border-[#e6dace] text-[#8c8279] hover:border-[#2d6a4f]'
                                                         }`}
                                                 >
-                                                    <m.icon size={18} />
-                                                    <span className="font-bold text-xs">{m.id}</span>
+                                                    <m.icon size={14} />
+                                                    <span className="font-bold text-[9px]">{m.id}</span>
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date de Règlement</label>
-                                        <PremiumDatePicker
-                                            label="Date"
-                                            colorMode="green"
-                                            value={paymentDetails.date}
-                                            onChange={(val) => setPaymentDetails({ ...paymentDetails, date: val })}
-                                            lockedDates={lockedDates}
-                                            allowedDates={user?.role === 'caissier' ? [todayStr, yesterdayStr] : undefined}
-                                        />
+                                    <div className="space-y-0.5">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Date de Règlement</label>
+                                        <div className="scale-[0.9] origin-top-left -mb-2">
+                                            <PremiumDatePicker
+                                                label="Date"
+                                                colorMode="green"
+                                                value={paymentDetails.date}
+                                                onChange={(val) => setPaymentDetails({ ...paymentDetails, date: val })}
+                                                lockedDates={lockedDates}
+                                                allowedDates={user?.role === 'caissier' ? [todayStr, yesterdayStr] : undefined}
+                                            />
+                                        </div>
                                     </div>
 
                                     {paymentDetails.method === 'Chèque' && (
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 gap-2 pt-1">
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Recto</label>
+                                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Recto</label>
                                                 <div
                                                     onClick={() => document.getElementById('recto-upload')?.click()}
-                                                    className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
+                                                    className="h-16 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
                                                 >
                                                     {paymentDetails.photo_cheque_url ? (
                                                         <img src={paymentDetails.photo_cheque_url} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <>
-                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
-                                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Recto</span>
+                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={16} />
+                                                            <span className="text-[6px] font-black text-[#8c8279] uppercase tracking-widest">Ajouter</span>
                                                         </>
                                                     )}
                                                     <input id="recto-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'recto')} />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Chèque Verso</label>
+                                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Verso</label>
                                                 <div
                                                     onClick={() => document.getElementById('verso-upload')?.click()}
-                                                    className="h-24 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
+                                                    className="h-16 bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-lg flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:border-[#2d6a4f] hover:bg-[#f0faf5] transition-all overflow-hidden"
                                                 >
                                                     {paymentDetails.photo_verso_url ? (
                                                         <img src={paymentDetails.photo_verso_url} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <>
-                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={24} />
-                                                            <span className="text-[8px] font-black text-[#8c8279] uppercase tracking-widest">Verso</span>
+                                                            <UploadCloud className="text-[#2d6a4f] opacity-40" size={16} />
+                                                            <span className="text-[6px] font-black text-[#8c8279] uppercase tracking-widest">Ajouter</span>
                                                         </>
                                                     )}
                                                     <input id="verso-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'verso')} />
@@ -1323,7 +1329,7 @@ export default function FacturationPage() {
 
                                     <button
                                         onClick={handlePayInvoice}
-                                        className="w-full h-16 bg-[#2d6a4f] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#1b4332] transition-all shadow-xl shadow-[#2d6a4f]/20"
+                                        className="w-full h-11 bg-[#2d6a4f] text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#1b4332] transition-all shadow-lg"
                                     >
                                         Valider et Archiver
                                     </button>
@@ -1531,26 +1537,27 @@ export default function FacturationPage() {
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
                                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
+                                className="bg-white rounded-[1.5rem] w-full max-w-lg max-h-[96vh] overflow-y-auto shadow-2xl border border-white/20 custom-scrollbar m-auto"
                             >
-                                <div className="p-5 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                        <Edit2 size={28} className="text-[#c69f6e]" />
+                                <div className="p-3 bg-[#4a3426] text-white relative rounded-t-[1.5rem]">
+                                    <h2 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                                        <Edit2 size={20} className="text-[#c69f6e]" />
                                         Modifier Facture
                                     </h2>
-                                    <p className="text-xs text-white/60 font-medium mt-1">Mettre à jour les informations de la facture</p>
-                                    <button onClick={() => setShowEditModal(null)} className="absolute top-5 right-5 text-white/40 hover:text-white"><X size={24} /></button>
+                                    <button onClick={() => setShowEditModal(null)} className="absolute top-3 right-3 text-white/40 hover:text-white transition-colors">
+                                        <X size={20} />
+                                    </button>
                                 </div>
 
-                                <div className="p-5 space-y-3">
+                                <div className="p-4 space-y-3">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Fournisseur / Elément</label>
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Fournisseur / Elément</label>
                                         <div className="relative">
-                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={16} />
                                             <select
                                                 value={showEditModal.supplier_name}
                                                 onChange={(e) => setShowEditModal({ ...showEditModal, supplier_name: e.target.value })}
-                                                className="w-full h-14 pl-12 pr-12 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none"
+                                                className="w-full h-10 pl-10 pr-10 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all appearance-none text-xs"
                                             >
                                                 <option value="">Sélectionner</option>
                                                 {data?.getSuppliers.map((s: any) => (<option key={s.id} value={s.name}>{s.name}</option>))}
@@ -1560,82 +1567,84 @@ export default function FacturationPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Type de Document & Numéro</label>
-                                        <div className="flex gap-4">
-                                            <div className="flex-1 flex gap-2">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Document & N°</label>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 flex gap-1">
                                                 {['Facture', 'BL'].map((t) => (
                                                     <button
                                                         key={t}
                                                         type="button"
                                                         onClick={() => setShowEditModal({ ...showEditModal, doc_type: t })}
-                                                        className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border ${showEditModal.doc_type === t
-                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-lg shadow-[#d00000]/20'
-                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/30'
+                                                        className={`flex-1 h-8 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border ${showEditModal.doc_type === t
+                                                            ? 'bg-[#d00000] text-white border-[#d00000] shadow-md shadow-[#d00000]/10'
+                                                            : 'bg-white text-[#8c8279] border-[#e6dace] hover:border-[#d00000]/20'
                                                             }`}
                                                     >
                                                         {t}
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className="flex-[1.5] relative">
-                                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={18} />
+                                            <div className="flex-[1.2] relative">
+                                                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={14} />
                                                 <input
                                                     type="text"
-                                                    placeholder="N° (Optionnel)"
+                                                    placeholder="N° optional"
                                                     value={showEditModal.doc_number}
                                                     onChange={(e) => setShowEditModal({ ...showEditModal, doc_number: e.target.value })}
-                                                    className="w-full h-12 pl-11 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-xs"
+                                                    className="w-full h-8 pl-9 pr-3 bg-[#f9f6f2] border border-[#e6dace] rounded-lg font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-[11px]"
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Montant (DT)</label>
+                                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Montant (DT)</label>
                                             <div className="relative">
-                                                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={20} />
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={16} />
                                                 <input
                                                     type="number"
                                                     step="0.001"
                                                     placeholder="0.000"
                                                     value={showEditModal.amount}
                                                     onChange={(e) => setShowEditModal({ ...showEditModal, amount: e.target.value })}
-                                                    className="w-full h-14 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-2xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                                    className="w-full h-10 pl-9 pr-3 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all text-sm"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Date Facture</label>
-                                            <PremiumDatePicker
-                                                label="Date"
-                                                value={showEditModal.date}
-                                                onChange={(val) => setShowEditModal({ ...showEditModal, date: val })}
-                                                lockedDates={lockedDates}
-                                            />
+                                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Date Facture</label>
+                                            <div className="scale-[0.9] origin-top-left -mb-2">
+                                                <PremiumDatePicker
+                                                    label="Date"
+                                                    value={showEditModal.date}
+                                                    onChange={(val) => setShowEditModal({ ...showEditModal, date: val })}
+                                                    lockedDates={lockedDates}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Photos Facture ({showEditModal.photos.length}/5)</label>
-                                        <div className="grid grid-cols-5 gap-2">
+                                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-1 block ml-1">Photos ({showEditModal.photos.length}/5)</label>
+                                        <div className="grid grid-cols-5 gap-2 mb-2">
                                             {showEditModal.photos.map((p: string, i: number) => (
-                                                <div key={i} className="aspect-square bg-[#fcfaf8] border border-[#e6dace] rounded-xl relative group overflow-hidden">
+                                                <div key={i} className="aspect-square bg-[#fcfaf8] border border-[#e6dace] rounded-lg relative group overflow-hidden">
                                                     <img src={p} className="w-full h-full object-cover" />
                                                     <button
                                                         onClick={() => setShowEditModal({ ...showEditModal, photos: showEditModal.photos.filter((_: any, idx: number) => idx !== i) })}
-                                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                                                        className="absolute top-0.5 right-0.5 bg-red-500 text-white p-1 rounded-full opacity-100 transition-all shadow-md"
                                                     >
-                                                        <Trash2 size={12} />
+                                                        <Trash2 size={10} />
                                                     </button>
                                                 </div>
                                             ))}
                                             {showEditModal.photos.length < 5 && (
                                                 <button
                                                     onClick={() => document.getElementById('edit-upload')?.click()}
-                                                    className="aspect-square bg-[#fcfaf8] border-2 border-dashed border-[#e6dace] rounded-xl flex items-center justify-center text-[#c69f6e] hover:border-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
+                                                    className="aspect-square bg-[#fcfaf8] border border-dashed border-[#e6dace] rounded-lg flex items-center justify-center text-[#c69f6e] hover:border-[#c69f6e] hover:bg-[#fcfaf8] transition-all"
                                                 >
-                                                    <Plus size={24} />
+                                                    <Plus size={18} />
                                                     <input
                                                         id="edit-upload"
                                                         type="file"
@@ -1652,8 +1661,11 @@ export default function FacturationPage() {
                                                                         reader.readAsDataURL(file);
                                                                     });
                                                                 });
-                                                                const results = await Promise.all(filePromises);
-                                                                setShowEditModal({ ...showEditModal, photos: [...showEditModal.photos, ...results].slice(0, 5) });
+                                                                const newPhotos = await Promise.all(filePromises);
+                                                                setShowEditModal({
+                                                                    ...showEditModal,
+                                                                    photos: [...showEditModal.photos, ...newPhotos].slice(0, 5)
+                                                                });
                                                             }
                                                         }}
                                                     />
@@ -1664,7 +1676,7 @@ export default function FacturationPage() {
 
                                     <button
                                         onClick={() => handleUpdateInvoice(showEditModal)}
-                                        className="w-full h-16 bg-[#4a3426] text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:bg-[#38261b] transition-all shadow-xl shadow-[#4a3426]/20"
+                                        className="w-full h-11 bg-[#4a3426] text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-[#38261b] transition-all shadow-lg"
                                     >
                                         Enregistrer les modifications
                                     </button>
@@ -1673,9 +1685,8 @@ export default function FacturationPage() {
                         </motion.div>
                     )
                 }
-            </AnimatePresence >
+            </AnimatePresence>
 
-            {/* Confirmation Modal */}
             {/* Confirmation Modal */}
             <ConfirmModal
                 isOpen={!!showConfirm}
