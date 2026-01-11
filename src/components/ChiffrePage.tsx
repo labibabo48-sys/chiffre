@@ -706,23 +706,16 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(journalier.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${journalier.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">{journalier.details ? 'Détails OK' : 'Détails'}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
                                                 <div className="w-full md:w-36 relative">
-                                                    <select
-                                                        value={journalier.paymentMethod || 'Espèces'}
-                                                        onChange={(e) => handleJournalierChange(index, 'paymentMethod', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6"
-                                                    >
-                                                        <option value="Espèces">💵 Espèces</option>
-                                                        <option value="Chèque">✍️ Chèque</option>
-                                                        <option value="TPE (Carte)">💳 TPE (Carte)</option>
-                                                        <option value="Ticket Restaurant">🎫 T. Restaurant</option>
-                                                    </select>
+                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
+                                                        <span>💵</span> Espèces
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -749,13 +742,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
-                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Section</span>
-                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesJournalier.toFixed(3)} <span className="text-sm">DT</span></span>
-                                </div>
                                 <button onClick={() => handleAddJournalier()} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
                                     <Plus size={18} /> Nouvelle Ligne (Journalier)
                                 </button>
+                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Journalier</span>
+                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesJournalier.toFixed(3)} <span className="text-sm">DT</span></span>
+                                </div>
                             </section>
                         </div>
 
@@ -852,24 +845,16 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(expense.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${expense.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">{expense.details ? 'Détails OK' : 'Détails'}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">{expense.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
                                                 <div className="w-full md:w-36 relative">
-                                                    <select
-                                                        value={expense.paymentMethod || 'Espèces'}
-                                                        disabled={expense.isFromFacturation}
-                                                        onChange={(e) => handleDetailChange(index, 'paymentMethod', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6 ${expense.isFromFacturation ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        <option value="Espèces">💵 Espèces</option>
-                                                        <option value="Chèque">✍️ Chèque</option>
-                                                        <option value="TPE (Carte)">💳 TPE (Carte)</option>
-                                                        <option value="Ticket Restaurant">🎫 T. Restaurant</option>
-                                                    </select>
+                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
+                                                        <span>💵</span> Espèces
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -882,7 +867,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${expense.isFromFacturation && expense.invoices.length === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : (expense.isFromFacturation ? 'border-red-600 text-red-600 bg-red-50' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
@@ -953,13 +938,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
-                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Section</span>
-                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDynamic.toFixed(3)} <span className="text-sm">DT</span></span>
-                                </div>
                                 <button onClick={handleAddExpense} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
                                     <Plus size={18} /> Nouvelle Ligne
                                 </button>
+                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Fournisseur</span>
+                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDynamic.toFixed(3)} <span className="text-sm">DT</span></span>
+                                </div>
                             </section>
                         </div>
 
@@ -1056,23 +1041,16 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         setTempDetails(divers.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 px-4 rounded-xl border flex items-center gap-2 transition-all ${divers.details ? 'bg-[#c69f6e] text-white border-[#c69f6e]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-red-600 text-white border-red-600' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'}`}
                                                 >
                                                     <FileText size={16} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">{divers.details ? 'Détails OK' : 'Détails'}</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">{divers.details ? 'Détails OK' : 'Détails'}</span>
                                                 </button>
 
                                                 <div className="w-full md:w-36 relative">
-                                                    <select
-                                                        value={divers.paymentMethod || 'Espèces'}
-                                                        onChange={(e) => handleDiversChange(index, 'paymentMethod', e.target.value)}
-                                                        className="w-full bg-white border border-[#e6dace] rounded-xl h-12 px-2 font-bold text-[10px] text-[#4a3426] focus:border-[#c69f6e] outline-none appearance-none cursor-pointer pr-6"
-                                                    >
-                                                        <option value="Espèces">💵 Espèces</option>
-                                                        <option value="Chèque">✍️ Chèque</option>
-                                                        <option value="TPE (Carte)">💳 TPE (Carte)</option>
-                                                        <option value="Ticket Restaurant">🎫 T. Restaurant</option>
-                                                    </select>
+                                                    <div className="w-full bg-[#f9f6f2] border border-[#e6dace] rounded-xl h-12 px-3 flex items-center gap-2 font-bold text-[10px] text-[#4a3426] opacity-70 cursor-not-allowed">
+                                                        <span>💵</span> Espèces
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 w-full md:w-auto">
@@ -1098,13 +1076,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
-                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Section</span>
-                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDivers.toFixed(3)} <span className="text-sm">DT</span></span>
-                                </div>
                                 <button onClick={() => handleAddDivers()} className="mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all">
                                     <Plus size={18} /> Nouvelle Ligne (Divers)
                                 </button>
+                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Divers</span>
+                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDivers.toFixed(3)} <span className="text-sm">DT</span></span>
+                                </div>
                             </section>
                         </div>
 
@@ -1156,7 +1134,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     ))}
                                 </div>
                                 <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
-                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Section</span>
+                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Administratif</span>
                                     <span className="text-2xl font-black text-[#4a3426]">{totalExpensesAdmin.toFixed(3)} <span className="text-sm">DT</span></span>
                                 </div>
                             </section>
