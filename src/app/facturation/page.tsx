@@ -12,6 +12,7 @@ import {
     ZoomIn, ZoomOut, RotateCcw, Download, Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Swal from 'sweetalert2';
 
 // --- Helper Components & Utilities ---
 
@@ -259,12 +260,22 @@ const UPDATE_INVOICE = gql`
 `;
 
 // --- Confirm Modal Component ---
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, color = 'brown' }: any) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, color = 'brown', alert = false }: any) => {
     if (!isOpen) return null;
     const colors: { [key: string]: string } = {
         brown: 'bg-[#4a3426] hover:bg-[#38261b]',
         red: 'bg-red-500 hover:bg-red-600',
         green: 'bg-[#2d6a4f] hover:bg-[#1b4332]'
+    };
+    const backdropColors: { [key: string]: string } = {
+        brown: 'bg-black/40',
+        red: 'bg-red-500/60',
+        green: 'bg-[#2d6a4f]/60'
+    };
+    const headerColors: { [key: string]: string } = {
+        brown: 'bg-[#4a3426]',
+        red: 'bg-red-500',
+        green: 'bg-[#2d6a4f]'
     };
     return (
         <AnimatePresence>
@@ -272,7 +283,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, color = 'bro
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[300] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 text-left"
+                className={`fixed inset-0 z-[300] ${backdropColors[color]} backdrop-blur-md flex items-center justify-center p-4 text-left`}
                 onClick={onClose}
             >
                 <motion.div
@@ -280,9 +291,9 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, color = 'bro
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
                     onClick={e => e.stopPropagation()}
-                    className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-[#e6dace]"
+                    className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-white/20"
                 >
-                    <div className={`p-6 ${colors[color]} text-white`}>
+                    <div className={`p-6 ${headerColors[color]} text-white`}>
                         <h3 className="text-lg font-black uppercase tracking-tight">{title}</h3>
                     </div>
                     <div className="p-6 space-y-6">
@@ -290,17 +301,19 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, color = 'bro
                             {message}
                         </p>
                         <div className="flex gap-3">
+                            {!alert && (
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
+                                >
+                                    Annuler
+                                </button>
+                            )}
                             <button
-                                onClick={onClose}
-                                className="flex-1 h-12 bg-[#f9f6f2] text-[#8c8279] rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#ece6df] transition-all"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={() => { onConfirm(); onClose(); }}
+                                onClick={() => { if (onConfirm) onConfirm(); onClose(); }}
                                 className={`flex-1 h-12 ${colors[color]} text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg`}
                             >
-                                Confirmer
+                                {alert ? 'OK' : 'Confirmer'}
                             </button>
                         </div>
                     </div>
@@ -325,7 +338,7 @@ export default function FacturationPage() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showPayModal, setShowPayModal] = useState<any>(null);
     const [showEditModal, setShowEditModal] = useState<any>(null);
-    const [showConfirm, setShowConfirm] = useState<{ type: string, title: string, message: string, color: string, onConfirm: () => void } | null>(null);
+    const [showConfirm, setShowConfirm] = useState<{ type: string, title: string, message: string, color: string, onConfirm?: () => void, alert?: boolean } | null>(null);
     const [showChoiceModal, setShowChoiceModal] = useState(false);
     const [viewingData, setViewingData] = useState<any>(null);
     const [imgZoom, setImgZoom] = useState(1);
@@ -530,7 +543,13 @@ export default function FacturationPage() {
 
     const handleUnpay = async (inv: any) => {
         if (lockedDates.includes(inv.paid_date)) {
-            alert("Cette date est verrouillée. Impossible d'annuler le paiement.");
+            setShowConfirm({
+                type: 'alert',
+                title: 'INTERDIT',
+                message: 'Cette date est verrouillée. Impossible de modifier cette facture.',
+                color: 'red',
+                alert: true
+            });
             return;
         }
         setShowConfirm({
@@ -729,7 +748,7 @@ export default function FacturationPage() {
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={18} />
                                 <input
                                     type="text"
-                                    placeholder="Rechercher..."
+                                    placeholder="Rechercher (Nom, N°, Montant)..."
                                     value={searchSupplier}
                                     onChange={(e) => setSearchSupplier(e.target.value)}
                                     className="w-full h-12 pl-12 pr-4 bg-[#f9f6f2] border border-[#e6dace] rounded-xl font-bold text-[#4a3426] outline-none focus:border-[#c69f6e] transition-all"
@@ -753,9 +772,14 @@ export default function FacturationPage() {
                                 />
                             </div>
                         </div>
-                        {statusFilter !== 'all' && (
+                        {(statusFilter !== 'all' || searchSupplier || filterStartDate || filterEndDate) && (
                             <button
-                                onClick={() => setStatusFilter('all')}
+                                onClick={() => {
+                                    setStatusFilter('all');
+                                    setSearchSupplier('');
+                                    setFilterStartDate('');
+                                    setFilterEndDate('');
+                                }}
                                 className="h-12 px-4 bg-[#fcfaf8] border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fff9f2] flex items-center gap-2 transition-all"
                             >
                                 <X size={14} /> Réinitialiser
@@ -1021,19 +1045,19 @@ export default function FacturationPage() {
                                 onClick={e => e.stopPropagation()}
                                 className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
                             >
-                                <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
+                                <div className="p-5 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
                                     <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                         <Receipt size={28} className="text-[#c69f6e]" />
                                         Nouveau Reçu
                                     </h2>
                                     <p className="text-xs text-white/60 font-medium mt-1">Enregistrer une nouvelle facture fournisseur</p>
-                                    <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
+                                    <button onClick={() => setShowAddModal(false)} className="absolute top-5 right-5 text-white/40 hover:text-white"><X size={24} /></button>
                                 </div>
 
-                                <div className="p-8 space-y-6">
+                                <div className="p-5 space-y-3">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-4 block ml-1">Section</label>
-                                        <div className="flex gap-2 mb-6">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Section</label>
+                                        <div className="flex gap-2 mb-3">
                                             {['Fournisseur', 'Journalier', 'Divers'].map((s) => (
                                                 <button
                                                     key={s}
@@ -1087,7 +1111,7 @@ export default function FacturationPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-4 block ml-1">Type de Document & Numéro</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Type de Document & Numéro</label>
                                         <div className="flex gap-4">
                                             <div className="flex-1 flex gap-2">
                                                 {['Facture', 'BL'].map((t) => (
@@ -1505,16 +1529,16 @@ export default function FacturationPage() {
                                 onClick={e => e.stopPropagation()}
                                 className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
                             >
-                                <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
+                                <div className="p-5 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
                                     <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
                                         <Edit2 size={28} className="text-[#c69f6e]" />
                                         Modifier Facture
                                     </h2>
                                     <p className="text-xs text-white/60 font-medium mt-1">Mettre à jour les informations de la facture</p>
-                                    <button onClick={() => setShowEditModal(null)} className="absolute top-8 right-8 text-white/40 hover:text-white"><X size={24} /></button>
+                                    <button onClick={() => setShowEditModal(null)} className="absolute top-5 right-5 text-white/40 hover:text-white"><X size={24} /></button>
                                 </div>
 
-                                <div className="p-8 space-y-6">
+                                <div className="p-5 space-y-3">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Fournisseur / Elément</label>
                                         <div className="relative">
@@ -1532,7 +1556,7 @@ export default function FacturationPage() {
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-3 block ml-1">Type de Document & Numéro</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-2 block ml-1">Type de Document & Numéro</label>
                                         <div className="flex gap-4">
                                             <div className="flex-1 flex gap-2">
                                                 {['Facture', 'BL'].map((t) => (
@@ -1648,14 +1672,15 @@ export default function FacturationPage() {
             </AnimatePresence >
 
             {/* Confirmation Modal */}
-            < ConfirmModal
-                isOpen={!!showConfirm
-                }
+            {/* Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!showConfirm}
                 onClose={() => setShowConfirm(null)}
                 onConfirm={showConfirm?.onConfirm}
                 title={showConfirm?.title}
                 message={showConfirm?.message}
                 color={showConfirm?.color}
+                alert={showConfirm?.alert}
             />
 
 

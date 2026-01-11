@@ -71,7 +71,7 @@ export const resolvers = {
             const params = [];
             if (supplierName) {
                 params.push(`%${supplierName}%`);
-                sql += ` AND supplier_name ILIKE $${params.length}`;
+                sql += ` AND (supplier_name ILIKE $${params.length} OR doc_number ILIKE $${params.length} OR amount::text ILIKE $${params.length})`;
             }
             if (startDate) {
                 params.push(startDate);
