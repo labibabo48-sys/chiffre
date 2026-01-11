@@ -7,7 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import {
     LayoutDashboard, Loader2, Calendar,
     Wallet, TrendingUp, TrendingDown, CreditCard, Banknote, Coins, Receipt, Calculator,
-    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, Truck, Download
+    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, Truck, Download, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,6 +29,8 @@ const GET_CHIFFRES_MONTHLY = gql`
       extras_details { username montant }
       primes_details { username montant }
       diponce_divers
+      diponce_journalier
+      diponce_admin
     }
   }
 `;
@@ -127,13 +129,15 @@ export default function DashboardPage() {
                 allExtras: [...acc.allExtras, ...curr.extras_details],
                 allPrimes: [...acc.allPrimes, ...curr.primes_details],
                 allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]')],
+                allJournalier: [...acc.allJournalier, ...JSON.parse(curr.diponce_journalier || '[]')],
+                allAdmin: [...acc.allAdmin, ...JSON.parse(curr.diponce_admin || '[]')],
             };
         }, {
             recette_de_caisse: 0, total_diponce: 0, recette_net: 0,
             tpe: 0, cheque_bancaire: 0, espaces: 0, tickets_restaurant: 0,
             extra: 0, primes: 0,
             allExpenses: [], allAvances: [], allDoublages: [], allExtras: [], allPrimes: [],
-            allDivers: []
+            allDivers: [], allJournalier: [], allAdmin: []
         });
 
         // Grouping function
@@ -159,7 +163,9 @@ export default function DashboardPage() {
         return {
             ...base,
             groupedExpenses: filterByName(aggregateGroup(base.allExpenses, 'supplier', 'amount')),
+            groupedJournalier: filterByName(aggregateGroup(base.allJournalier, 'designation', 'amount')),
             groupedDivers: filterByName(aggregateGroup(base.allDivers, 'designation', 'amount')),
+            groupedAdmin: filterByName(aggregateGroup(base.allAdmin, 'designation', 'amount')),
             groupedAvances: filterByName(aggregateGroup(base.allAvances, 'username', 'montant')),
             groupedDoublages: filterByName(aggregateGroup(base.allDoublages, 'username', 'montant')),
             groupedExtras: filterByName(aggregateGroup(base.allExtras, 'username', 'montant')),
@@ -313,7 +319,7 @@ export default function DashboardPage() {
 
                             {/* 2. Unified Grid for All Expense Categories */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* 1.1 Dépenses Journalier (Divers) */}
+                                {/* 1.1 Dépenses Journalier */}
                                 <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
                                     <button
                                         onClick={() => toggleSection('journalier')}
@@ -321,17 +327,17 @@ export default function DashboardPage() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
-                                                <Sparkles size={20} />
+                                                <Clock size={20} />
                                             </div>
                                             <div>
                                                 <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Journalier</h4>
-                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Désignations Diverses</p>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Quotidien & Fonctionnement</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
                                                 <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
-                                                    {aggregates.groupedDivers.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                    {aggregates.groupedJournalier.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                                 </span>
                                                 <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
                                             </div>
@@ -353,7 +359,7 @@ export default function DashboardPage() {
                                                 className="overflow-hidden"
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
-                                                    {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a: any, i: number) => (
+                                                    {aggregates.groupedJournalier.length > 0 ? aggregates.groupedJournalier.map((a: any, i: number) => (
                                                         <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
                                                             <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
                                                             <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
@@ -365,7 +371,7 @@ export default function DashboardPage() {
                                     </AnimatePresence>
                                 </div>
 
-                                {/* 1.2 Dépenses Courantes (Fournisseurs) */}
+                                {/* 1.2 Dépenses Fournisseur */}
                                 <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
                                     <button
                                         onClick={() => toggleSection('fournisseurs')}
@@ -376,8 +382,8 @@ export default function DashboardPage() {
                                                 <Truck size={20} />
                                             </div>
                                             <div>
-                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Fournisseurs</h4>
-                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Dépenses & Charges</p>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Fournisseurs</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Marchandises & Services</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
@@ -417,6 +423,110 @@ export default function DashboardPage() {
                                                                 <Eye size={12} className="text-[#c69f6e] opacity-0 group-hover:opacity-100 transition-opacity" />
                                                             </div>
                                                         </button>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* 1.3 Dépenses Divers */}
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('divers')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
+                                                <Sparkles size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Divers</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Frais Exceptionnels</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedDivers.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                            </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['divers'] ? 180 : 0 }}
+                                                className="text-[#c69f6e]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['divers'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                            <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
+                                                        </div>
+                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* 1.4 Dépenses Administratif */}
+                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                    <button
+                                        onClick={() => toggleSection('administratif')}
+                                        className="flex justify-between items-center w-full text-left"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#4a3426]/10 flex items-center justify-center text-[#4a3426]">
+                                                <LayoutDashboard size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Administratif</h4>
+                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Loyers, Factures & Bur.</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                <span className="text-[13px] md:text-sm font-black text-[#4a3426]">
+                                                    {aggregates.groupedAdmin.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                            </div>
+                                            <motion.div
+                                                animate={{ rotate: expandedSections['administratif'] ? 180 : 0 }}
+                                                className="text-[#4a3426]"
+                                            >
+                                                <ChevronDown size={20} />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {expandedSections['administratif'] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                    {aggregates.groupedAdmin.length > 0 ? aggregates.groupedAdmin.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                            <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
+                                                        </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
                                                 </div>
                                             </motion.div>
