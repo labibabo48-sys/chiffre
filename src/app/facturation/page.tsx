@@ -564,7 +564,7 @@ export default function FacturationPage() {
                             photo_url: invoiceData.photos[0] || '',
                             photos: JSON.stringify(invoiceData.photos),
                             doc_type: invoiceData.doc_type,
-                            doc_number: invoiceData.doc_number || null
+                            doc_number: invoiceData.doc_number || ''
                         }
                     });
                     setShowEditModal(null);
@@ -1503,7 +1503,7 @@ export default function FacturationPage() {
                                 animate={{ scale: 1, opacity: 1, y: 0 }}
                                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-y-auto max-h-[90vh] shadow-2xl border border-white/20 custom-scrollbar"
+                                className="bg-white rounded-[2.5rem] w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl border border-white/20"
                             >
                                 <div className="p-8 bg-[#4a3426] text-white relative rounded-t-[2.5rem]">
                                     <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
