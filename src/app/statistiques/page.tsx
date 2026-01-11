@@ -50,6 +50,7 @@ export default function StatistiquesPage() {
     const [initializing, setInitializing] = useState(true);
 
     // Filter States
+    const today = new Date();
     const ty = today.getFullYear();
     const tm = String(today.getMonth() + 1).padStart(2, '0');
     const td = String(today.getDate()).padStart(2, '0');
