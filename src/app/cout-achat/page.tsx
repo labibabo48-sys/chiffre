@@ -315,7 +315,7 @@ export default function CoutAchatPage() {
                                         <div className="text-[10px] font-black uppercase tracking-widest text-[#8c8279]">Consommation Totale</div>
                                     </div>
                                     <div>
-                                        <div className="text-3xl font-black tracking-tighter text-[#4a3426]">{(aggregates.totalPaid + aggregates.journalier.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.divers.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.admin.reduce((a: number, b: any) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</div>
+                                        <div className="text-3xl font-black tracking-tighter text-[#4a3426]">{(aggregates.totalPaid + aggregates.journalier.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.fournisseurs.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.divers.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.admin.reduce((a: number, b: any) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</div>
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#8c8279] mt-1 text-right">Payé + Dépenses directes</p>
                                     </div>
                                 </div>
