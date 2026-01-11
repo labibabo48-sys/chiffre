@@ -202,6 +202,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [showJournalierDropdown, setShowJournalierDropdown] = useState<number | null>(null);
     const [showDiversDropdown, setShowDiversDropdown] = useState<number | null>(null);
     const [viewingInvoices, setViewingInvoices] = useState<string[] | null>(null);
+    const [viewingInvoicesTarget, setViewingInvoicesTarget] = useState<{ index: number, type: 'expense' | 'divers' | 'journalier' } | null>(null);
     const [showCalendar, setShowCalendar] = useState(false);
     const [showSupplierModal, setShowSupplierModal] = useState(false);
     const [showJournalierModal, setShowJournalierModal] = useState(false);
@@ -723,10 +724,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         onClick={(e) => {
                                                             if (journalier.invoices.length > 0) {
                                                                 setViewingInvoices(journalier.invoices);
+                                                                setViewingInvoicesTarget({ index, type: 'journalier' });
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
+                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
@@ -862,12 +864,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         onClick={(e) => {
                                                             if (expense.invoices.length > 0) {
                                                                 setViewingInvoices(expense.invoices);
+                                                                setViewingInvoicesTarget({ index, type: 'expense' });
                                                                 e.preventDefault();
                                                             } else if (expense.isFromFacturation) {
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : (expense.isFromFacturation ? 'border-red-600 text-red-600 bg-red-50' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
+                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{expense.invoices.length || 'Reçu'}</span>
@@ -1058,10 +1061,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         onClick={(e) => {
                                                             if (divers.invoices.length > 0) {
                                                                 setViewingInvoices(divers.invoices);
+                                                                setViewingInvoicesTarget({ index, type: 'divers' });
                                                                 e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 px-3 rounded-xl border border-dashed flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'border-[#c69f6e] text-[#c69f6e] bg-[#c69f6e]/5' : 'border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
+                                                        className={`h-12 px-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-red-600 text-white border-red-600' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
@@ -1307,10 +1311,54 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             {/* Image Modal */}
             <AnimatePresence>
                 {viewingInvoices && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewingInvoices(null)}>
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-3xl p-4 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => setViewingInvoices(null)} className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"><LogOut size={20} className="rotate-180" /></button>
-                            <h3 className="text-xl font-bold mb-6 text-[#4a3426] flex items-center gap-2"><Receipt size={24} className="text-[#c69f6e]" /> Reçus & Factures</h3>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => { setViewingInvoices(null); setViewingInvoicesTarget(null); }} className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"><LogOut size={20} className="rotate-180" /></button>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-[#4a3426] flex items-center gap-2"><Receipt size={24} className="text-[#c69f6e]" /> Reçus & Factures</h3>
+                                {viewingInvoicesTarget && (
+                                    <label className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-red-700 transition-all shadow-lg shadow-red-200">
+                                        <Plus size={16} /> Ajouter Photo
+                                        <input
+                                            type="file"
+                                            multiple
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const files = e.target.files;
+                                                if (!files) return;
+                                                const loaders = Array.from(files).map(file => {
+                                                    return new Promise<string>((resolve) => {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => resolve(reader.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    });
+                                                });
+                                                const base64s = await Promise.all(loaders);
+
+                                                if (viewingInvoicesTarget.type === 'journalier') {
+                                                    const newJournalier = [...expensesJournalier];
+                                                    const currentInvoices = newJournalier[viewingInvoicesTarget.index].invoices || [];
+                                                    newJournalier[viewingInvoicesTarget.index].invoices = [...currentInvoices, ...base64s];
+                                                    setExpensesJournalier(newJournalier);
+                                                    setViewingInvoices(newJournalier[viewingInvoicesTarget.index].invoices);
+                                                } else if (viewingInvoicesTarget.type === 'divers') {
+                                                    const newDivers = [...expensesDivers];
+                                                    const currentInvoices = newDivers[viewingInvoicesTarget.index].invoices || [];
+                                                    newDivers[viewingInvoicesTarget.index].invoices = [...currentInvoices, ...base64s];
+                                                    setExpensesDivers(newDivers);
+                                                    setViewingInvoices(newDivers[viewingInvoicesTarget.index].invoices);
+                                                } else {
+                                                    const newExpenses = [...expenses];
+                                                    const currentInvoices = newExpenses[viewingInvoicesTarget.index].invoices || [];
+                                                    newExpenses[viewingInvoicesTarget.index].invoices = [...currentInvoices, ...base64s];
+                                                    setExpenses(newExpenses);
+                                                    setViewingInvoices(newExpenses[viewingInvoicesTarget.index].invoices);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                )}
+                            </div>
                             {viewingInvoices.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{viewingInvoices.map((img, idx) => (<div key={idx} className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm"><img src={img} className="w-full h-auto object-contain" /><div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100">Reçu {idx + 1}</div></div>))}</div>
                             ) : <div className="text-center py-20 text-gray-400"><UploadCloud size={60} className="mx-auto mb-4 opacity-20" /><p>Aucun reçu attaché</p></div>}
