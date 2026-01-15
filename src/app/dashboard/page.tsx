@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useRef } from 'react';
+import HistoryModal from '@/components/HistoryModal';
 
 // --- Premium Date Picker Component ---
 const PremiumDatePicker = ({ value, onChange, label, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, align?: 'left' | 'right' }) => {
@@ -173,7 +174,8 @@ export default function DashboardPage() {
     const today = new Date();
     const [pickerYear, setPickerYear] = useState(today.getFullYear());
     const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-    const [viewingData, setViewingData] = useState<any>(null);
+    const [viewingData, setViewingData] = useState<any | null>(null);
+    const [showHistoryModal, setShowHistoryModal] = useState<{ isOpen: boolean, type: string, targetName?: string } | null>(null);
 
     // Filter dates
     const startOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
@@ -434,8 +436,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedJournalier.length > 0 ? aggregates.groupedJournalier.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
-                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "journalier", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity hover:underline truncate max-w-[60%]">{a.name}</span>
                                                             <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -491,7 +493,10 @@ export default function DashboardPage() {
                                                             onClick={() => setSelectedSupplier(a.name)}
                                                             className="w-full flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-[#4a3426] transition-all"
                                                         >
-                                                            <span className="font-bold text-[#4a3426] text-sm group-hover:text-white transition-colors truncate max-w-[60%]">{a.name}</span>
+                                                            <span
+                                                                onClick={(e) => { e.stopPropagation(); setShowHistoryModal({ isOpen: true, type: 'supplier', targetName: a.name }); }}
+                                                                className="font-bold text-[#4a3426] text-sm group-hover:text-white transition-colors truncate max-w-[60%] hover:underline cursor-pointer"
+                                                            >{a.name}</span>
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-black text-[#4a3426] group-hover:text-white transition-colors">{a.amount.toFixed(3)}</span>
                                                                 <Eye size={12} className="text-[#c69f6e] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -545,8 +550,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedDivers.length > 0 ? aggregates.groupedDivers.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
-                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "divers", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity hover:underline truncate max-w-[60%]">{a.name}</span>
                                                             <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -597,8 +602,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedAdmin.length > 0 ? aggregates.groupedAdmin.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
-                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity truncate max-w-[60%]">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "admin", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30 group hover:bg-white hover:border-[#c69f6e]/30 transition-all">
+                                                            <span className="font-bold text-[#4a3426] text-sm opacity-70 group-hover:opacity-100 transition-opacity hover:underline truncate max-w-[60%]">{a.name}</span>
                                                             <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -649,8 +654,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedAvances.length > 0 ? aggregates.groupedAvances.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "avance", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70 hover:underline">{a.name}</span>
                                                             <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -701,8 +706,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedDoublages.length > 0 ? aggregates.groupedDoublages.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "doublage", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70 hover:underline">{a.name}</span>
                                                             <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -753,8 +758,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedExtras.length > 0 ? aggregates.groupedExtras.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "extra", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70 hover:underline">{a.name}</span>
                                                             <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -805,8 +810,8 @@ export default function DashboardPage() {
                                             >
                                                 <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
                                                     {aggregates.groupedPrimes.length > 0 ? aggregates.groupedPrimes.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
-                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70">{a.name}</span>
+                                                        <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "prime", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                            <span className="font-medium text-[#4a3426] text-sm opacity-70 hover:underline">{a.name}</span>
                                                             <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
                                                         </div>
                                                     )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
@@ -884,6 +889,15 @@ export default function DashboardPage() {
                         </div>
                     )}
                 </main>
+
+                <HistoryModal
+                    isOpen={!!showHistoryModal}
+                    onClose={() => setShowHistoryModal(null)}
+                    type={showHistoryModal?.type}
+                    targetName={showHistoryModal?.targetName}
+                    startDate={dateRange.start}
+                    endDate={dateRange.end}
+                />
             </div>
 
             {/* Invoices Modal */}

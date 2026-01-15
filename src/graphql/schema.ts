@@ -10,6 +10,7 @@ export const typeDefs = `#graphql
     id: Int
     username: String
     montant: String
+    date: String
   }
 
   type Employee {

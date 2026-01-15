@@ -217,10 +217,10 @@ export const resolvers = {
                     diponce_divers: typeof row.diponce_divers === 'string' ? row.diponce_divers : JSON.stringify(row.diponce_divers || []),
                     diponce_journalier: typeof row.diponce_journalier === 'string' ? row.diponce_journalier : JSON.stringify(row.diponce_journalier || []),
                     diponce_admin: typeof row.diponce_admin === 'string' ? row.diponce_admin : JSON.stringify(row.diponce_admin || []),
-                    avances_details: dayAvances.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString() })),
-                    doublages_details: dayDoublages.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString() })),
-                    extras_details: dayExtras.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString() })),
-                    primes_details: dayPrimes.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString() }))
+                    avances_details: dayAvances.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString(), date: r.date })),
+                    doublages_details: dayDoublages.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString(), date: r.date })),
+                    extras_details: dayExtras.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString(), date: r.date })),
+                    primes_details: dayPrimes.map(r => ({ id: r.id, username: r.username, montant: r.montant.toString(), date: r.date }))
                 };
             });
         },

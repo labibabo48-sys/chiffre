@@ -2831,13 +2831,56 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         {showEmployeeModal && (
                                             <div className="relative animate-in fade-in slide-in-from-top-4 duration-300">
                                                 <Briefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bba282]" size={20} />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Département (optionnel)..."
-                                                    value={employeeDepartment}
-                                                    onChange={(e) => setEmployeeDepartment(e.target.value)}
-                                                    className="w-full h-16 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl pl-14 pr-6 font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all placeholder-[#bba282]/50"
-                                                />
+                                                <div className="relative flex items-center">
+                                                    <input
+                                                        type="text"
+                                                        readOnly
+                                                        placeholder="Département (optionnel)..."
+                                                        value={employeeDepartment}
+                                                        className="w-full h-16 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl pl-14 pr-14 font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all placeholder-[#bba282]/50 cursor-pointer"
+                                                        onClick={async () => {
+                                                            const { value: dept } = await MySwal.fire({
+                                                                title: 'Ajouter Département',
+                                                                input: 'text',
+                                                                inputPlaceholder: 'Nom du département...',
+                                                                showCancelButton: true,
+                                                                confirmButtonText: 'Ajouter',
+                                                                cancelButtonText: 'Annuler',
+                                                                confirmButtonColor: '#4a3426',
+                                                                background: '#fff',
+                                                                customClass: {
+                                                                    title: 'text-lg font-black uppercase text-[#4a3426]',
+                                                                    confirmButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3',
+                                                                    cancelButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3'
+                                                                }
+                                                            });
+                                                            if (dept) setEmployeeDepartment(dept);
+                                                        }}
+                                                    />
+                                                    <button
+                                                        onClick={async () => {
+                                                            const { value: dept } = await MySwal.fire({
+                                                                title: 'Ajouter Département',
+                                                                input: 'text',
+                                                                inputPlaceholder: 'Nom du département...',
+                                                                showCancelButton: true,
+                                                                confirmButtonText: 'Ajouter',
+                                                                cancelButtonText: 'Annuler',
+                                                                confirmButtonColor: '#4a3426',
+                                                                background: '#fff',
+                                                                customClass: {
+                                                                    title: 'text-lg font-black uppercase text-[#4a3426]',
+                                                                    confirmButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3',
+                                                                    cancelButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3'
+                                                                }
+                                                            });
+                                                            if (dept) setEmployeeDepartment(dept);
+                                                        }}
+                                                        className="absolute right-3 p-2 bg-[#f4ece4] rounded-xl text-[#c69f6e] hover:bg-[#e6dace] transition-colors"
+                                                    >
+                                                        <Plus size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
