@@ -499,12 +499,12 @@ export default function PaiementsPage() {
                 </header>
 
                 <main className="max-w-7xl mx-auto px-4 md:px-8 mt-8 space-y-8">
-                    {/* Financial Summary Grid - 6 Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Financial Summary Grid - Now 2 columns max for better spacing of bottom cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                         {/* 1. Chiffre d'Affaire */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#10b981] to-[#059669] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
+                            className="col-span-1 sm:col-span-2 lg:col-span-2 bg-gradient-to-br from-[#10b981] to-[#059669] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
@@ -524,7 +524,7 @@ export default function PaiementsPage() {
                         {/* 2. Total Dépenses (Moved here and made BIG) */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#6b7280] to-[#4b5563] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
+                            className="col-span-1 sm:col-span-2 lg:col-span-2 bg-gradient-to-br from-[#6b7280] to-[#4b5563] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
@@ -544,7 +544,7 @@ export default function PaiementsPage() {
                         {/* 3. Recette Nette Globale */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#22c55e] to-[#16a34a] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
+                            className="col-span-1 sm:col-span-2 lg:col-span-2 bg-gradient-to-br from-[#22c55e] to-[#16a34a] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
