@@ -2980,8 +2980,24 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         if (formValues) {
                                                             const [newName, newDept] = formValues;
                                                             if (newName && (newName.trim() !== emp.name || newDept.trim() !== (emp.department || ''))) {
-                                                                await updateEmployee({ variables: { id: emp.id, name: newName.trim(), department: newDept.trim() || null } });
-                                                                refetchEmployees();
+                                                                try {
+                                                                    await updateEmployee({ variables: { id: emp.id, name: newName.trim(), department: newDept.trim() || null } });
+                                                                    await refetchEmployees();
+                                                                    await MySwal.fire({
+                                                                        icon: 'success',
+                                                                        title: 'Succès',
+                                                                        text: 'Employé mis à jour avec succès',
+                                                                        timer: 1500,
+                                                                        showConfirmButton: false
+                                                                    });
+                                                                } catch (error) {
+                                                                    console.error('Update error:', error);
+                                                                    await MySwal.fire({
+                                                                        icon: 'error',
+                                                                        title: 'Erreur',
+                                                                        text: 'Une erreur est survenue lors de la mise à jour'
+                                                                    });
+                                                                }
                                                             }
                                                         }
                                                     }}
