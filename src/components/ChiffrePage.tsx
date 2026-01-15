@@ -27,6 +27,10 @@ const GET_CHIFFRES_RANGE = gql`
         doublages_details { id username montant }
         extras_details { id username montant }
         primes_details { id username montant }
+        diponce
+        diponce_divers
+        diponce_admin
+        diponce_journalier
     }
   }
 `;
@@ -417,14 +421,22 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate }: any) => {
         avance: 'Liste des Accomptes',
         doublage: 'Liste des Doublages',
         extra: 'Liste des Extras',
-        prime: 'Liste des Primes'
+        prime: 'Liste des Primes',
+        divers: 'Dépenses Divers',
+        admin: 'Dépenses Administratif',
+        journalier: 'Dépenses Journalier',
+        supplier: 'Dépenses Fournisseur'
     };
 
     const detailsKeyMap: any = {
         avance: 'avances_details',
         doublage: 'doublages_details',
         extra: 'extras_details',
-        prime: 'primes_details'
+        prime: 'primes_details',
+        divers: 'diponce_divers',
+        admin: 'diponce_admin',
+        journalier: 'diponce_journalier',
+        supplier: 'diponce'
     };
 
     // Grouping logic
@@ -432,8 +444,26 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate }: any) => {
     let globalTotal = 0;
 
     historyData?.getChiffresByRange?.forEach((chiffre: any) => {
-        const details = chiffre[detailsKeyMap[type]] || [];
+        let details = [];
+        const isJsonType = ['divers', 'admin', 'journalier', 'supplier'].includes(type);
+
+        if (isJsonType) {
+            try {
+                details = JSON.parse(chiffre[detailsKeyMap[type]] || '[]');
+            } catch (e) { details = []; }
+            // Normalize for logic reuse (some use 'supplier', some 'designation')
+            details = details.map((d: any) => ({
+                ...d,
+                username: d.designation || d.supplier,
+                montant: d.amount
+            }));
+        } else {
+            details = chiffre[detailsKeyMap[type]] || [];
+        }
+
         details.forEach((item: any) => {
+            if (!item.username || !item.montant) return;
+
             if (!groupedData[item.username]) {
                 groupedData[item.username] = {
                     username: item.username,
@@ -1363,9 +1393,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         {/* 1. Dépenses Journalier */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
-                                    Dépenses Journalier
+                                <h3
+                                    className="text-lg font-bold text-[#4a3426] flex items-center gap-2 cursor-pointer group/title"
+                                    onClick={() => setShowHistoryModal({ type: 'journalier' })}
+                                >
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs group-hover/title:bg-[#c69f6e] transition-colors">1</div>
+                                    <span className="group-hover/title:text-[#c69f6e] transition-colors">Dépenses Journalier</span>
                                 </h3>
                                 <button
                                     onClick={() => {
@@ -1557,7 +1590,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 >
                                     <Plus size={18} /> Nouvelle Ligne (Journalier)
                                 </button>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                <div
+                                    className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50 cursor-pointer hover:bg-[#f9f6f2] transition-colors"
+                                    onClick={() => setShowHistoryModal({ type: 'journalier' })}
+                                >
                                     <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Journalier</span>
                                     <span className="text-2xl font-black text-[#4a3426]">{totalExpensesJournalier.toFixed(3)} <span className="text-sm">DT</span></span>
                                 </div>
@@ -1567,9 +1603,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         {/* 2. Dépenses Fournisseur */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
-                                    Dépenses Fournisseur
+                                <h3
+                                    className="text-lg font-bold text-[#4a3426] flex items-center gap-2 cursor-pointer group/title"
+                                    onClick={() => setShowHistoryModal({ type: 'supplier' })}
+                                >
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs group-hover/title:bg-[#c69f6e] transition-colors">2</div>
+                                    <span className="group-hover/title:text-[#c69f6e] transition-colors">Dépenses Fournisseur</span>
                                 </h3>
                                 <button
                                     onClick={() => {
@@ -1763,7 +1802,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 >
                                     <Plus size={18} /> Nouvelle Ligne
                                 </button>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                <div
+                                    className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50 cursor-pointer hover:bg-[#f9f6f2] transition-colors"
+                                    onClick={() => setShowHistoryModal({ type: 'supplier' })}
+                                >
                                     <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Fournisseur</span>
                                     <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDynamic.toFixed(3)} <span className="text-sm">DT</span></span>
                                 </div>
@@ -1773,9 +1815,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         {/* 3. Dépenses Divers */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</div>
-                                    Dépenses divers
+                                <h3
+                                    className="text-lg font-bold text-[#4a3426] flex items-center gap-2 cursor-pointer group/title"
+                                    onClick={() => setShowHistoryModal({ type: 'divers' })}
+                                >
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs group-hover/title:bg-[#c69f6e] transition-colors">3</div>
+                                    <span className="group-hover/title:text-[#c69f6e] transition-colors">Dépenses divers</span>
                                 </h3>
                                 <button
                                     onClick={() => {
@@ -1912,7 +1957,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 >
                                     <Plus size={18} /> Nouvelle Ligne (Divers)
                                 </button>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                <div
+                                    className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50 cursor-pointer hover:bg-[#f9f6f2] transition-colors"
+                                    onClick={() => setShowHistoryModal({ type: 'divers' })}
+                                >
                                     <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Divers</span>
                                     <span className="text-2xl font-black text-[#4a3426]">{totalExpensesDivers.toFixed(3)} <span className="text-sm">DT</span></span>
                                 </div>
@@ -1923,9 +1971,12 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         {/* 4. Dépenses Administratif */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">4</div>
-                                    Dépenses Administratif
+                                <h3
+                                    className="text-lg font-bold text-[#4a3426] flex items-center gap-2 cursor-pointer group/title"
+                                    onClick={() => setShowHistoryModal({ type: 'admin' })}
+                                >
+                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs group-hover/title:bg-[#c69f6e] transition-colors">4</div>
+                                    <span className="group-hover/title:text-[#c69f6e] transition-colors">Dépenses Administratif</span>
                                 </h3>
                             </div>
 
@@ -1969,7 +2020,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
+                                <div
+                                    className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50 cursor-pointer hover:bg-[#f9f6f2] transition-colors"
+                                    onClick={() => setShowHistoryModal({ type: 'admin' })}
+                                >
                                     <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Administratif</span>
                                     <span className="text-2xl font-black text-[#4a3426]">{totalExpensesAdmin.toFixed(3)} <span className="text-sm">DT</span></span>
                                 </div>
