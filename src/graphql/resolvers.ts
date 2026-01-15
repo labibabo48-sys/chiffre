@@ -67,7 +67,7 @@ export const resolvers = {
                 primes_details: primesDetails.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant) }))
             };
         },
-        getInvoices: async (_: any, { supplierName, startDate, endDate, month }: any) => {
+        getInvoices: async (_: any, { supplierName, startDate, endDate, month, payer }: any) => {
             let sql = 'SELECT * FROM invoices WHERE 1=1';
             const params = [];
             if (supplierName) {
@@ -85,6 +85,10 @@ export const resolvers = {
             if (month) {
                 params.push(`${month}-%`);
                 sql += ` AND (date LIKE $${params.length} OR paid_date LIKE $${params.length})`;
+            }
+            if (payer) {
+                params.push(payer);
+                sql += ` AND payer = $${params.length}`;
             }
             sql += ' ORDER BY date DESC, id DESC';
             const res = await query(sql, params);
@@ -609,10 +613,10 @@ export const resolvers = {
             return res.rows[0];
         },
         addPaidInvoice: async (_: any, args: any) => {
-            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number } = args;
+            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number, payer } = args;
             const res = await query(
-                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11) RETURNING *",
-                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number]
+                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number, payer) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11, $12) RETURNING *",
+                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number, payer]
             );
             const row = res.rows[0];
             return {

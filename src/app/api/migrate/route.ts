@@ -11,7 +11,9 @@ export async function GET() {
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_cheque_url TEXT;");
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS photo_verso_url TEXT;");
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS doc_type TEXT DEFAULT 'Facture';");
+
         await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS doc_number TEXT;");
+        await query("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payer VARCHAR(255);");
 
         return NextResponse.json({ success: true, message: 'Migration successful: Extra columns added' });
     } catch (err: any) {

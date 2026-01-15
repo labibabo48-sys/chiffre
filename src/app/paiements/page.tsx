@@ -189,8 +189,8 @@ const ADD_BANK_DEPOSIT = gql`
 `;
 
 const ADD_PAID_INVOICE = gql`
-  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!) {
-    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date) {
+  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String) {
+    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer) {
       id
     }
   }
@@ -213,8 +213,8 @@ const PAY_INVOICE = gql`
 `;
 
 const GET_INVOICES = gql`
-  query GetInvoices($supplierName: String, $startDate: String, $endDate: String) {
-    getInvoices(supplierName: $supplierName, startDate: $startDate, endDate: $endDate) {
+  query GetInvoices($supplierName: String, $startDate: String, $endDate: String, $payer: String) {
+    getInvoices(supplierName: $supplierName, startDate: $startDate, endDate: $endDate, payer: $payer) {
       id
       supplier_name
       amount
@@ -228,6 +228,7 @@ const GET_INVOICES = gql`
       photos
       doc_type
       doc_number
+      payer
     }
   }
 `;
@@ -271,6 +272,7 @@ export default function PaiementsPage() {
     const [expAmount, setExpAmount] = useState('');
     const [expDate, setExpDate] = useState(todayStr);
     const [expMethod, setExpMethod] = useState('Espèces');
+    const [expDocType, setExpDocType] = useState('Facture');
     const [expPhoto, setExpPhoto] = useState('');
     const [expPhotoCheque, setExpPhotoCheque] = useState('');
     const [expPhotoVerso, setExpPhotoVerso] = useState('');
@@ -295,6 +297,17 @@ export default function PaiementsPage() {
     const { data: unpaidData, refetch: refetchUnpaid } = useQuery(GET_INVOICES, {
         variables: { supplierName: '', startDate: '', endDate: '' },
         pollInterval: 5000
+    });
+
+    // History Modal State
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [historySearch, setHistorySearch] = useState('');
+    const [historyDateRange, setHistoryDateRange] = useState({ start: '', end: '' });
+
+    const { data: historyData, refetch: refetchHistory } = useQuery(GET_INVOICES, {
+        variables: { payer: 'riadh', startDate: '', endDate: '' },
+        pollInterval: 5000,
+        skip: !showHistoryModal
     });
 
     const [execPayInvoice] = useMutation(PAY_INVOICE);
@@ -462,7 +475,8 @@ export default function PaiementsPage() {
                     photo_cheque_url: expPhotoCheque,
                     photo_verso_url: expPhotoVerso,
                     payment_method: expMethod,
-                    paid_date: expDate
+                    paid_date: expDate,
+                    payer: 'riadh'
                 }
             });
             setExpName('');
@@ -827,6 +841,31 @@ export default function PaiementsPage() {
                                                         <option value="Ticket Restaurant">🎫 T. Restaurant</option>
                                                     </select>
                                                 </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Type de Document</label>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExpDocType('Facture')}
+                                                            className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'Facture'
+                                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                                                : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
+                                                                }`}
+                                                        >
+                                                            📄 Facture
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExpDocType('BL')}
+                                                            className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'BL'
+                                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                                                : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
+                                                                }`}
+                                                        >
+                                                            📋 BL
+                                                        </button>
+                                                    </div>
+                                                </div>
                                                 <div className="space-y-3">
                                                     <div>
                                                         <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Facture / Bon (Photo)</label>
@@ -1039,6 +1078,16 @@ export default function PaiementsPage() {
                                         <p className="text-center py-8 text-xs font-bold text-[#8c8279] italic">Aucun versement enregistré</p>
                                     )}
                                 </div>
+
+                                <button
+                                    onClick={() => {
+                                        setShowHistoryModal(true);
+                                        refetchHistory();
+                                    }}
+                                    className="w-full mt-4 h-11 bg-white border border-[#e6dace] hover:border-[#c69f6e] rounded-xl font-black text-xs uppercase tracking-widest text-[#4a3426] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                                >
+                                    <Clock size={16} className="text-[#c69f6e]" /> Historique Riadh
+                                </button>
                             </div>
                         </div>
 
@@ -1451,6 +1500,139 @@ export default function PaiementsPage() {
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* History Modal for Riadh */}
+            <AnimatePresence>
+                {showHistoryModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
+                        onClick={() => setShowHistoryModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-[#f9f6f2] rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20 flex flex-col"
+                        >
+                            <div className="p-6 bg-white border-b border-[#e6dace] shrink-0">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-black text-[#4a3426] uppercase tracking-tight flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-[#f4ece4] rounded-xl flex items-center justify-center text-[#c69f6e]">
+                                            <Clock size={22} />
+                                        </div>
+                                        Historique Dépenses (Riadh)
+                                    </h2>
+                                    <button onClick={() => setShowHistoryModal(false)} className="w-10 h-10 rounded-full hover:bg-[#fcfaf8] flex items-center justify-center text-[#8c8279] transition-colors">
+                                        <ChevronRight size={24} className="rotate-90" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c8279]" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="Rechercher par nom..."
+                                            value={historySearch}
+                                            onChange={(e) => setHistorySearch(e.target.value)}
+                                            className="w-full h-12 pl-12 pr-4 bg-[#fcfaf8] border border-[#e6dace] rounded-xl font-medium text-[#4a3426] placeholder:text-[#8c8279]/50 focus:border-[#c69f6e] focus:ring-2 focus:ring-[#c69f6e]/20 outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <PremiumDatePicker
+                                                label="Début"
+                                                value={historyDateRange.start}
+                                                onChange={(val) => setHistoryDateRange(prev => ({ ...prev, start: val }))}
+                                            />
+                                        </div>
+                                        <span className="text-[#c69f6e] font-black text-sm opacity-30 mt-5">→</span>
+                                        <div className="flex-1">
+                                            <PremiumDatePicker
+                                                label="Fin"
+                                                value={historyDateRange.end}
+                                                onChange={(val) => setHistoryDateRange(prev => ({ ...prev, end: val }))}
+                                            />
+                                        </div>
+                                        {(historyDateRange.start || historyDateRange.end) && (
+                                            <button
+                                                onClick={() => setHistoryDateRange({ start: '', end: '' })}
+                                                className="mt-5 px-3 h-10 bg-[#f4ece4] text-[#c69f6e] rounded-xl text-xs font-bold hover:bg-[#ebdccf] transition-all"
+                                            >
+                                                Réinitialiser
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+                                <div className="space-y-4">
+                                    {(() => {
+                                        const riadhInvoices = historyData?.getInvoices?.filter((inv: any) => inv.payer === 'riadh') || [];
+                                        const filteredHistory = riadhInvoices.filter((inv: any) => {
+                                            if (historySearch) {
+                                                if (!inv.supplier_name.toLowerCase().includes(historySearch.toLowerCase())) return false;
+                                            }
+                                            if (historyDateRange.start) {
+                                                if (new Date(inv.date) < new Date(historyDateRange.start)) return false;
+                                            }
+                                            if (historyDateRange.end) {
+                                                if (new Date(inv.date) > new Date(historyDateRange.end)) return false;
+                                            }
+                                            return true;
+                                        });
+
+                                        if (filteredHistory.length > 0) {
+                                            return filteredHistory
+                                                .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                .map((inv: any) => (
+                                                    <div key={inv.id} className="bg-white p-4 rounded-2xl border border-[#e6dace]/50 hover:border-[#c69f6e] transition-all flex justify-between items-center group">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="px-2 py-0.5 bg-[#f4ece4] text-[#c69f6e] rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                                                    {new Date(inv.date).toLocaleDateString('fr-FR')}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold text-[#8c8279] uppercase">{inv.payment_method}</span>
+                                                            </div>
+                                                            <h3 className="font-black text-[#4a3426]">{inv.supplier_name}</h3>
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="text-right">
+                                                                <div className="font-black text-[#4a3426] text-lg">{parseFloat(inv.amount).toFixed(3)} DT</div>
+                                                            </div>
+                                                            {(inv.photo_url || inv.photo_cheque_url) && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedInvoice(inv);
+                                                                        setShowHistoryModal(false);
+                                                                    }}
+                                                                    className="w-8 h-8 rounded-full bg-[#fcfaf8] hover:bg-[#c69f6e] hover:text-white flex items-center justify-center transition-colors text-[#8c8279]"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ));
+                                        } else {
+                                            return (
+                                                <div className="text-center py-12 text-[#8c8279] font-bold italic opacity-50">
+                                                    Aucun résultat correspondant
+                                                </div>
+                                            );
+                                        }
+                                    })()}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

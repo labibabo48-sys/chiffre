@@ -78,6 +78,7 @@ export const typeDefs = `#graphql
     paid_date: String
     doc_type: String
     doc_number: String
+    payer: String
   }
 
   type BankDeposit {
@@ -106,7 +107,7 @@ export const typeDefs = `#graphql
     getDesignations: [Designation]
     getMonthlySalaries(startDate: String!, endDate: String!): [SalaryHistory]
     getPaidUsers(month: String, startDate: String, endDate: String): [PaidUser]
-    getInvoices(supplierName: String, startDate: String, endDate: String, month: String): [Invoice]
+    getInvoices(supplierName: String, startDate: String, endDate: String, month: String, payer: String): [Invoice]
     getPaymentStats(month: String, startDate: String, endDate: String): PaymentStats
     getBankDeposits(month: String, startDate: String, endDate: String): [BankDeposit]
     getLockedDates: [String]
@@ -188,6 +189,7 @@ export const typeDefs = `#graphql
       paid_date: String!
       doc_type: String
       doc_number: String
+      payer: String
     ): Invoice
 
     unlockChiffre(date: String!): Chiffre
