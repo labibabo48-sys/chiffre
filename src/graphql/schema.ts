@@ -15,6 +15,7 @@ export const typeDefs = `#graphql
   type Employee {
     id: Int
     name: String
+    department: String
   }
 
   type Chiffre {
@@ -186,8 +187,8 @@ export const typeDefs = `#graphql
 
     unlockChiffre(date: String!): Chiffre
 
-    upsertEmployee(name: String!): Employee
-    updateEmployee(id: Int!, name: String!): Employee
+    upsertEmployee(name: String!, department: String): Employee
+    updateEmployee(id: Int!, name: String!, department: String): Employee
     deleteEmployee(id: Int!): Boolean
 
     addAvance(username: String!, amount: String!, date: String!): DetailItem

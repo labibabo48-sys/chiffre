@@ -65,6 +65,26 @@ const initDb = async () => {
     `);
 
     await query(`
+      CREATE TABLE IF NOT EXISTS public.employees (
+        id serial NOT NULL,
+        name character varying(255) NOT NULL,
+        department character varying(100),
+        CONSTRAINT employees_pkey PRIMARY KEY (id),
+        CONSTRAINT employees_name_key UNIQUE (name)
+      );
+    `);
+
+    // Ensure department column exists for employees
+    await query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='employees' AND column_name='department') THEN
+          ALTER TABLE public.employees ADD COLUMN department character varying(100);
+        END IF;
+      END $$;
+    `);
+
+    await query(`
       CREATE TABLE IF NOT EXISTS public.invoices (
         id serial NOT NULL,
         supplier_name character varying(255) NOT NULL,
