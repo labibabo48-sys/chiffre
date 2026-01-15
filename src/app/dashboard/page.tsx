@@ -238,14 +238,15 @@ export default function DashboardPage() {
                 primes: acc.primes + parseFloat(curr.primes || '0'),
 
                 // Accumulate details
-                allExpenses: [...acc.allExpenses, ...JSON.parse(curr.diponce || '[]')],
-                allAvances: [...acc.allAvances, ...curr.avances_details],
-                allDoublages: [...acc.allDoublages, ...curr.doublages_details],
-                allExtras: [...acc.allExtras, ...curr.extras_details],
-                allPrimes: [...acc.allPrimes, ...curr.primes_details],
-                allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]')],
-                allJournalier: [...acc.allJournalier, ...JSON.parse(curr.diponce_journalier || '[]')],
-                allAdmin: [...acc.allAdmin, ...JSON.parse(curr.diponce_admin || '[]')],
+                // Accumulate details with date injection
+                allExpenses: [...acc.allExpenses, ...JSON.parse(curr.diponce || '[]').map((i: any) => ({ ...i, date: curr.date }))],
+                allAvances: [...acc.allAvances, ...curr.avances_details.map((i: any) => ({ ...i, date: curr.date }))],
+                allDoublages: [...acc.allDoublages, ...curr.doublages_details.map((i: any) => ({ ...i, date: curr.date }))],
+                allExtras: [...acc.allExtras, ...curr.extras_details.map((i: any) => ({ ...i, date: curr.date }))],
+                allPrimes: [...acc.allPrimes, ...curr.primes_details.map((i: any) => ({ ...i, date: curr.date }))],
+                allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]').map((i: any) => ({ ...i, date: curr.date }))],
+                allJournalier: [...acc.allJournalier, ...JSON.parse(curr.diponce_journalier || '[]').map((i: any) => ({ ...i, date: curr.date }))],
+                allAdmin: [...acc.allAdmin, ...JSON.parse(curr.diponce_admin || '[]').map((i: any) => ({ ...i, date: curr.date }))],
             };
         }, {
             recette_de_caisse: 0, total_diponce: 0, recette_net: 0,
