@@ -238,10 +238,11 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [] }: any) =>
                                         value={search}
                                         onChange={(e) => { setSearch(e.target.value); setShowDropdown(true); }}
                                         onFocus={() => setShowDropdown(true)}
+                                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                                         className="w-full h-14 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl pl-12 pr-4 font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
                                     />
-                                    {search && filteredEmployees.length > 0 && (
-                                        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-[#e6dace] max-h-48 overflow-y-auto z-10 custom-scrollbar">
+                                    {showDropdown && search && filteredEmployees.length > 0 && (
+                                        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-[#e6dace] max-h-48 overflow-y-auto z-[410] custom-scrollbar">
                                             {filteredEmployees.map((emp: any) => (
                                                 <button
                                                     key={emp.id}
@@ -265,6 +266,7 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [] }: any) =>
                                         placeholder="0.000"
                                         step="0.001"
                                         value={amount}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         onChange={(e) => setAmount(e.target.value)}
                                         className="w-full h-14 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl pl-12 pr-4 font-black text-2xl text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
                                     />
@@ -1160,6 +1162,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     type="number"
                                                     value={recetteCaisse}
                                                     disabled={isLocked}
+                                                    onWheel={(e) => e.currentTarget.blur()}
                                                     onChange={(e) => { setRecetteCaisse(e.target.value); setHasInteracted(true); }}
                                                     className={`text-6xl md:text-7xl lg:text-8xl font-black bg-transparent text-[#4a3426] outline-none placeholder-[#e6dace] text-center md:text-right w-full md:w-auto min-w-[150px] ${isLocked ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
                                                     placeholder="0"
@@ -1224,6 +1227,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={journalier.amount}
                                                         disabled={isLocked}
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => handleJournalierChange(index, 'amount', e.target.value)}
                                                         className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
                                                     />
@@ -1406,6 +1410,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         disabled={expense.isFromFacturation || isLocked}
                                                         value={expense.amount}
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => handleDetailChange(index, 'amount', e.target.value)}
                                                         className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${(expense.isFromFacturation || isLocked) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     />
@@ -1610,6 +1615,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={divers.amount}
                                                         disabled={isLocked}
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => handleDiversChange(index, 'amount', e.target.value)}
                                                         className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
@@ -1749,6 +1755,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         placeholder="0.00"
                                                         value={admin.amount}
                                                         disabled={isLocked}
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => handleAdminChange(index, 'amount', e.target.value)}
                                                         className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     />
@@ -2030,6 +2037,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         type="number"
                                                         disabled={m.label === 'Espèces' || isLocked}
                                                         value={m.val}
+                                                        onWheel={(e) => e.currentTarget.blur()}
                                                         onChange={(e) => m.set(e.target.value)}
                                                         className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${(m.label === 'Espèces' || isLocked) ? 'bg-white/20 border-white/30 cursor-not-allowed' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
                                                     />
