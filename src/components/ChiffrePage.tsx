@@ -2103,7 +2103,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         {acompte.toFixed(3)} <span className="text-xs">DT</span>
                                     </span>
                                 </div>
-                                <div className="space-y-2 text-sm text-[#4a3426] max-h-48 overflow-y-auto custom-scrollbar">
+                                <div className="space-y-2 text-sm text-[#4a3426]">
                                     {avancesList.length > 0 ? avancesList.map((a, i) => (
                                         <div key={i} className="flex justify-between p-3 bg-[#f9f6f2] rounded-2xl items-center group">
                                             <div className="flex items-center gap-2">
@@ -2171,7 +2171,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         {doublage.toFixed(3)} <span className="text-xs">DT</span>
                                     </span>
                                 </div>
-                                <div className="space-y-2 text-sm text-[#4a3426] max-h-48 overflow-y-auto custom-scrollbar">
+                                <div className="space-y-2 text-sm text-[#4a3426]">
                                     {doublagesList.length > 0 ? doublagesList.map((a, i) => (
                                         <div key={i} className="flex justify-between p-3 bg-[#f9f6f2] rounded-2xl items-center group">
                                             <div className="flex items-center gap-2">
@@ -2240,7 +2240,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         {extraTotal.toFixed(3)} <span className="text-xs">DT</span>
                                     </span>
                                 </div>
-                                <div className="space-y-2 text-sm text-[#4a3426] max-h-48 overflow-y-auto custom-scrollbar">
+                                <div className="space-y-2 text-sm text-[#4a3426]">
                                     {extrasList.length > 0 ? extrasList.map((a, i) => (
                                         <div key={i} className="flex justify-between p-3 bg-[#f9f6f2] rounded-2xl items-center group">
                                             <div className="flex items-center gap-2">
@@ -2309,7 +2309,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         {primesTotal.toFixed(3)} <span className="text-xs">DT</span>
                                     </span>
                                 </div>
-                                <div className="space-y-2 text-sm text-[#4a3426] max-h-48 overflow-y-auto custom-scrollbar">
+                                <div className="space-y-2 text-sm text-[#4a3426]">
                                     {primesList.length > 0 ? primesList.map((p, i) => (
                                         <div key={i} className="flex justify-between p-3 bg-[#f9f6f2] rounded-2xl items-center group">
                                             <div className="flex items-center gap-2">
