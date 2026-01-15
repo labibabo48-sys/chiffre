@@ -13,6 +13,10 @@ import {
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const GET_CHIFFRE = gql`
   query GetChiffre($date: String!) {
