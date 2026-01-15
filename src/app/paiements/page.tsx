@@ -549,7 +549,7 @@ export default function PaiementsPage() {
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
-                                    <TrendingUp size={16} /> Recette Nette Globale
+                                    <TrendingUp size={16} /> Reste
                                 </div>
                                 <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
                                     {stats.totalRecetteNette.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
