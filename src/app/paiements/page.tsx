@@ -623,84 +623,6 @@ export default function PaiementsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Bancaire Section */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <div className="bg-white p-6 rounded-[2.5rem] luxury-shadow border border-[#e6dace]/50">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-lg font-black text-[#4a3426] flex items-center gap-2">
-                                        <div className="bg-[#4a3426] p-2 rounded-xl text-white">
-                                            <TrendingUp size={18} />
-                                        </div>
-                                        Bancaire
-                                    </h3>
-                                    <button
-                                        onClick={() => setShowBankForm(!showBankForm)}
-                                        className="text-[10px] font-black uppercase tracking-widest bg-[#f4ece4] text-[#c69f6e] px-3 py-2 rounded-xl hover:bg-[#ebdccf] transition-all"
-                                    >
-                                        {showBankForm ? 'Annuler' : 'Verser à la banque'}
-                                    </button>
-                                </div>
-
-                                <AnimatePresence>
-                                    {showBankForm && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                                            className="overflow-hidden mb-6"
-                                        >
-                                            <div className="space-y-3 p-4 bg-[#fcfaf8] rounded-3xl border border-[#e6dace]/50">
-                                                <div className="grid grid-cols-2 gap-3 items-end">
-                                                    <div>
-                                                        <label className="text-[10px] font-black text-[#8c8279] uppercase ml-1">Montant (DT)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={bankAmount}
-                                                            onChange={(e) => setBankAmount(e.target.value)}
-                                                            className="w-full h-11 bg-white border border-[#e6dace] rounded-xl px-4 font-black text-lg outline-none focus:border-[#c69f6e]"
-                                                            placeholder="0.000"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-black text-[#8c8279] uppercase ml-1">Date</label>
-                                                        <PremiumDatePicker
-                                                            label="Date"
-                                                            value={bankDate}
-                                                            onChange={setBankDate}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={handleBankSubmit}
-                                                    disabled={addingBank}
-                                                    className="w-full h-11 bg-[#4a3426] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#4a3426]/20"
-                                                >
-                                                    {addingBank ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmer le Versement'}
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest px-2">Derniers versements</h4>
-                                    {data?.getBankDeposits?.length > 0 ? (
-                                        data.getBankDeposits.slice(0, 5).map((d: any) => (
-                                            <div key={d.id} className="flex justify-between items-center p-4 bg-[#fcfaf8] rounded-2xl border border-transparent hover:border-[#e6dace] transition-all">
-                                                <div>
-                                                    <p className="text-sm font-black text-[#4a3426] text-[15px]">{parseFloat(d.amount).toFixed(3)} DT</p>
-                                                    <p className="text-[10px] font-bold text-[#8c8279] uppercase tracking-tighter">{new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
-                                                </div>
-                                                <div className="bg-green-100 p-2 rounded-xl text-green-600">
-                                                    <TrendingUp size={16} />
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-center py-8 text-xs font-bold text-[#8c8279] italic">Aucun versement enregistré</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Middle: Salaries/Payments List */}
                         <div className="lg:col-span-2 space-y-8">
                             {/* Nouvelle Dépense Section */}
@@ -909,6 +831,84 @@ export default function PaiementsPage() {
                                 </div>
                             </div>
                         </div>
+                        {/* Bancaire Section */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <div className="bg-white p-6 rounded-[2.5rem] luxury-shadow border border-[#e6dace]/50">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-lg font-black text-[#4a3426] flex items-center gap-2">
+                                        <div className="bg-[#4a3426] p-2 rounded-xl text-white">
+                                            <TrendingUp size={18} />
+                                        </div>
+                                        Bancaire
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowBankForm(!showBankForm)}
+                                        className="text-[10px] font-black uppercase tracking-widest bg-[#f4ece4] text-[#c69f6e] px-3 py-2 rounded-xl hover:bg-[#ebdccf] transition-all"
+                                    >
+                                        {showBankForm ? 'Annuler' : 'Verser à la banque'}
+                                    </button>
+                                </div>
+
+                                <AnimatePresence>
+                                    {showBankForm && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                            className="overflow-hidden mb-6"
+                                        >
+                                            <div className="space-y-3 p-4 bg-[#fcfaf8] rounded-3xl border border-[#e6dace]/50">
+                                                <div className="grid grid-cols-2 gap-3 items-end">
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-[#8c8279] uppercase ml-1">Montant (DT)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={bankAmount}
+                                                            onChange={(e) => setBankAmount(e.target.value)}
+                                                            className="w-full h-11 bg-white border border-[#e6dace] rounded-xl px-4 font-black text-lg outline-none focus:border-[#c69f6e]"
+                                                            placeholder="0.000"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] font-black text-[#8c8279] uppercase ml-1">Date</label>
+                                                        <PremiumDatePicker
+                                                            label="Date"
+                                                            value={bankDate}
+                                                            onChange={setBankDate}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={handleBankSubmit}
+                                                    disabled={addingBank}
+                                                    className="w-full h-11 bg-[#4a3426] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#4a3426]/20"
+                                                >
+                                                    {addingBank ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmer le Versement'}
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest px-2">Derniers versements</h4>
+                                    {data?.getBankDeposits?.length > 0 ? (
+                                        data.getBankDeposits.slice(0, 5).map((d: any) => (
+                                            <div key={d.id} className="flex justify-between items-center p-4 bg-[#fcfaf8] rounded-2xl border border-transparent hover:border-[#e6dace] transition-all">
+                                                <div>
+                                                    <p className="text-sm font-black text-[#4a3426] text-[15px]">{parseFloat(d.amount).toFixed(3)} DT</p>
+                                                    <p className="text-[10px] font-bold text-[#8c8279] uppercase tracking-tighter">{new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
+                                                </div>
+                                                <div className="bg-green-100 p-2 rounded-xl text-green-600">
+                                                    <TrendingUp size={16} />
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-center py-8 text-xs font-bold text-[#8c8279] italic">Aucun versement enregistré</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </main>
 
