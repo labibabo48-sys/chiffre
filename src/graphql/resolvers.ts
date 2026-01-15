@@ -33,10 +33,10 @@ export const resolvers = {
 
             // Fetch from local database
             const [avances, doublages, extras, primes] = await Promise.all([
-                query('SELECT id, employee_name as username, montant FROM advances WHERE date = $1', [date]),
-                query('SELECT id, employee_name as username, montant FROM doublages WHERE date = $1', [date]),
-                query('SELECT id, employee_name as username, montant FROM extras WHERE date = $1', [date]),
-                query('SELECT id, employee_name as username, montant FROM primes WHERE date = $1', [date])
+                query('SELECT id, employee_name as username, montant FROM advances WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant FROM doublages WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant FROM extras WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant FROM primes WHERE date = $1 ORDER BY id DESC', [date])
             ]);
 
             const extraDetails = extras.rows;
@@ -96,10 +96,10 @@ export const resolvers = {
         getChiffresByRange: async (_: any, { startDate, endDate }: { startDate: string, endDate: string }) => {
             const [res, avances, doublages, extras, primes, paidInvoicesRes] = await Promise.all([
                 query('SELECT * FROM chiffres WHERE date >= $1 AND date <= $2 ORDER BY date ASC', [startDate, endDate]),
-                query('SELECT id, date, employee_name as username, montant FROM advances WHERE date >= $1 AND date <= $2', [startDate, endDate]),
-                query('SELECT id, date, employee_name as username, montant FROM doublages WHERE date >= $1 AND date <= $2', [startDate, endDate]),
-                query('SELECT id, date, employee_name as username, montant FROM extras WHERE date >= $1 AND date <= $2', [startDate, endDate]),
-                query('SELECT id, date, employee_name as username, montant FROM primes WHERE date >= $1 AND date <= $2', [startDate, endDate]),
+                query('SELECT id, date, employee_name as username, montant FROM advances WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [startDate, endDate]),
+                query('SELECT id, date, employee_name as username, montant FROM doublages WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [startDate, endDate]),
+                query('SELECT id, date, employee_name as username, montant FROM extras WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [startDate, endDate]),
+                query('SELECT id, date, employee_name as username, montant FROM primes WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [startDate, endDate]),
                 query("SELECT * FROM invoices WHERE status = 'paid' AND paid_date >= $1 AND paid_date <= $2", [startDate, endDate])
             ]);
 
@@ -616,15 +616,21 @@ export const resolvers = {
             const res = await query('UPDATE chiffres SET is_locked = false WHERE date = $1 RETURNING *', [date]);
             return res.rows[0];
         },
-        upsertEmployee: async (_: any, { name }: { name: string }) => {
+        upsertEmployee: async (_: any, { name, department }: { name: string, department?: string }) => {
             const normalized = name.trim();
             const existing = await query('SELECT * FROM employees WHERE LOWER(name) = LOWER($1)', [normalized]);
-            if (existing.rows.length > 0) return existing.rows[0];
-            const res = await query('INSERT INTO employees (name) VALUES ($1) RETURNING *', [normalized]);
+            if (existing.rows.length > 0) {
+                if (department && existing.rows[0].department !== department) {
+                    const updated = await query('UPDATE employees SET department = $1 WHERE id = $2 RETURNING *', [department, existing.rows[0].id]);
+                    return updated.rows[0];
+                }
+                return existing.rows[0];
+            }
+            const res = await query('INSERT INTO employees (name, department) VALUES ($1, $2) RETURNING *', [normalized, department || null]);
             return res.rows[0];
         },
-        updateEmployee: async (_: any, { id, name }: { id: number, name: string }) => {
-            const res = await query('UPDATE employees SET name = $1 WHERE id = $2 RETURNING *', [name.trim(), id]);
+        updateEmployee: async (_: any, { id, name, department }: { id: number, name: string, department?: string }) => {
+            const res = await query('UPDATE employees SET name = $1, department = $2 WHERE id = $3 RETURNING *', [name.trim(), department || null, id]);
             return res.rows[0];
         },
         deleteEmployee: async (_: any, { id }: { id: number }) => {
