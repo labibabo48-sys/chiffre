@@ -623,6 +623,10 @@ export const resolvers = {
             const res = await query('INSERT INTO employees (name) VALUES ($1) RETURNING *', [normalized]);
             return res.rows[0];
         },
+        updateEmployee: async (_: any, { id, name }: { id: number, name: string }) => {
+            const res = await query('UPDATE employees SET name = $1 WHERE id = $2 RETURNING *', [name.trim(), id]);
+            return res.rows[0];
+        },
         deleteEmployee: async (_: any, { id }: { id: number }) => {
             await query('DELETE FROM employees WHERE id = $1', [id]);
             return true;

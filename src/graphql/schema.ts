@@ -187,6 +187,7 @@ export const typeDefs = `#graphql
     unlockChiffre(date: String!): Chiffre
 
     upsertEmployee(name: String!): Employee
+    updateEmployee(id: Int!, name: String!): Employee
     deleteEmployee(id: Int!): Boolean
 
     addAvance(username: String!, amount: String!, date: String!): DetailItem

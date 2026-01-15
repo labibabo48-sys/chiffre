@@ -142,55 +142,34 @@ const GET_EMPLOYEES = gql`
   }
 `;
 
-const UPSERT_EMPLOYEE = gql`
-  mutation UpsertEmployee($name: String!) {
-    upsertEmployee(name: $name) {
-      id
-      name
-    }
+const UPDATE_EMPLOYEE = gql`
+  mutation UpdateEmployee($id: Int!, $name: String!) {
+    updateEmployee(id: $id, name: $name) { id name }
   }
 `;
 
-const ADD_AVANCE = gql`
-  mutation AddAvance($username: String!, $amount: String!, $date: String!) {
-    addAvance(username: $username, amount: $amount, date: $date) { id username montant }
+const DELETE_EMPLOYEE = gql`
+  mutation DeleteEmployee($id: Int!) {
+    deleteEmployee(id: $id)
   }
 `;
-const DELETE_AVANCE = gql`
-  mutation DeleteAvance($id: Int!) { deleteAvance(id: $id) }
-`;
 
-const ADD_DOUBLAGE = gql`
-  mutation AddDoublage($username: String!, $amount: String!, $date: String!) {
-    addDoublage(username: $username, amount: $amount, date: $date) { id username montant }
-  }
-`;
-const DELETE_DOUBLAGE = gql`
-  mutation DeleteDoublage($id: Int!) { deleteDoublage(id: $id) }
-`;
-
-const ADD_EXTRA = gql`
-  mutation AddExtra($username: String!, $amount: String!, $date: String!) {
-    addExtra(username: $username, amount: $amount, date: $date) { id username montant }
-  }
-`;
-const DELETE_EXTRA = gql`
-  mutation DeleteExtra($id: Int!) { deleteExtra(id: $id) }
-`;
-
-const ADD_PRIME = gql`
-  mutation AddPrime($username: String!, $amount: String!, $date: String!) {
-    addPrime(username: $username, amount: $amount, date: $date) { id username montant }
-  }
-`;
-const DELETE_PRIME = gql`
-  mutation DeletePrime($id: Int!) { deletePrime(id: $id) }
-`;
-
-const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [] }: any) => {
+const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [], initialData = null }: any) => {
     const [search, setSearch] = useState('');
     const [amount, setAmount] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                setSearch(initialData.username);
+                setAmount(initialData.montant);
+            } else {
+                setSearch('');
+                setAmount('');
+            }
+        }
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -199,10 +178,10 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [] }: any) =>
     );
 
     const titleMap: any = {
-        avance: 'Ajouter Accompte',
-        doublage: 'Ajouter Doublage',
-        extra: 'Ajouter Extra',
-        prime: 'Ajouter Prime'
+        avance: initialData ? 'Mettre à jour Accompte' : 'Ajouter Accompte',
+        doublage: initialData ? 'Mettre à jour Doublage' : 'Ajouter Doublage',
+        extra: initialData ? 'Mettre à jour Extra' : 'Ajouter Extra',
+        prime: initialData ? 'Mettre à jour Prime' : 'Ajouter Prime'
     };
 
     return (
@@ -279,8 +258,6 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [] }: any) =>
                             onClick={() => {
                                 onSubmit(type, search, amount);
                                 onClose();
-                                setSearch('');
-                                setAmount('');
                             }}
                             className="w-full h-14 bg-[#4a3426] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-[#4a3426]/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-40 disabled:grayscale disabled:scale-100"
                         >
@@ -466,7 +443,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [showSupplierDropdown, setShowSupplierDropdown] = useState<number | null>(null);
     const [showJournalierDropdown, setShowJournalierDropdown] = useState<number | null>(null);
     const [showDiversDropdown, setShowDiversDropdown] = useState<number | null>(null);
-    const [showEntryModal, setShowEntryModal] = useState<any>(null); // { type: 'avance' | 'doublage' | 'extra' | 'prime' }
+    const [showEntryModal, setShowEntryModal] = useState<any>(null); // { type: 'avance' | 'doublage' | 'extra' | 'prime', data: any }
+    const [showEmployeeList, setShowEmployeeList] = useState(false);
     const [employeeSearch, setEmployeeSearch] = useState('');
     const [viewingInvoices, setViewingInvoices] = useState<string[] | null>(null);
     const [viewingInvoicesTarget, setViewingInvoicesTarget] = useState<{ index: number, type: 'expense' | 'divers' | 'journalier' } | null>(null);
@@ -1796,17 +1774,26 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                 <div className="bg-[#4a3426] text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">3</div>
                                 Collaborateurs
                             </h3>
-                            <button
-                                onClick={() => {
-                                    if (isLocked) return;
-                                    setEmployeeSearch('');
-                                    setShowEmployeeModal(true);
-                                }}
-                                className={`flex items-center gap-2 px-6 py-2 bg-white border border-[#e6dace] rounded-full text-[11px] font-bold uppercase tracking-widest text-[#c69f6e] shadow-sm hover:shadow-md hover:bg-[#fcfaf8] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                <Plus size={14} />
-                                Ajouter Employé
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowEmployeeList(true)}
+                                    className="flex items-center gap-2 px-6 py-2 bg-white border border-[#e6dace] rounded-full text-[11px] font-bold uppercase tracking-widest text-[#8c8279] shadow-sm hover:shadow-md hover:bg-[#fcfaf8] transition-all"
+                                >
+                                    <List size={14} />
+                                    Liste
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) return;
+                                        setEmployeeSearch('');
+                                        setShowEmployeeModal(true);
+                                    }}
+                                    className={`flex items-center gap-2 px-6 py-2 bg-white border border-[#e6dace] rounded-full text-[11px] font-bold uppercase tracking-widest text-[#c69f6e] shadow-sm hover:shadow-md hover:bg-[#fcfaf8] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <Plus size={14} />
+                                    Ajouter Employé
+                                </button>
+                            </div>
                         </div>
 
                         {/* 3. Fixes Grid (2x2) */}
@@ -1833,9 +1820,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <div className="flex items-center gap-3">
                                                 <b className="font-black text-[#4a3426]">{parseFloat(a.montant).toFixed(3)}</b>
                                                 {!isLocked && (
-                                                    <button onClick={() => a.id && handleDeleteEntry('avance', a.id)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={() => setShowEntryModal({ type: 'avance', data: a })}
+                                                            className="text-[#c69f6e] hover:text-[#4a3426] transition-colors"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => a.id && handleDeleteEntry('avance', a.id)}
+                                                            className="text-red-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -1867,9 +1865,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <div className="flex items-center gap-3">
                                                 <b className="font-black text-[#4a3426]">{parseFloat(d.montant).toFixed(3)}</b>
                                                 {!isLocked && (
-                                                    <button onClick={() => d.id && handleDeleteEntry('doublage', d.id)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={() => setShowEntryModal({ type: 'doublage', data: d })}
+                                                            className="text-[#c69f6e] hover:text-[#4a3426] transition-colors"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => d.id && handleDeleteEntry('doublage', d.id)}
+                                                            className="text-red-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -1902,9 +1911,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <div className="flex items-center gap-3">
                                                 <b className="font-black text-[#4a3426]">{parseFloat(e.montant).toFixed(3)}</b>
                                                 {!isLocked && (
-                                                    <button onClick={() => e.id && handleDeleteEntry('extra', e.id)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={() => setShowEntryModal({ type: 'extra', data: e })}
+                                                            className="text-[#c69f6e] hover:text-[#4a3426] transition-colors"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => e.id && handleDeleteEntry('extra', e.id)}
+                                                            className="text-red-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -1937,9 +1957,20 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                             <div className="flex items-center gap-3">
                                                 <b className="font-black text-[#4a3426]">{parseFloat(p.montant).toFixed(3)}</b>
                                                 {!isLocked && (
-                                                    <button onClick={() => p.id && handleDeleteEntry('prime', p.id)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={() => setShowEntryModal({ type: 'prime', data: p })}
+                                                            className="text-[#c69f6e] hover:text-[#4a3426] transition-colors"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => p.id && handleDeleteEntry('prime', p.id)}
+                                                            className="text-red-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -2494,19 +2525,113 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             <EntryModal
                 isOpen={!!showEntryModal}
                 onClose={() => setShowEntryModal(null)}
-                type={showEntryModal?.type}
-                employees={employeesData?.getEmployees || []}
                 onSubmit={handleEntrySubmit}
+                type={showEntryModal?.type}
+                initialData={showEntryModal?.data}
+                employees={employeesData?.getEmployees}
             />
 
+            <AnimatePresence>
+                {showEmployeeList && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[400] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => setShowEmployeeList(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-[#e6dace]"
+                        >
+                            <div className="p-8 space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-xl font-black text-[#4a3426] uppercase tracking-tighter">Annuaire Employés</h3>
+                                    <button onClick={() => setShowEmployeeList(false)} className="p-2 hover:bg-[#f9f6f2] rounded-xl transition-colors text-[#bba282]"><X size={20} /></button>
+                                </div>
+
+                                <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                    {employeesData?.getEmployees?.map((emp: any) => (
+                                        <div key={emp.id} className="flex justify-between items-center p-4 bg-[#fcfaf8] rounded-2xl border border-[#e6dace]/30 group hover:border-[#c69f6e]/30 transition-all">
+                                            <span className="font-bold text-[#4a3426]">{emp.name}</span>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={async () => {
+                                                        const { value: newName } = await MySwal.fire({
+                                                            title: 'Renommer employé',
+                                                            input: 'text',
+                                                            inputValue: emp.name,
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Enregistrer',
+                                                            cancelButtonText: 'Annuler',
+                                                            confirmButtonColor: '#4a3426',
+                                                            background: '#fff',
+                                                            customClass: {
+                                                                title: 'text-lg font-black uppercase text-[#4a3426]',
+                                                                input: 'rounded-xl border-[#e6dace]',
+                                                                confirmButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3',
+                                                                cancelButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3'
+                                                            }
+                                                        });
+                                                        if (newName && newName.trim() !== emp.name) {
+                                                            await updateEmployee({ variables: { id: emp.id, name: newName.trim() } });
+                                                            refetchEmployees();
+                                                        }
+                                                    }}
+                                                    className="p-2 text-[#c69f6e] hover:bg-[#f4ece4] rounded-lg transition-colors"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        const result = await MySwal.fire({
+                                                            title: 'Supprimer ?',
+                                                            text: "Cette action est irréversible.",
+                                                            icon: 'warning',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Oui, supprimer',
+                                                            cancelButtonText: 'Annuler',
+                                                            confirmButtonColor: '#ef4444',
+                                                            background: '#fff',
+                                                            customClass: {
+                                                                title: 'text-lg font-black uppercase text-[#4a3426]',
+                                                                confirmButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3',
+                                                                cancelButton: 'rounded-xl font-bold uppercase tracking-widest text-xs py-3'
+                                                            }
+                                                        });
+                                                        if (result.isConfirmed) {
+                                                            await deleteEmployee({ variables: { id: emp.id } });
+                                                            refetchEmployees();
+                                                        }
+                                                    }}
+                                                    className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!employeesData?.getEmployees || employeesData.getEmployees.length === 0) && (
+                                        <div className="text-center py-12 opacity-40 italic">Aucun employé enregistré</div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <ConfirmModal
-                isOpen={!!showConfirm}
-                onClose={() => setShowConfirm(null)}
-                onConfirm={showConfirm?.onConfirm}
-                title={showConfirm?.title}
-                message={showConfirm?.message}
-                color={showConfirm?.color}
-                alert={showConfirm?.type === 'alert'}
+                isOpen={showConfirm.isOpen}
+                onClose={() => setShowConfirm({ ...showConfirm, isOpen: false })}
+                onConfirm={showConfirm.onConfirm}
+                title={showConfirm.title}
+                message={showConfirm.message}
+                color={showConfirm.color}
+                alert={showConfirm.alert}
             />
         </div>
     );
