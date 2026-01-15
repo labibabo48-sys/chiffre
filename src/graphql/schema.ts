@@ -79,6 +79,7 @@ export const typeDefs = `#graphql
     doc_type: String
     doc_number: String
     payer: String
+    origin: String
   }
 
   type BankDeposit {
@@ -177,6 +178,14 @@ export const typeDefs = `#graphql
       amount: String!
       date: String!
     ): BankDeposit
+
+    updateBankDeposit(
+      id: Int!
+      amount: String!
+      date: String!
+    ): BankDeposit
+
+    deleteBankDeposit(id: Int!): Boolean
 
     addPaidInvoice(
       supplier_name: String!

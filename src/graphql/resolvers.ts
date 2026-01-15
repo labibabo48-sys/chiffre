@@ -612,10 +612,21 @@ export const resolvers = {
             );
             return res.rows[0];
         },
+        updateBankDeposit: async (_: any, { id, amount, date }: { id: number, amount: string, date: string }) => {
+            const res = await query(
+                'UPDATE bank_deposits SET amount = $1, date = $2 WHERE id = $3 RETURNING *',
+                [amount, date, id]
+            );
+            return res.rows[0];
+        },
+        deleteBankDeposit: async (_: any, { id }: { id: number }) => {
+            await query('DELETE FROM bank_deposits WHERE id = $1', [id]);
+            return true;
+        },
         addPaidInvoice: async (_: any, args: any) => {
             const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number, payer } = args;
             const res = await query(
-                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number, payer) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11, $12) RETURNING *",
+                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number, payer, origin) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11, $12, 'direct_expense') RETURNING *",
                 [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number, payer]
             );
             const row = res.rows[0];

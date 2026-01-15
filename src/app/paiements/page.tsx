@@ -188,6 +188,20 @@ const ADD_BANK_DEPOSIT = gql`
   }
 `;
 
+const UPDATE_BANK_DEPOSIT = gql`
+  mutation UpdateBankDeposit($id: Int!, $amount: String!, $date: String!) {
+    updateBankDeposit(id: $id, amount: $amount, date: $date) {
+      id
+    }
+  }
+`;
+
+const DELETE_BANK_DEPOSIT = gql`
+  mutation DeleteBankDeposit($id: Int!) {
+    deleteBankDeposit(id: $id)
+  }
+`;
+
 const ADD_PAID_INVOICE = gql`
   mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String) {
     addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer) {
@@ -212,6 +226,16 @@ const PAY_INVOICE = gql`
   }
 `;
 
+const UNPAY_INVOICE = gql`
+  mutation UnpayInvoice($id: Int!) {
+    unpayInvoice(id: $id) {
+        id
+        status
+        paid_date
+    }
+  }
+`;
+
 const GET_INVOICES = gql`
   query GetInvoices($supplierName: String, $startDate: String, $endDate: String, $payer: String) {
     getInvoices(supplierName: $supplierName, startDate: $startDate, endDate: $endDate, payer: $payer) {
@@ -229,6 +253,7 @@ const GET_INVOICES = gql`
       doc_type
       doc_number
       payer
+      origin
     }
   }
 `;
@@ -267,6 +292,7 @@ export default function PaiementsPage() {
     const [bankAmount, setBankAmount] = useState('');
     const [bankDate, setBankDate] = useState(todayStr);
     const [showBankForm, setShowBankForm] = useState(false);
+    const [editingDeposit, setEditingDeposit] = useState<any>(null);
 
     const [expName, setExpName] = useState('');
     const [expAmount, setExpAmount] = useState('');
@@ -312,6 +338,7 @@ export default function PaiementsPage() {
 
     const [execPayInvoice] = useMutation(PAY_INVOICE);
     const [execDeleteInvoice] = useMutation(DELETE_INVOICE);
+    const [execUnpayInvoice] = useMutation(UNPAY_INVOICE);
 
     const handlePaySubmit = async () => {
         if (!showPayModal) return;
@@ -343,25 +370,32 @@ export default function PaiementsPage() {
     };
 
     const handleDelete = async (inv: any) => {
+        const isDirect = inv.origin === 'direct_expense';
         Swal.fire({
             title: 'Êtes-vous sûr?',
-            text: "Cette action est irréversible!",
+            text: isDirect ? "Cette dépense sera définitivement supprimée." : "Cette facture retournera dans la liste des impayés.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Oui, supprimer!',
+            confirmButtonText: 'Oui, confirmer',
             cancelButtonText: 'Annuler'
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await execDeleteInvoice({ variables: { id: parseInt(inv.id) } });
-                    await refetchUnpaid();
+                    if (isDirect) {
+                        await execDeleteInvoice({ variables: { id: parseInt(inv.id) } });
+                        Swal.fire('Supprimé!', 'Dépense supprimée avec succès.', 'success');
+                    } else {
+                        await execUnpayInvoice({ variables: { id: parseInt(inv.id) } });
+                        Swal.fire('Annulé!', 'Paiement annulé, facture remise en impayé.', 'success');
+                        await refetchUnpaid();
+                    }
                     await refetch();
-                    Swal.fire('Supprimé!', 'La facture a été supprimée.', 'success');
+                    await refetchHistory();
                 } catch (e) {
                     console.error(e);
-                    Swal.fire('Erreur', 'Impossible de supprimer', 'error');
+                    Swal.fire('Erreur', 'Une erreur est survenue', 'error');
                 }
             }
         });
@@ -430,6 +464,8 @@ export default function PaiementsPage() {
     };
 
     const [addBankDeposit, { loading: addingBank }] = useMutation(ADD_BANK_DEPOSIT);
+    const [updateBankDeposit] = useMutation(UPDATE_BANK_DEPOSIT);
+    const [deleteBankDeposit] = useMutation(DELETE_BANK_DEPOSIT);
     const [addPaidInvoice, { loading: addingExp }] = useMutation(ADD_PAID_INVOICE);
 
     const filteredUsers = useMemo(() => {
@@ -455,13 +491,57 @@ export default function PaiementsPage() {
     const handleBankSubmit = async () => {
         if (!bankAmount || !bankDate) return;
         try {
-            await addBankDeposit({ variables: { amount: bankAmount, date: bankDate } });
+            if (editingDeposit) {
+                await updateBankDeposit({ variables: { id: parseInt(editingDeposit.id), amount: bankAmount, date: bankDate } });
+                setEditingDeposit(null);
+            } else {
+                await addBankDeposit({ variables: { amount: bankAmount, date: bankDate } });
+            }
             setBankAmount('');
             setShowBankForm(false);
             refetch();
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: editingDeposit ? 'Versement bancaire mis à jour' : 'Versement bancaire ajouté',
+                timer: 1500,
+                showConfirmButton: false
+            });
         } catch (e) {
             console.error(e);
+            Swal.fire('Erreur', 'Une erreur est survenue', 'error');
         }
+    };
+
+    const handleEditDepositClick = (d: any) => {
+        setEditingDeposit(d);
+        setBankAmount(d.amount);
+        setBankDate(d.date);
+        setShowBankForm(true);
+    };
+
+    const handleDeleteDeposit = (d: any) => {
+        Swal.fire({
+            title: 'Êtes-vous sûr?',
+            text: "Ce versement sera supprimé définitivement.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await deleteBankDeposit({ variables: { id: parseInt(d.id) } });
+                    refetch();
+                    Swal.fire('Supprimé!', 'Versement supprimé avec succès.', 'success');
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Erreur', 'Impossible de supprimer', 'error');
+                }
+            }
+        });
     };
 
     const handleExpSubmit = async () => {
@@ -1029,7 +1109,12 @@ export default function PaiementsPage() {
                                         Bancaire
                                     </h3>
                                     <button
-                                        onClick={() => setShowBankForm(!showBankForm)}
+                                        onClick={() => {
+                                            setShowBankForm(!showBankForm);
+                                            setEditingDeposit(null);
+                                            setBankAmount('');
+                                            setBankDate(todayStr);
+                                        }}
                                         className="text-[10px] font-black uppercase tracking-widest bg-[#f4ece4] text-[#c69f6e] px-3 py-2 rounded-xl hover:bg-[#ebdccf] transition-all"
                                     >
                                         {showBankForm ? 'Annuler' : 'Verser à la banque'}
@@ -1068,7 +1153,7 @@ export default function PaiementsPage() {
                                                     disabled={addingBank}
                                                     className="w-full h-11 bg-[#4a3426] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#4a3426]/20"
                                                 >
-                                                    {addingBank ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirmer le Versement'}
+                                                    {addingBank ? <Loader2 size={16} className="animate-spin mx-auto" /> : (editingDeposit ? 'Mettre à jour' : 'Confirmer le Versement')}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -1079,13 +1164,29 @@ export default function PaiementsPage() {
                                     <h4 className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest px-2">Derniers versements</h4>
                                     {data?.getBankDeposits?.length > 0 ? (
                                         data.getBankDeposits.slice(0, 5).map((d: any) => (
-                                            <div key={d.id} className="flex justify-between items-center p-4 bg-[#fcfaf8] rounded-2xl border border-transparent hover:border-[#e6dace] transition-all">
+                                            <div key={d.id} className="flex justify-between items-center p-4 bg-[#fcfaf8] rounded-2xl border border-transparent hover:border-[#e6dace] transition-all group">
                                                 <div>
                                                     <p className="text-sm font-black text-[#4a3426] text-[15px]">{parseFloat(d.amount).toFixed(3)} DT</p>
                                                     <p className="text-[10px] font-bold text-[#8c8279] uppercase tracking-tighter">{new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
                                                 </div>
-                                                <div className="bg-green-100 p-2 rounded-xl text-green-600">
-                                                    <TrendingUp size={16} />
+                                                <div className="flex items-center gap-2">
+                                                    <div className="hidden group-hover:flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleEditDepositClick(d)}
+                                                            className="w-8 h-8 rounded-lg bg-white border border-[#e6dace] text-[#c69f6e] flex items-center justify-center hover:bg-[#c69f6e] hover:text-white transition-all"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteDeposit(d)}
+                                                            className="w-8 h-8 rounded-lg bg-white border border-red-100 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="bg-green-100 p-2 rounded-xl text-green-600">
+                                                        <TrendingUp size={16} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))
@@ -1588,32 +1689,52 @@ export default function PaiementsPage() {
                                             return filteredHistory
                                                 .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                                 .map((inv: any) => (
-                                                    <div key={inv.id} className="bg-white p-4 rounded-2xl border border-[#e6dace]/50 hover:border-[#c69f6e] transition-all flex justify-between items-center group">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="px-2 py-0.5 bg-[#f4ece4] text-[#c69f6e] rounded-lg text-[9px] font-black uppercase tracking-wider">
-                                                                    {new Date(inv.date).toLocaleDateString('fr-FR')}
-                                                                </span>
-                                                                <span className="text-[10px] font-bold text-[#8c8279] uppercase">{inv.payment_method}</span>
+                                                    <div key={inv.id} className="group relative bg-white p-5 rounded-3xl border border-[#e6dace]/60 hover:border-[#c69f6e]/60 hover:shadow-lg hover:shadow-[#c69f6e]/5 transition-all duration-300">
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 rounded-2xl bg-[#f9f6f2] flex items-center justify-center text-[#c69f6e] group-hover:bg-[#c69f6e] group-hover:text-white transition-colors duration-300">
+                                                                    <Receipt size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="font-black text-[#4a3426] text-lg leading-tight group-hover:text-[#c69f6e] transition-colors">{inv.supplier_name}</h3>
+                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                        <span className="text-[10px] font-bold text-[#8c8279] uppercase tracking-wider bg-[#f4ece4] px-2 py-0.5 rounded-full">
+                                                                            {inv.payment_method}
+                                                                        </span>
+                                                                        <span className="w-1 h-1 rounded-full bg-[#e6dace]"></span>
+                                                                        <span className="text-[10px] font-bold text-[#8c8279] opacity-70">
+                                                                            {new Date(inv.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                            <h3 className="font-black text-[#4a3426]">{inv.supplier_name}</h3>
-                                                        </div>
-                                                        <div className="flex items-center gap-4 min-w-[200px] justify-end">
-                                                            <div className="text-right">
-                                                                <div className="font-black text-[#4a3426] text-lg">{parseFloat(inv.amount).toFixed(3)} DT</div>
-                                                            </div>
-                                                            <div className="w-8 h-8 flex items-center justify-center">
-                                                                {(inv.photo_url || inv.photo_cheque_url) && (
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="text-right">
+                                                                    <div className="font-black text-[#4a3426] text-xl">
+                                                                        {parseFloat(inv.amount).toFixed(3)} <span className="text-sm opacity-50">DT</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
                                                                     <button
-                                                                        onClick={() => {
-                                                                            setSelectedInvoice(inv);
-                                                                            setShowHistoryModal(false);
-                                                                        }}
-                                                                        className="w-8 h-8 rounded-full bg-[#fcfaf8] hover:bg-[#c69f6e] hover:text-white flex items-center justify-center transition-colors text-[#8c8279]"
+                                                                        onClick={() => handleDelete(inv)}
+                                                                        className="w-10 h-10 rounded-full border-2 border-red-50 hover:border-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all text-red-400"
+                                                                        title="Supprimer / Annuler"
                                                                     >
-                                                                        <Eye size={16} />
+                                                                        <Trash2 size={18} />
                                                                     </button>
-                                                                )}
+                                                                    {(inv.photo_url || inv.photo_cheque_url) && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setSelectedInvoice(inv);
+                                                                                setShowHistoryModal(false);
+                                                                            }}
+                                                                            className="w-10 h-10 rounded-full border-2 border-[#f4ece4] hover:border-[#c69f6e] hover:bg-[#c69f6e] hover:text-white flex items-center justify-center transition-all text-[#c69f6e]"
+                                                                            title="Voir détails"
+                                                                        >
+                                                                            <Eye size={18} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
