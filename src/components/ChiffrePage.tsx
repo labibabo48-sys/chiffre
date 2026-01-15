@@ -845,12 +845,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
-                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'journalier' });
                                                         setTempDetails(journalier.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked && !journalier.details ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
@@ -860,14 +859,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (isLocked) e.preventDefault();
-                                                            else if (journalier.invoices.length > 0) {
+                                                            if (journalier.invoices.length > 0) {
                                                                 setViewingInvoices(journalier.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'journalier' });
                                                                 e.preventDefault();
+                                                            } else if (isLocked) {
+                                                                e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked && journalier.invoices.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{journalier.invoices.length || 'Reçu'}</span>
@@ -994,12 +994,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
-                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'expense' });
                                                         setTempDetails(expense.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${expense.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked && !expense.details ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{expense.details ? 'Détails OK' : 'Détails'}</span>
@@ -1009,16 +1008,17 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (isLocked) e.preventDefault();
-                                                            else if (expense.invoices.length > 0) {
+                                                            if (expense.invoices.length > 0) {
                                                                 setViewingInvoices(expense.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'expense' });
                                                                 e.preventDefault();
                                                             } else if (expense.isFromFacturation) {
                                                                 e.preventDefault();
+                                                            } else if (isLocked) {
+                                                                e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${expense.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : (expense.isFromFacturation ? 'border-dashed border-red-600 text-red-600 bg-red-50' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]')} ${isLocked && expense.invoices.length === 0 ? 'cursor-not-allowed opacity-50' : ''}`}
                                                     >
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">
@@ -1212,12 +1212,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
                                                 <button
                                                     onClick={() => {
-                                                        if (isLocked) return;
                                                         setModalDetailsTarget({ index, type: 'divers' });
                                                         setTempDetails(divers.details || '');
                                                         setShowDetailsModal(true);
                                                     }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${divers.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked && !divers.details ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 >
                                                     <FileText size={16} />
                                                     <span className="text-[10px] font-black uppercase tracking-widest leading-none">{divers.details ? 'Détails OK' : 'Détails'}</span>
@@ -1227,14 +1226,15 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 <div className="flex items-center gap-2 w-full md:w-auto">
                                                     <label
                                                         onClick={(e) => {
-                                                            if (isLocked) e.preventDefault();
-                                                            else if (divers.invoices.length > 0) {
+                                                            if (divers.invoices.length > 0) {
                                                                 setViewingInvoices(divers.invoices);
                                                                 setViewingInvoicesTarget({ index, type: 'divers' });
                                                                 e.preventDefault();
+                                                            } else if (isLocked) {
+                                                                e.preventDefault();
                                                             }
                                                         }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${divers.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked && divers.invoices.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <UploadCloud size={14} />
                                                         <span className="font-black uppercase tracking-widest">{divers.invoices.length || 'Reçu'}</span>
                                                         <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', true)} />
@@ -1738,9 +1738,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         <textarea
                                             autoFocus
                                             value={tempDetails}
-                                            onChange={(e) => setTempDetails(e.target.value)}
-                                            placeholder="Notez ici les détails de la dépense..."
-                                            className="w-full bg-[#fcfaf8] border border-[#e6dace] rounded-3xl p-6 text-base font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none min-h-[160px] resize-none transition-all shadow-inner placeholder-[#bba282]/30"
+                                            readOnly={isLocked}
+                                            onChange={(e) => !isLocked && setTempDetails(e.target.value)}
+                                            placeholder={isLocked ? "Aucun détail supplémentaire." : "Notez ici les détails de la dépense..."}
+                                            className={`w-full bg-[#fcfaf8] border border-[#e6dace] rounded-3xl p-6 text-base font-bold text-[#4a3426] focus:border-[#c69f6e] outline-none min-h-[160px] resize-none transition-all shadow-inner placeholder-[#bba282]/30 ${isLocked ? 'cursor-default opacity-80' : ''}`}
                                         />
                                     </div>
                                 </div>
@@ -1757,6 +1758,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     </button>
                                     <button
                                         onClick={() => {
+                                            if (isLocked) {
+                                                setShowDetailsModal(false);
+                                                setModalDetailsTarget(null);
+                                                return;
+                                            }
                                             if (modalDetailsTarget.type === 'divers') {
                                                 const newDivers = [...expensesDivers];
                                                 newDivers[modalDetailsTarget.index].details = tempDetails;
@@ -1775,7 +1781,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         }}
                                         className="flex-[2] py-5 gold-gradient rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] text-white shadow-xl shadow-[#c69f6e]/20 hover:scale-[1.02] active:scale-95 transition-all"
                                     >
-                                        Enregistrer les détails
+                                        {isLocked ? 'Fermer' : 'Enregistrer les détails'}
                                     </button>
                                 </div>
                             </div>
