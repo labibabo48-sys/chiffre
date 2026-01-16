@@ -1467,7 +1467,7 @@ export default function PaiementsPage() {
                                             key={salaryRemainderMonth}
                                             type="number"
                                             step="0.001"
-                                            defaultValue={(data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires')?.amount || 0}
+                                            defaultValue={0}
                                             className="w-full text-center text-5xl font-black text-[#4a3426] outline-none border-b-2 border-[#e6dace] focus:border-red-400 pb-2 bg-transparent transition-colors"
                                         />
                                         <span className="text-xs font-black text-[#c69f6e] mt-2 block mb-6">DT</span>
@@ -1487,6 +1487,7 @@ export default function PaiementsPage() {
                                                         }
                                                     });
                                                     await refetch();
+                                                    if (input) input.value = '';
                                                     const btn = document.getElementById('global-save-btn');
                                                     if (btn) {
                                                         const originalText = btn.innerHTML;
