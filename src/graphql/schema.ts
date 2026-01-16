@@ -240,6 +240,6 @@ export const typeDefs = `#graphql
     deletePrime(id: Int!): Boolean
     
     upsertSalaryRemainder(employee_name: String!, amount: Float!, month: String!, status: String): SalaryRemainder
-    deleteSalaryRemainder(employee_name: String!, month: String!): Boolean
+    deleteSalaryRemainder(id: Int!): Boolean
   }
 `;

@@ -1504,57 +1504,50 @@ export default function PaiementsPage() {
                                             >
                                                 Sauvegarder
                                             </button>
+                                        </div>
+                                        <div className="mt-8 space-y-3">
                                             {(() => {
-                                                const currentGlobal = (data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires');
-                                                if (currentGlobal && currentGlobal.amount > 0) {
-                                                    return (
+                                                const globals = (data?.getSalaryRemainders || []).filter((r: any) => r.employee_name === 'Restes Salaires').sort((a: any, b: any) => new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime());
+                                                if (globals.length === 0) return null;
+                                                return globals.map((g: any) => (
+                                                    <div key={g.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-red-100 shadow-sm group hover:border-red-200 transition-colors">
+                                                        <div className="flex flex-col items-start">
+                                                            <div className="flex items-baseline gap-1">
+                                                                <span className="font-black text-xl text-[#4a3426]">{g.amount}</span>
+                                                                <span className="text-[10px] font-bold text-[#c69f6e] uppercase">DT</span>
+                                                            </div>
+                                                            {g.updated_at && (
+                                                                <p className="text-[9px] font-bold text-green-600/70 mt-1 flex items-center gap-1">
+                                                                    <CheckCircle2 size={10} />
+                                                                    {new Date(Number(g.updated_at) || g.updated_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                         <button
                                                             onClick={async () => {
                                                                 Swal.fire({
-                                                                    title: 'Réinitialiser?',
-                                                                    text: 'Voulez-vous supprimer ce montant global?',
+                                                                    title: 'Supprimer?',
+                                                                    text: 'Voulez-vous supprimer ce montant?',
                                                                     icon: 'warning',
                                                                     showCancelButton: true,
                                                                     confirmButtonColor: '#ef4444',
                                                                     cancelButtonColor: '#8c8279',
-                                                                    confirmButtonText: 'Oui, supprimer'
+                                                                    confirmButtonText: 'Oui'
                                                                 }).then(async (result) => {
                                                                     if (result.isConfirmed) {
-                                                                        await deleteSalaryRemainder({
-                                                                            variables: {
-                                                                                employee_name: 'Restes Salaires',
-                                                                                month: salaryRemainderMonth
-                                                                            }
-                                                                        });
+                                                                        await deleteSalaryRemainder({ variables: { id: parseInt(g.id) } });
                                                                         await refetch();
-                                                                        const input = document.getElementById('global-salary-input') as HTMLInputElement;
-                                                                        if (input) input.value = "0";
                                                                     }
                                                                 });
                                                             }}
-                                                            className="w-14 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border-2 border-red-100 flex items-center justify-center transition-all shadow-md active:scale-95"
+                                                            className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                                                         >
-                                                            <Trash2 size={24} />
+                                                            <Trash2 size={16} />
                                                         </button>
-                                                    );
-                                                }
-                                                return null;
+                                                    </div>
+                                                ));
                                             })()}
                                         </div>
-                                        {(() => {
-                                            const currentGlobal = (data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires');
-                                            if (currentGlobal?.updated_at) {
-                                                return (
-                                                    <div className="flex items-center justify-center gap-1.5 mt-4 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 w-fit mx-auto">
-                                                        <CheckCircle2 size={12} className="text-green-500" />
-                                                        <p className="text-[9px] font-bold text-green-600 uppercase tracking-wide">
-                                                            Dernière mise à jour: {new Date(Number(currentGlobal.updated_at) || currentGlobal.updated_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -1652,8 +1645,7 @@ export default function PaiementsPage() {
                                                                             if (result.isConfirmed) {
                                                                                 await deleteSalaryRemainder({
                                                                                     variables: {
-                                                                                        employee_name: emp.name,
-                                                                                        month: salaryRemainderMonth
+                                                                                        id: parseInt(rem.id)
                                                                                     }
                                                                                 });
                                                                                 await refetch();
@@ -2407,6 +2399,6 @@ export default function PaiementsPage() {
             </AnimatePresence >
 
 
-        </div>
+        </div >
     );
 }

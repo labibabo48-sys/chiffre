@@ -814,6 +814,17 @@ export const resolvers = {
             return true;
         },
         upsertSalaryRemainder: async (_: any, { employee_name, amount, month, status }: any) => {
+            // If it's the global "Restes Salaires", we allow multiple entries, so always INSERT.
+            if (employee_name === 'Restes Salaires') {
+                const res = await query(
+                    'INSERT INTO salary_remainders (employee_name, amount, month, status, updated_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP) RETURNING *',
+                    [employee_name, amount, month, status || 'confirmed']
+                );
+                const row = res.rows[0];
+                return { ...row, updated_at: row.updated_at ? new Date(row.updated_at).toISOString() : null };
+            }
+
+            // For specific employees, we enforce one record per month (Update if exists)
             const existing = await query('SELECT id FROM salary_remainders WHERE employee_name = $1 AND month = $2', [employee_name, month]);
             if (existing.rows.length > 0) {
                 const res = await query(
@@ -831,8 +842,8 @@ export const resolvers = {
                 return { ...row, updated_at: row.updated_at ? new Date(row.updated_at).toISOString() : null };
             }
         },
-        deleteSalaryRemainder: async (_: any, { employee_name, month }: any) => {
-            await query('DELETE FROM salary_remainders WHERE employee_name = $1 AND month = $2', [employee_name, month]);
+        deleteSalaryRemainder: async (_: any, { id }: any) => {
+            await query('DELETE FROM salary_remainders WHERE id = $1', [id]);
             return true;
         },
     },
