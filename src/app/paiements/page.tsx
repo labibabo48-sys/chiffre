@@ -2128,24 +2128,7 @@ export default function PaiementsPage() {
                                     </div>
                                 </div>
 
-                                {/* Footer Total Summary */}
-                                <div className="p-8 bg-white border-t border-[#e6dace]/50 shrink-0">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {[
-                                            { label: 'Total Salaires', val: totals.salaries, color: 'text-[#a89284]', bg: 'bg-[#a89284]/5' },
-                                            { label: 'Riadh (Historique)', val: totals.riadh, color: 'text-[#c69f6e]', bg: 'bg-[#c69f6e]/5' },
-                                            { label: 'Reste Prévu', val: (stats.totalRecetteNette - totals.global), color: 'text-[#22c55e]', bg: 'bg-[#22c55e]/5' }
-                                        ].map((sum, i) => (
-                                            <div key={i} className={`p-4 ${sum.bg} rounded-[1.5rem] border border-white/50 shadow-sm`}>
-                                                <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest mb-1 opacity-60">{sum.label}</p>
-                                                <p className={`text-lg font-black ${sum.color} tracking-tighter`}>
-                                                    {sum.val.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                                    <span className="text-[10px] ml-1">DT</span>
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+
                             </motion.div>
                         </div>
                     )
