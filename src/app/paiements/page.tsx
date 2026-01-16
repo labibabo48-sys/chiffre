@@ -1974,27 +1974,29 @@ export default function PaiementsPage() {
                                 className="relative bg-[#fcfaf8] w-full max-w-7xl h-auto max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col"
                             >
                                 <div className="p-8 md:p-10 flex-1 overflow-y-auto custom-scrollbar">
-                                    <div className="flex justify-between items-center mb-8 bg-white/50 p-6 rounded-[2rem] border border-[#e6dace]/30">
-                                        <div>
+                                    <div className="grid grid-cols-3 items-center mb-8 bg-white/50 p-6 rounded-[2rem] border border-[#e6dace]/30">
+                                        <div className="text-left">
                                             <h2 className="text-3xl font-black text-[#4a3426] tracking-tighter">Détails des Dépenses</h2>
                                             <p className="text-[#c69f6e] font-black text-[10px] uppercase tracking-[0.3em] mt-1">Récapitulatif financier complet</p>
                                         </div>
-                                        <button
-                                            onClick={() => setShowExpensesDetails(false)}
-                                            className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8c8279] hover:bg-red-50 hover:text-red-500 transition-all border border-[#e6dace]/50 shadow-sm"
-                                        >
-                                            <X size={24} />
-                                        </button>
-                                    </div>
 
-                                    {/* Hero Total Global - Centered and Large */}
-                                    <div className="flex flex-col items-center justify-center mb-12 py-10 bg-white/40 rounded-[3rem] border border-white/60 shadow-inner">
-                                        <p className="text-[14px] font-black text-[#8c8279] uppercase tracking-[0.4em] mb-4">Total Global</p>
-                                        <div className="flex items-baseline gap-4">
-                                            <h1 className="text-7xl md:text-9xl font-black text-[#4a3426] tracking-tighter leading-none">
-                                                {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </h1>
-                                            <span className="text-3xl md:text-4xl font-black text-[#c69f6e]">DT</span>
+                                        <div className="flex flex-col items-center">
+                                            <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1 opacity-60">Total Global</p>
+                                            <div className="flex items-baseline gap-2">
+                                                <p className="text-3xl font-black text-[#4a3426] tracking-tighter">
+                                                    {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </p>
+                                                <span className="text-xs font-black text-[#c69f6e]">DT</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => setShowExpensesDetails(false)}
+                                                className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8c8279] hover:bg-red-50 hover:text-red-500 transition-all border border-[#e6dace]/50 shadow-sm"
+                                            >
+                                                <X size={24} />
+                                            </button>
                                         </div>
                                     </div>
 
