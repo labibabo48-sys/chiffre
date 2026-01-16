@@ -2503,21 +2503,23 @@ export default function PaiementsPage() {
                                                         </div>
 
                                                         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                                            {(() => {
-                                                                const groupedByDate = new Map<string, number>();
-                                                                selectedEmployeeDetails.items.forEach(item => {
-                                                                    const d = new Date(Number(item.date) || item.date);
-                                                                    const dateStr = d.toLocaleDateString('fr-FR');
-                                                                    groupedByDate.set(dateStr, (groupedByDate.get(dateStr) || 0) + item.amount);
-                                                                });
-
-                                                                return Array.from(groupedByDate.entries()).map(([dateStr, totalAmount], i) => (
-                                                                    <div key={i} className="flex justify-between items-center px-6 py-4 bg-[#fcfaf8] rounded-2xl border border-[#e6dace]/20 shadow-sm">
-                                                                        <span className="text-xs font-black text-[#4a3426] tracking-tight">{dateStr}</span>
-                                                                        <span className="text-sm font-black text-[#4a3426]">{totalAmount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[10px] opacity-40 ml-0.5 uppercase">DT</span></span>
+                                                            {selectedEmployeeDetails.items.map((item: any, i: number) => {
+                                                                const d = new Date(Number(item.date) || item.date);
+                                                                const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                                                const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                                                return (
+                                                                    <div key={i} className="flex justify-between items-center px-6 py-4 bg-[#fcfaf8] rounded-2xl border border-[#e6dace]/20 shadow-sm hover:border-[#c69f6e]/30 transition-all">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-xs font-black text-[#4a3426] tracking-tight">{dateStr}</span>
+                                                                            <span className="text-[9px] font-bold text-green-500/80 flex items-center gap-1 mt-0.5">
+                                                                                <Clock size={10} className="opacity-70" />
+                                                                                {timeStr}
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className="text-sm font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[10px] opacity-40 ml-0.5 uppercase">DT</span></span>
                                                                     </div>
-                                                                ));
-                                                            })()}
+                                                                );
+                                                            })}
                                                         </div>
                                                     </div>
 
