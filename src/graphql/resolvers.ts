@@ -202,7 +202,7 @@ export const resolvers = {
 
                 // Calculate cumulative total diponce including facturation
                 // Compute totals for all categories to get accurate daily stats
-                let diversList = [], journalierList = [], adminList = [];
+                let diversList = [], adminList = [];
                 try { diversList = typeof row.diponce_divers === 'string' ? JSON.parse(row.diponce_divers) : (row.diponce_divers || []); } catch (e) { }
                 try { adminList = typeof row.diponce_admin === 'string' ? JSON.parse(row.diponce_admin) : (row.diponce_admin || []); } catch (e) { }
 

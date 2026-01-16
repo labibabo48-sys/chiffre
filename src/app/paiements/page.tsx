@@ -184,7 +184,6 @@ const GET_PAYMENT_DATA = gql`
       date
       diponce
       diponce_divers
-      diponce_journalier
       diponce_admin
       avances_details { username montant }
       doublages_details { username montant }
@@ -585,11 +584,11 @@ export default function PaiementsPage() {
 
     const expenseDetails = useMemo(() => {
         if (!data || !data.getDailyExpenses) return {
-            journalier: [], fournisseurs: [], divers: [], administratif: [],
+            fournisseurs: [], divers: [], administratif: [],
             avances: [], doublages: [], extras: [], primes: [], restesSalaires: [], remainders: []
         };
         const base = {
-            journalier: [], fournisseurs: [], divers: [], administratif: [],
+            fournisseurs: [], divers: [], administratif: [],
             avances: [], doublages: [], extras: [], primes: [], restesSalaires: [], remainders: []
         };
 
@@ -597,17 +596,15 @@ export default function PaiementsPage() {
         const directExpenses = (data.getInvoices || []).filter((inv: any) => inv.payer === 'riadh' && inv.category);
 
         const agg = data.getDailyExpenses.reduce((acc: any, curr: any) => {
-            let d = [], dv = [], dj = [], da = [];
+            let d = [], dv = [], da = [];
             try { d = JSON.parse(curr.diponce || '[]'); } catch (e) { }
             try { dv = JSON.parse(curr.diponce_divers || '[]'); } catch (e) { }
-            try { dj = JSON.parse(curr.diponce_journalier || '[]'); } catch (e) { }
             try { da = JSON.parse(curr.diponce_admin || '[]'); } catch (e) { }
 
             return {
                 ...acc,
                 fournisseurs: [...acc.fournisseurs, ...d],
                 divers: [...acc.divers, ...dv],
-                journalier: [...acc.journalier, ...dj],
                 administratif: [...acc.administratif, ...da],
                 avances: [...acc.avances, ...curr.avances_details],
                 doublages: [...acc.doublages, ...curr.doublages_details],
@@ -619,9 +616,8 @@ export default function PaiementsPage() {
 
         // Merge direct expenses from invoices into the aggregation
         directExpenses.forEach((inv: any) => {
-            if (inv.category === 'Journalier') agg.journalier.push({ designation: inv.supplier_name, amount: inv.amount });
+            if (inv.category === 'Journalier' || inv.category === 'Divers') agg.divers.push({ designation: inv.supplier_name, amount: inv.amount });
             else if (inv.category === 'Fournisseur') agg.fournisseurs.push({ supplier: inv.supplier_name, amount: inv.amount });
-            else if (inv.category === 'Divers') agg.divers.push({ designation: inv.supplier_name, amount: inv.amount });
         });
 
         // Add salary remainders
@@ -642,7 +638,6 @@ export default function PaiementsPage() {
         };
 
         return {
-            journalier: group(agg.journalier, 'designation', 'amount'),
             fournisseurs: group(agg.fournisseurs, 'supplier', 'amount'),
             divers: group(agg.divers, 'designation', 'amount'),
             administratif: group(agg.administratif, 'designation', 'amount'),
@@ -656,8 +651,7 @@ export default function PaiementsPage() {
     }, [data]);
 
     const totals = useMemo(() => {
-        const dep = expenseDetails.journalier.reduce((a: number, b: any) => a + b.amount, 0) +
-            expenseDetails.fournisseurs.reduce((a: number, b: any) => a + b.amount, 0) +
+        const dep = expenseDetails.fournisseurs.reduce((a: number, b: any) => a + b.amount, 0) +
             expenseDetails.divers.reduce((a: number, b: any) => a + b.amount, 0) +
             expenseDetails.administratif.reduce((a: number, b: any) => a + b.amount, 0);
 
@@ -2303,7 +2297,6 @@ export default function PaiementsPage() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start pb-8">
                                         {[
-                                            { title: 'Dépenses Journalier', subtitle: 'Quotidien & Fonctionnement', icon: Clock, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.journalier },
                                             { title: 'Dépenses Fournisseurs', subtitle: 'Marchandises & Services', icon: Truck, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.fournisseurs },
                                             { title: 'Dépenses Divers', subtitle: 'Frais Exceptionnels', icon: Sparkles, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.divers },
                                             { title: 'Dépenses Administratif', subtitle: 'Loyers, Factures & Bureaux', icon: Layout, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.administratif },

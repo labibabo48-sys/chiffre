@@ -144,6 +144,9 @@ const initDb = async () => {
       }
     }
 
+    // Migrate any leftover 'journalier' types to 'divers'
+    await query("UPDATE public.designations SET type = 'divers' WHERE type = 'journalier'");
+
     // Create tables for details if they don't exist
     const detailTables = ['advances', 'doublages', 'extras', 'primes'];
     for (const table of detailTables) {

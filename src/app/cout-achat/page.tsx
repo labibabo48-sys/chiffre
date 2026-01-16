@@ -127,7 +127,6 @@ const GET_CHIFFRES_DATA = gql`
     getChiffresByRange(startDate: $startDate, endDate: $endDate) {
       diponce
       diponce_divers
-      diponce_journalier
       diponce_admin
     }
     getInvoices(startDate: $startDate, endDate: $endDate) {
@@ -191,11 +190,10 @@ export default function CoutAchatPage() {
             return {
                 allExpenses: [...acc.allExpenses, ...JSON.parse(curr.diponce || '[]')],
                 allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]')],
-                allJournalier: [...acc.allJournalier, ...JSON.parse(curr.diponce_journalier || '[]')],
                 allAdmin: [...acc.allAdmin, ...JSON.parse(curr.diponce_admin || '[]')],
             };
         }, {
-            allExpenses: [], allDivers: [], allJournalier: [], allAdmin: []
+            allExpenses: [], allDivers: [], allAdmin: []
         });
 
         // Get paid and unpaid invoices directly from getInvoices
@@ -223,7 +221,6 @@ export default function CoutAchatPage() {
         };
 
         return {
-            journalier: filterByName(aggregateGroup(base.allJournalier, 'designation', 'amount')),
             fournisseurs: filterByName(aggregateGroup(base.allExpenses, 'supplier', 'amount')),
             divers: filterByName(aggregateGroup(base.allDivers, 'designation', 'amount')),
             admin: filterByName(aggregateGroup(base.allAdmin, 'designation', 'amount')),
@@ -315,7 +312,7 @@ export default function CoutAchatPage() {
                                         <div className="text-[10px] font-black uppercase tracking-widest text-[#8c8279]">Consommation Totale</div>
                                     </div>
                                     <div>
-                                        <div className="text-3xl font-black tracking-tighter text-[#4a3426]">{(aggregates.totalPaid + aggregates.journalier.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.fournisseurs.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.divers.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.admin.reduce((a: number, b: any) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</div>
+                                        <div className="text-3xl font-black tracking-tighter text-[#4a3426]">{(aggregates.totalPaid + aggregates.fournisseurs.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.divers.reduce((a: number, b: any) => a + b.amount, 0) + aggregates.admin.reduce((a: number, b: any) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</div>
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#8c8279] mt-1 text-right">Payé + Dépenses directes</p>
                                     </div>
                                 </div>
@@ -389,38 +386,6 @@ export default function CoutAchatPage() {
                                     </AnimatePresence>
                                 </div>
 
-                                {/* 3. Dépenses Journalières */}
-                                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
-                                    <button onClick={() => toggleSection('journalier')} className="flex justify-between items-center w-full text-left">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e] text-sm"><Clock /></div>
-                                            <div>
-                                                <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Dépenses Journalieres</h4>
-                                                <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Quotidien & Fonctionnement</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 py-2 rounded-xl text-xs font-black text-[#4a3426]">
-                                                {aggregates.journalier.reduce((a: number, b: any) => a + b.amount, 0).toFixed(3)} DT
-                                            </div>
-                                            <motion.div animate={{ rotate: expandedSections['journalier'] ? 180 : 0 }} className="text-[#c69f6e]"><ChevronDown size={20} /></motion.div>
-                                        </div>
-                                    </button>
-                                    <AnimatePresence>
-                                        {expandedSections['journalier'] && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                                <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50 text-xs">
-                                                    {aggregates.journalier.length > 0 ? aggregates.journalier.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between items-center p-3 bg-[#fcfaf8] rounded-xl border border-[#e6dace]/30">
-                                                            <span className="font-bold text-[#4a3426] opacity-70">{a.name}</span>
-                                                            <span className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</span>
-                                                        </div>
-                                                    )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40">Aucune donnée</div>}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
 
                                 {/* 4. Dépenses Fournisseurs (Directes) */}
                                 <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">

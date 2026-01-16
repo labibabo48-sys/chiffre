@@ -386,7 +386,7 @@ export default function FacturationPage() {
         photo_verso_url: ''
     });
 
-    const [section, setSection] = useState<'Fournisseur' | 'Journalier' | 'Divers'>('Fournisseur');
+    const [section, setSection] = useState<'Fournisseur' | 'Divers'>('Fournisseur');
     const [showAddNameModal, setShowAddNameModal] = useState(false);
     const [newName, setNewName] = useState({ name: '', section: 'Fournisseur' });
 
@@ -407,7 +407,7 @@ export default function FacturationPage() {
                 await execUpsertDesignation({
                     variables: {
                         name: newName.name,
-                        type: newName.section === 'Journalier' ? 'journalier' : 'divers'
+                        type: 'divers'
                     }
                 });
             }
@@ -1077,7 +1077,7 @@ export default function FacturationPage() {
                                     <div>
                                         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">Section</label>
                                         <div className="flex gap-1.5 mb-1.5">
-                                            {['Fournisseur', 'Journalier', 'Divers'].map((s) => (
+                                            {['Fournisseur', 'Divers'].map((s) => (
                                                 <button
                                                     key={s}
                                                     onClick={() => {
@@ -1095,7 +1095,7 @@ export default function FacturationPage() {
                                         </div>
 
                                         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8c8279] mb-0.5 block ml-1">
-                                            {section === 'Fournisseur' ? 'Fournisseur' : (section === 'Journalier' ? 'Personnel' : 'Désignation')}
+                                            {section === 'Fournisseur' ? 'Fournisseur' : 'Désignation'}
                                         </label>
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c69f6e]" size={16} />
@@ -1111,7 +1111,7 @@ export default function FacturationPage() {
                                                     ))
                                                 ) : (
                                                     data?.getDesignations
-                                                        .filter((d: any) => d.type === (section === 'Journalier' ? 'journalier' : 'divers'))
+                                                        .filter((d: any) => d.type === 'divers')
                                                         .map((d: any) => (
                                                             <option key={d.id} value={d.name}>{d.name}</option>
                                                         ))
@@ -1742,7 +1742,6 @@ export default function FacturationPage() {
                                 <div className="p-8 grid grid-cols-1 gap-4">
                                     {[
                                         { id: 'Fournisseur', label: 'Ajouter Fournisseur', desc: 'Pour les factures de marchandises', icon: Package, color: 'text-blue-500', bg: 'bg-blue-50' },
-                                        { id: 'Journalier', label: 'Ajouter Journalier', desc: 'Pour les dépenses quotidiennes', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
                                         { id: 'Divers', label: 'Ajouter Divers', desc: 'Pour les charges exceptionnelles', icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-50' }
                                     ].map((item) => (
                                         <button
