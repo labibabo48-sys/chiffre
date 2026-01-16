@@ -1638,7 +1638,7 @@ export default function PaiementsPage() {
                                                                         ? 'bg-white text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300'
                                                                         : 'bg-white text-[#4a3426] border-[#e6dace] hover:bg-[#2d6a4f] hover:text-white hover:border-[#2d6a4f]'}`}
                                                                 >
-                                                                    {rem && rem.amount > 0 ? 'Mettre à jour' : 'Sauvegarder'}
+                                                                    {rem && rem.amount > 0 ? 'Modifier' : 'Sauvegarder'}
                                                                 </button>
 
                                                                 {rem && rem.amount > 0 && (
