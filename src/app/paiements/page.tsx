@@ -372,7 +372,7 @@ export default function PaiementsPage() {
     const [showExpForm, setShowExpForm] = useState(false);
     const [showSalaryRemaindersModal, setShowSalaryRemaindersModal] = useState(false);
     const [salaryRemainderMonth, setSalaryRemainderMonth] = useState(currentMonthStr);
-    const [salaryRemainderMode, setSalaryRemainderMode] = useState<'global' | 'employee'>('global');
+    const [salaryRemainderMode, setSalaryRemainderMode] = useState<'global' | 'employee'>('employee');
     const [salaryRemainderSearch, setSalaryRemainderSearch] = useState('');
     const [editingHistoryItem, setEditingHistoryItem] = useState<any>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
@@ -1524,12 +1524,20 @@ export default function PaiementsPage() {
                                     <h3 className="text-sm font-black text-[#8c8279] uppercase tracking-widest mb-6">Montant Global ({salaryRemainderMonth})</h3>
                                     <div className="relative">
                                         <input
+                                            id="global-salary-input"
                                             key={salaryRemainderMonth}
                                             type="number"
                                             step="0.001"
                                             defaultValue={(data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires')?.amount || 0}
-                                            onBlur={async (e) => {
-                                                const val = parseFloat(e.target.value);
+                                            className="w-full text-center text-5xl font-black text-[#4a3426] outline-none border-b-2 border-[#e6dace] focus:border-red-400 pb-2 bg-transparent transition-colors"
+                                        />
+                                        <span className="text-xs font-black text-[#c69f6e] mt-2 block mb-6">DT</span>
+
+                                        <button
+                                            id="global-save-btn"
+                                            onClick={async () => {
+                                                const input = document.getElementById('global-salary-input') as HTMLInputElement;
+                                                const val = parseFloat(input?.value || '0');
                                                 await upsertSalaryRemainder({
                                                     variables: {
                                                         employee_name: 'Restes Salaires',
@@ -1538,11 +1546,24 @@ export default function PaiementsPage() {
                                                         status: 'CONFIRMÉ'
                                                     }
                                                 });
-                                                refetch();
+                                                await refetch();
+                                                const btn = document.getElementById('global-save-btn');
+                                                if (btn) {
+                                                    const originalText = btn.innerHTML;
+                                                    btn.innerHTML = '<span class="flex items-center gap-2 justify-center">ENREGISTRÉ <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
+                                                    btn.classList.add('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
+                                                    btn.classList.remove('bg-white', 'text-red-500', 'border-red-200');
+                                                    setTimeout(() => {
+                                                        btn.innerHTML = originalText;
+                                                        btn.classList.remove('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
+                                                        btn.classList.add('bg-white', 'text-red-500', 'border-red-200');
+                                                    }, 2000);
+                                                }
                                             }}
-                                            className="w-full text-center text-5xl font-black text-[#4a3426] outline-none border-b-2 border-[#e6dace] focus:border-red-400 pb-2 bg-transparent transition-colors"
-                                        />
-                                        <span className="text-xs font-black text-[#c69f6e] mt-2 block">DT</span>
+                                            className="w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest bg-white border-2 border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-md active:scale-95"
+                                        >
+                                            Sauvegarder
+                                        </button>
                                     </div>
                                 </div>
                             </div>
