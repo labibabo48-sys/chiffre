@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import {
     CreditCard, Loader2, Search, Calendar,
-    ArrowUpRight, Download, Filter, User,
+    ArrowUpRight, Download, Filter, User, FileText,
     TrendingUp, Receipt, Wallet, UploadCloud, Coins, Banknote,
     ChevronLeft, ChevronRight, Image as ImageIcon, Ticket,
     Clock, CheckCircle2, Eye, Edit2, Trash2, X, Layout, Plus,
