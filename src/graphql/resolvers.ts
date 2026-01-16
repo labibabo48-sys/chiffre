@@ -33,10 +33,10 @@ export const resolvers = {
 
             // Fetch from local database
             const [avances, doublages, extras, primes] = await Promise.all([
-                query('SELECT id, employee_name as username, montant FROM advances WHERE date = $1 ORDER BY id DESC', [date]),
-                query('SELECT id, employee_name as username, montant FROM doublages WHERE date = $1 ORDER BY id DESC', [date]),
-                query('SELECT id, employee_name as username, montant FROM extras WHERE date = $1 ORDER BY id DESC', [date]),
-                query('SELECT id, employee_name as username, montant FROM primes WHERE date = $1 ORDER BY id DESC', [date])
+                query('SELECT id, employee_name as username, montant, created_at FROM advances WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant, created_at FROM doublages WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant, created_at FROM extras WHERE date = $1 ORDER BY id DESC', [date]),
+                query('SELECT id, employee_name as username, montant, created_at FROM primes WHERE date = $1 ORDER BY id DESC', [date])
             ]);
 
             const extraDetails = extras.rows;
@@ -61,10 +61,10 @@ export const resolvers = {
                 diponce: JSON.stringify(combinedDiponce),
                 diponce_divers: typeof data.diponce_divers === 'string' ? data.diponce_divers : JSON.stringify(data.diponce_divers || []),
                 diponce_admin: typeof data.diponce_admin === 'string' ? data.diponce_admin : JSON.stringify(data.diponce_admin || []),
-                avances_details: avances.rows.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant) })),
-                doublages_details: doublages.rows.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant) })),
-                extras_details: extraDetails.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant) })),
-                primes_details: primesDetails.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant) })),
+                avances_details: avances.rows.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant), created_at: r.created_at })),
+                doublages_details: doublages.rows.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant), created_at: r.created_at })),
+                extras_details: extraDetails.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant), created_at: r.created_at })),
+                primes_details: primesDetails.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant), created_at: r.created_at })),
                 restes_salaires_details: restesSalairesDetails.rows.map(r => ({ id: r.id, username: r.username, montant: parseFloat(r.montant), nb_jours: parseFloat(r.nb_jours || '0'), date, created_at: r.created_at }))
             };
         },
@@ -422,10 +422,10 @@ export const resolvers = {
 
             const [res, avances, doublages, extras, primes, restesSalaires] = await Promise.all([
                 query('SELECT * FROM chiffres WHERE date >= $1 AND date <= $2 ORDER BY date ASC', [start, end]),
-                query('SELECT id, date, employee_name as username, montant FROM advances WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
-                query('SELECT id, date, employee_name as username, montant FROM doublages WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
-                query('SELECT id, date, employee_name as username, montant FROM extras WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
-                query('SELECT id, date, employee_name as username, montant FROM primes WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
+                query('SELECT id, date, employee_name as username, montant, created_at FROM advances WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
+                query('SELECT id, date, employee_name as username, montant, created_at FROM doublages WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
+                query('SELECT id, date, employee_name as username, montant, created_at FROM extras WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
+                query('SELECT id, date, employee_name as username, montant, created_at FROM primes WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end]),
                 query('SELECT id, date, employee_name as username, montant, nb_jours, created_at FROM restes_salaires_daily WHERE date >= $1 AND date <= $2 ORDER BY id DESC', [start, end])
             ]);
 
@@ -790,7 +790,7 @@ export const resolvers = {
             return true;
         },
         addAvance: async (_: any, { username, amount, date }: any) => {
-            const res = await query('INSERT INTO advances (employee_name, montant, date) VALUES ($1, $2, $3) ON CONFLICT (employee_name, date) DO UPDATE SET montant = $2 RETURNING id, employee_name as username, montant', [username, amount, date]);
+            const res = await query('INSERT INTO advances (employee_name, montant, date) VALUES ($1, $2, $3) RETURNING id, employee_name as username, montant, created_at', [username, amount, date]);
             const row = res.rows[0];
             return { ...row, montant: parseFloat(row.montant) };
         },
@@ -799,7 +799,7 @@ export const resolvers = {
             return true;
         },
         addDoublage: async (_: any, { username, amount, date }: any) => {
-            const res = await query('INSERT INTO doublages (employee_name, montant, date) VALUES ($1, $2, $3) ON CONFLICT (employee_name, date) DO UPDATE SET montant = $2 RETURNING id, employee_name as username, montant', [username, amount, date]);
+            const res = await query('INSERT INTO doublages (employee_name, montant, date) VALUES ($1, $2, $3) RETURNING id, employee_name as username, montant, created_at', [username, amount, date]);
             const row = res.rows[0];
             return { ...row, montant: parseFloat(row.montant) };
         },
@@ -808,7 +808,7 @@ export const resolvers = {
             return true;
         },
         addExtra: async (_: any, { username, amount, date }: any) => {
-            const res = await query('INSERT INTO extras (employee_name, montant, date) VALUES ($1, $2, $3) ON CONFLICT (employee_name, date) DO UPDATE SET montant = $2 RETURNING id, employee_name as username, montant', [username, amount, date]);
+            const res = await query('INSERT INTO extras (employee_name, montant, date) VALUES ($1, $2, $3) RETURNING id, employee_name as username, montant, created_at', [username, amount, date]);
             const row = res.rows[0];
             return { ...row, montant: parseFloat(row.montant) };
         },
@@ -817,7 +817,7 @@ export const resolvers = {
             return true;
         },
         addPrime: async (_: any, { username, amount, date }: any) => {
-            const res = await query('INSERT INTO primes (employee_name, montant, date) VALUES ($1, $2, $3) ON CONFLICT (employee_name, date) DO UPDATE SET montant = $2 RETURNING id, employee_name as username, montant', [username, amount, date]);
+            const res = await query('INSERT INTO primes (employee_name, montant, date) VALUES ($1, $2, $3) RETURNING id, employee_name as username, montant, created_at', [username, amount, date]);
             const row = res.rows[0];
             return { ...row, montant: parseFloat(row.montant) };
         },

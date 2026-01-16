@@ -185,11 +185,11 @@ const GET_PAYMENT_DATA = gql`
       diponce
       diponce_divers
       diponce_admin
-      avances_details { username montant created_at }
-      doublages_details { username montant created_at }
-      extras_details { username montant created_at }
-      primes_details { username montant created_at }
-      restes_salaires_details { username montant created_at }
+      avances_details { id username montant created_at }
+      doublages_details { id username montant created_at }
+      extras_details { id username montant created_at }
+      primes_details { id username montant created_at }
+      restes_salaires_details { id username montant created_at }
     }
     getSalaryRemainders(month: $month) {
       id

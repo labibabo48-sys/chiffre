@@ -156,8 +156,8 @@ const initDb = async () => {
           employee_name character varying(255) NOT NULL,
           montant character varying(255) NOT NULL,
           date character varying(255) NOT NULL,
-          CONSTRAINT ${table}_pkey PRIMARY KEY (id),
-          CONSTRAINT ${table}_unique_emp_date UNIQUE (employee_name, date)
+          created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT ${table}_pkey PRIMARY KEY (id)
         );
       `);
     }
