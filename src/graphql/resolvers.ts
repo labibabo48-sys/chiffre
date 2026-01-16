@@ -651,6 +651,7 @@ export const resolvers = {
                 [id]
             );
             const row = res.rows[0];
+            if (!row) return null;
             return {
                 ...row,
                 photos: typeof row.photos === 'string' ? row.photos : JSON.stringify(row.photos || [])

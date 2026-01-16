@@ -321,8 +321,8 @@ const UPSERT_SALARY_REMAINDER = gql`
 `;
 
 const DELETE_SALARY_REMAINDER = gql`
-  mutation DeleteSalaryRemainder($employee_name: String!, $month: String!) {
-    deleteSalaryRemainder(employee_name: $employee_name, month: $month)
+  mutation DeleteSalaryRemainder($id: Int!) {
+    deleteSalaryRemainder(id: $id)
   }
 `;
 
