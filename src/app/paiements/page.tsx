@@ -1533,37 +1533,75 @@ export default function PaiementsPage() {
                                         />
                                         <span className="text-xs font-black text-[#c69f6e] mt-2 block mb-6">DT</span>
 
-                                        <button
-                                            id="global-save-btn"
-                                            onClick={async () => {
-                                                const input = document.getElementById('global-salary-input') as HTMLInputElement;
-                                                const val = parseFloat(input?.value || '0');
-                                                await upsertSalaryRemainder({
-                                                    variables: {
-                                                        employee_name: 'Restes Salaires',
-                                                        amount: val || 0,
-                                                        month: salaryRemainderMonth,
-                                                        status: 'CONFIRMÉ'
+                                        <div className="flex gap-2 mt-6">
+                                            <button
+                                                id="global-save-btn"
+                                                onClick={async () => {
+                                                    const input = document.getElementById('global-salary-input') as HTMLInputElement;
+                                                    const val = parseFloat(input?.value || '0');
+                                                    await upsertSalaryRemainder({
+                                                        variables: {
+                                                            employee_name: 'Restes Salaires',
+                                                            amount: val || 0,
+                                                            month: salaryRemainderMonth,
+                                                            status: 'CONFIRMÉ'
+                                                        }
+                                                    });
+                                                    await refetch();
+                                                    const btn = document.getElementById('global-save-btn');
+                                                    if (btn) {
+                                                        const originalText = btn.innerHTML;
+                                                        btn.innerHTML = '<span class="flex items-center gap-2 justify-center">ENREGISTRÉ <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
+                                                        btn.classList.add('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
+                                                        btn.classList.remove('bg-white', 'text-red-500', 'border-red-200');
+                                                        setTimeout(() => {
+                                                            btn.innerHTML = originalText;
+                                                            btn.classList.remove('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
+                                                            btn.classList.add('bg-white', 'text-red-500', 'border-red-200');
+                                                        }, 2000);
                                                     }
-                                                });
-                                                await refetch();
-                                                const btn = document.getElementById('global-save-btn');
-                                                if (btn) {
-                                                    const originalText = btn.innerHTML;
-                                                    btn.innerHTML = '<span class="flex items-center gap-2 justify-center">ENREGISTRÉ <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
-                                                    btn.classList.add('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
-                                                    btn.classList.remove('bg-white', 'text-red-500', 'border-red-200');
-                                                    setTimeout(() => {
-                                                        btn.innerHTML = originalText;
-                                                        btn.classList.remove('bg-green-500', 'text-white', 'border-green-500', 'shadow-green-500/30');
-                                                        btn.classList.add('bg-white', 'text-red-500', 'border-red-200');
-                                                    }, 2000);
+                                                }}
+                                                className="flex-1 py-4 rounded-xl font-black text-sm uppercase tracking-widest bg-white border-2 border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-md active:scale-95"
+                                            >
+                                                Sauvegarder
+                                            </button>
+                                            {(() => {
+                                                const currentGlobal = (data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires');
+                                                if (currentGlobal && currentGlobal.amount > 0) {
+                                                    return (
+                                                        <button
+                                                            onClick={async () => {
+                                                                Swal.fire({
+                                                                    title: 'Réinitialiser?',
+                                                                    text: 'Voulez-vous supprimer ce montant global?',
+                                                                    icon: 'warning',
+                                                                    showCancelButton: true,
+                                                                    confirmButtonColor: '#ef4444',
+                                                                    cancelButtonColor: '#8c8279',
+                                                                    confirmButtonText: 'Oui, supprimer'
+                                                                }).then(async (result) => {
+                                                                    if (result.isConfirmed) {
+                                                                        await deleteSalaryRemainder({
+                                                                            variables: {
+                                                                                employee_name: 'Restes Salaires',
+                                                                                month: salaryRemainderMonth
+                                                                            }
+                                                                        });
+                                                                        await refetch();
+                                                                        const input = document.getElementById('global-salary-input') as HTMLInputElement;
+                                                                        if (input) input.value = "0";
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="w-14 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border-2 border-red-100 flex items-center justify-center transition-all shadow-md active:scale-95"
+                                                        >
+                                                            <Trash2 size={24} />
+                                                        </button>
+                                                    );
                                                 }
-                                            }}
-                                            className="w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest bg-white border-2 border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-md active:scale-95"
-                                        >
-                                            Sauvegarder
-                                        </button>
+                                                return null;
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1646,6 +1684,37 @@ export default function PaiementsPage() {
                                                             >
                                                                 Sauvegarder
                                                             </button>
+                                                            {rem && rem.amount > 0 && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        Swal.fire({
+                                                                            title: 'Supprimer?',
+                                                                            text: 'Voulez-vous supprimer ce montant?',
+                                                                            icon: 'warning',
+                                                                            showCancelButton: true,
+                                                                            confirmButtonColor: '#ef4444',
+                                                                            cancelButtonColor: '#8c8279',
+                                                                            confirmButtonText: 'Oui, supprimer'
+                                                                        }).then(async (result) => {
+                                                                            if (result.isConfirmed) {
+                                                                                await deleteSalaryRemainder({
+                                                                                    variables: {
+                                                                                        employee_name: emp.name,
+                                                                                        month: salaryRemainderMonth
+                                                                                    }
+                                                                                });
+                                                                                await refetch();
+                                                                                const input = document.getElementById(`salary-input-${emp.id}`) as HTMLInputElement;
+                                                                                if (input) input.value = "0";
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                    className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100 flex items-center justify-center transition-all ml-2"
+                                                                    title="Supprimer"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );
