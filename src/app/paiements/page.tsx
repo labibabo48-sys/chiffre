@@ -405,6 +405,7 @@ export default function PaiementsPage() {
     const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
     const [historySearch, setHistorySearch] = useState('');
     const [historyDateRange, setHistoryDateRange] = useState({ start: '', end: '' });
+    const [selectedEmployeeDetails, setSelectedEmployeeDetails] = useState<{ name: string, category: string, subtitle: string, total: number, items: any[] } | null>(null);
 
     const { data: historyData, refetch: refetchHistory } = useQuery(GET_INVOICES, {
         variables: { payer: 'riadh', startDate: '', endDate: '' },
@@ -645,20 +646,40 @@ export default function PaiementsPage() {
             return Array.from(map.entries()).map(([name, amount]) => ({ name, amount })).filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
         };
 
+        const groupWithItems = (list: any[], nameKey: string, amountKey: string, tsKey: string = 'created_at') => {
+            const map = new Map<string, { total: number, items: any[] }>();
+            list.forEach(item => {
+                const name = item[nameKey];
+                if (!name) return;
+                const amt = parseFloat(item[amountKey] || '0');
+                if (!map.has(name)) map.set(name, { total: 0, items: [] });
+                const current = map.get(name)!;
+                current.total += amt;
+                current.items.push({
+                    amount: amt,
+                    date: item[tsKey] || item.updated_at || item.date
+                });
+            });
+            return Array.from(map.entries())
+                .map(([name, data]) => ({
+                    name,
+                    amount: data.total,
+                    items: data.items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                }))
+                .filter(x => x.amount > 0)
+                .sort((a, b) => b.amount - a.amount);
+        };
+
         return {
             fournisseurs: group(agg.fournisseurs, 'supplier', 'amount'),
             divers: group(agg.divers, 'designation', 'amount'),
             administratif: group(agg.administratif, 'designation', 'amount'),
-            avances: (agg.avances || []).map((a: any) => ({ name: a.username, amount: parseFloat(a.montant), updated_at: a.created_at })).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-            doublages: (agg.doublages || []).map((d: any) => ({ name: d.username, amount: parseFloat(d.montant), updated_at: d.created_at })).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-            extras: (agg.extras || []).map((e: any) => ({ name: e.username, amount: parseFloat(e.montant), updated_at: e.created_at })).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-            primes: (agg.primes || []).map((p: any) => ({ name: p.username, amount: parseFloat(p.montant), updated_at: p.created_at })).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+            avances: groupWithItems(agg.avances, 'username', 'montant'),
+            doublages: groupWithItems(agg.doublages, 'username', 'montant'),
+            extras: groupWithItems(agg.extras, 'username', 'montant'),
+            primes: groupWithItems(agg.primes, 'username', 'montant'),
             restesSalaires: group(agg.restesSalaires, 'username', 'montant'),
-            remainders: (agg.remainders || []).sort((a: any, b: any) => {
-                const da = new Date(Number(a.updated_at) || a.updated_at).getTime();
-                const db = new Date(Number(b.updated_at) || b.updated_at).getTime();
-                return db - da;
-            })
+            remainders: groupWithItems((agg.remainders || []).map(r => ({ ...r, username: r.name, montant: r.amount })), 'username', 'montant', 'updated_at')
         };
     }, [data]);
 
@@ -2374,23 +2395,45 @@ export default function PaiementsPage() {
                                                                 className="overflow-hidden bg-[#fcfaf8]/50 border-t border-[#e6dace]/30"
                                                             >
                                                                 <div className="p-4 space-y-2">
-                                                                    {(cat.items || []).map((item: any, i: number) => (
-                                                                        <div key={i} className="flex justify-between items-center px-5 py-3 bg-white rounded-xl border border-[#e6dace]/10 shadow-sm">
-                                                                            <div className="flex flex-col">
-                                                                                <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
-                                                                                {item.updated_at && (
-                                                                                    <span className="text-[9px] font-bold text-green-500/80 flex items-center gap-1 mt-0.5">
-                                                                                        <Clock size={10} className="opacity-70" />
-                                                                                        {(() => {
-                                                                                            const d = new Date(Number(item.updated_at) || item.updated_at);
-                                                                                            return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                                                                                        })()}
-                                                                                    </span>
-                                                                                )}
+                                                                    {(cat.items || []).map((item: any, i: number) => {
+                                                                        const hasSubItems = item.items && item.items.length > 0;
+                                                                        return (
+                                                                            <div
+                                                                                key={i}
+                                                                                onClick={() => {
+                                                                                    if (hasSubItems) {
+                                                                                        setSelectedEmployeeDetails({
+                                                                                            name: item.name,
+                                                                                            category: cat.title,
+                                                                                            subtitle: cat.subtitle,
+                                                                                            total: item.amount,
+                                                                                            items: item.items
+                                                                                        });
+                                                                                    }
+                                                                                }}
+                                                                                className={`flex justify-between items-center px-5 py-3 bg-white rounded-xl border border-[#e6dace]/10 shadow-sm transition-all ${hasSubItems ? 'cursor-pointer hover:border-[#c69f6e]/30 hover:bg-[#fcfaf8] active:scale-[0.98]' : ''}`}
+                                                                            >
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
+                                                                                    {item.updated_at && !hasSubItems && (
+                                                                                        <span className="text-[9px] font-bold text-green-500/80 flex items-center gap-1 mt-0.5">
+                                                                                            <Clock size={10} className="opacity-70" />
+                                                                                            {(() => {
+                                                                                                const d = new Date(Number(item.updated_at) || item.updated_at);
+                                                                                                return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                                                                            })()}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {hasSubItems && (
+                                                                                        <span className="text-[9px] font-bold text-[#c69f6e] flex items-center gap-1 mt-0.5 opacity-60">
+                                                                                            <Eye size={10} /> Voir détails
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <span className="text-[11px] font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[9px] opacity-40 ml-0.5">DT</span></span>
                                                                             </div>
-                                                                            <span className="text-[11px] font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[9px] opacity-40 ml-0.5">DT</span></span>
-                                                                        </div>
-                                                                    ))}
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </motion.div>
                                                         )}
@@ -2408,6 +2451,94 @@ export default function PaiementsPage() {
                 }
             </AnimatePresence >
 
+            <AnimatePresence>
+                {selectedEmployeeDetails && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-[#4a3426]/60 backdrop-blur-md"
+                            onClick={() => setSelectedEmployeeDetails(null)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-xl bg-[#fdfaf7] rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/50"
+                        >
+                            <div className="p-8">
+                                <div className="flex justify-between items-start mb-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#c69f6e]/10 flex items-center justify-center text-[#c69f6e]">
+                                            <Layout size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-black text-[#4a3426] tracking-tight uppercase">
+                                                HISTORIQUE: {selectedEmployeeDetails.name}
+                                            </h2>
+                                            <p className="text-[10px] font-black text-[#c69f6e] uppercase tracking-widest mt-1 opacity-60">
+                                                {selectedEmployeeDetails.category} groupés par employé
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedEmployeeDetails(null)}
+                                        className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#8c8279] hover:bg-red-50 hover:text-red-500 transition-all shadow-sm border border-[#e6dace]/30"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="bg-white rounded-[2rem] border border-[#e6dace]/30 p-8 shadow-inner shadow-[#4a3426]/5 mb-6">
+                                    <div className="flex items-center gap-5 mb-8">
+                                        <div className="w-14 h-14 rounded-full bg-[#f4ece4] flex items-center justify-center text-lg font-black text-[#c69f6e]">
+                                            {selectedEmployeeDetails.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-xl font-black text-[#4a3426] tracking-tight truncate max-w-[200px]">{selectedEmployeeDetails.name}</h3>
+                                                <div className="text-right">
+                                                    <span className="text-2xl font-black text-[#4a3426]">{selectedEmployeeDetails.total.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</span>
+                                                    <span className="text-[10px] font-black text-[#c69f6e] ml-1 opacity-60">DT</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-[10px] font-bold text-[#8c8279] italic mt-0.5 opacity-60">Détails des transactions:</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {(() => {
+                                            // Group items by date string (YYYY-MM-DD)
+                                            const groupedByDate = new Map<string, number>();
+                                            selectedEmployeeDetails.items.forEach(item => {
+                                                const d = new Date(Number(item.date) || item.date);
+                                                const dateStr = d.toLocaleDateString('fr-FR');
+                                                groupedByDate.set(dateStr, (groupedByDate.get(dateStr) || 0) + item.amount);
+                                            });
+
+                                            return Array.from(groupedByDate.entries()).map(([dateStr, totalAmount], i) => (
+                                                <div key={i} className="flex justify-between items-center px-6 py-4 bg-[#fcfaf8] rounded-2xl border border-[#e6dace]/20 shadow-sm">
+                                                    <span className="text-xs font-black text-[#4a3426] tracking-tight">{dateStr}</span>
+                                                    <span className="text-sm font-black text-[#4a3426]">{totalAmount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[10px] opacity-40 ml-0.5 uppercase">DT</span></span>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+
+                                <div className="bg-[#4a3426] rounded-[2rem] p-6 flex justify-between items-center shadow-lg shadow-[#4a3426]/20">
+                                    <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">TOTAL DE LA LISTE</span>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-white leading-none">
+                                            {selectedEmployeeDetails.total.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                        </span>
+                                        <span className="text-[10px] font-black text-[#c69f6e] ml-1">DT</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
         </div >
     );
