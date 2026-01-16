@@ -393,6 +393,17 @@ export const resolvers = {
             const res = await query('SELECT date FROM chiffres WHERE is_locked = true');
             return res.rows.map(r => r.date);
         },
+        getSalaryRemainders: async (_: any, { month }: { month?: string }) => {
+            let sql = 'SELECT * FROM salary_remainders';
+            const params = [];
+            if (month) {
+                params.push(month);
+                sql += ' WHERE month = $1';
+            }
+            sql += ' ORDER BY id DESC';
+            const res = await query(sql, params);
+            return res.rows;
+        },
         getDailyExpenses: async (_: any, { month, startDate, endDate }: { month?: string, startDate?: string, endDate?: string }) => {
             let start = startDate;
             let end = endDate;
@@ -800,6 +811,26 @@ export const resolvers = {
         },
         deletePrime: async (_: any, { id }: any) => {
             await query('DELETE FROM primes WHERE id = $1', [id]);
+            return true;
+        },
+        upsertSalaryRemainder: async (_: any, { employee_name, amount, month, status }: any) => {
+            const existing = await query('SELECT id FROM salary_remainders WHERE employee_name = $1 AND month = $2', [employee_name, month]);
+            if (existing.rows.length > 0) {
+                const res = await query(
+                    'UPDATE salary_remainders SET amount = $1, status = $2 WHERE employee_name = $3 AND month = $4 RETURNING *',
+                    [amount, status || 'confirmed', employee_name, month]
+                );
+                return res.rows[0];
+            } else {
+                const res = await query(
+                    'INSERT INTO salary_remainders (employee_name, amount, month, status) VALUES ($1, $2, $3, $4) RETURNING *',
+                    [employee_name, amount, month, status || 'confirmed']
+                );
+                return res.rows[0];
+            }
+        },
+        deleteSalaryRemainder: async (_: any, { id }: any) => {
+            await query('DELETE FROM salary_remainders WHERE id = $1', [id]);
             return true;
         },
     },

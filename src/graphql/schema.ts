@@ -90,6 +90,14 @@ export const typeDefs = `#graphql
     date: String
   }
 
+  type SalaryRemainder {
+    id: Int
+    employee_name: String
+    amount: Float
+    month: String
+    status: String
+  }
+
   type PaymentStats {
     totalRecetteNette: Float
     totalFacturesPayees: Float
@@ -117,6 +125,7 @@ export const typeDefs = `#graphql
     getLockedDates: [String]
     getDailyExpenses(month: String, startDate: String, endDate: String): [Chiffre]
     getEmployees: [Employee]
+    getSalaryRemainders(month: String): [SalaryRemainder]
   }
 
   type Mutation {
@@ -225,5 +234,8 @@ export const typeDefs = `#graphql
 
     addPrime(username: String!, amount: Float!, date: String!): DetailItem
     deletePrime(id: Int!): Boolean
+    
+    upsertSalaryRemainder(employee_name: String!, amount: Float!, month: String!, status: String): SalaryRemainder
+    deleteSalaryRemainder(id: Int!): Boolean
   }
 `;
