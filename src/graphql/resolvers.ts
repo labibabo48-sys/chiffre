@@ -634,7 +634,7 @@ export const resolvers = {
                 photos: typeof row.photos === 'string' ? row.photos : JSON.stringify(row.photos || [])
             };
         },
-        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos, doc_type, doc_number, payment_method, paid_date }: any) => {
+        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos, doc_type, doc_number, payment_method, paid_date, category }: any) => {
             const fields = [];
             const params = [];
             if (supplier_name !== undefined) { params.push(supplier_name); fields.push(`supplier_name = $${params.length}`); }
@@ -646,6 +646,7 @@ export const resolvers = {
             if (doc_number !== undefined) { params.push(doc_number); fields.push(`doc_number = $${params.length}`); }
             if (payment_method !== undefined) { params.push(payment_method); fields.push(`payment_method = $${params.length}`); }
             if (paid_date !== undefined) { params.push(paid_date); fields.push(`paid_date = $${params.length}`); }
+            if (category !== undefined) { params.push(category); fields.push(`category = $${params.length}`); }
 
             if (fields.length === 0) {
                 const r = await query('SELECT * FROM invoices WHERE id = $1', [id]);
@@ -729,10 +730,10 @@ export const resolvers = {
             return true;
         },
         addPaidInvoice: async (_: any, args: any) => {
-            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number, payer } = args;
+            const { supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type, doc_number, payer, category } = args;
             const res = await query(
-                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number, payer, origin, updated_at) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11, $12, 'direct_expense', CURRENT_TIMESTAMP) RETURNING *",
-                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number, payer]
+                "INSERT INTO invoices (supplier_name, amount, date, photo_url, photos, photo_cheque_url, photo_verso_url, status, payment_method, paid_date, doc_type, doc_number, payer, origin, category, updated_at) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, 'paid', $8, $9, $10, $11, $12, 'direct_expense', $13, CURRENT_TIMESTAMP) RETURNING *",
+                [supplier_name, amount, date, photo_url, photos || '[]', photo_cheque_url, photo_verso_url, payment_method, paid_date, doc_type || 'Facture', doc_number, payer, category]
             );
             const row = res.rows[0];
             return {

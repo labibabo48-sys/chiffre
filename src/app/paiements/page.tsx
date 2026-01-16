@@ -178,6 +178,7 @@ const GET_PAYMENT_DATA = gql`
       photo_verso_url
       payment_method
       paid_date
+      category
     }
     getDailyExpenses(month: $month, startDate: $startDate, endDate: $endDate) {
       date
@@ -216,8 +217,8 @@ const DELETE_BANK_DEPOSIT = gql`
 `;
 
 const ADD_PAID_INVOICE = gql`
-  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String, $doc_type: String) {
-    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer, doc_type: $doc_type) {
+  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String, $doc_type: String, $category: String) {
+    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer, doc_type: $doc_type, category: $category) {
       id
     }
   }
@@ -250,8 +251,8 @@ const UNPAY_INVOICE = gql`
 `;
 
 const UPDATE_INVOICE = gql`
-  mutation UpdateInvoice($id: Int!, $supplier_name: String, $amount: String, $date: String, $payment_method: String, $paid_date: String) {
-    updateInvoice(id: $id, supplier_name: $supplier_name, amount: $amount, date: $date, payment_method: $payment_method, paid_date: $paid_date) {
+  mutation UpdateInvoice($id: Int!, $supplier_name: String, $amount: String, $date: String, $payment_method: String, $paid_date: String, $category: String) {
+    updateInvoice(id: $id, supplier_name: $supplier_name, amount: $amount, date: $date, payment_method: $payment_method, paid_date: $paid_date, category: $category) {
       id
     }
   }
@@ -275,6 +276,7 @@ const GET_INVOICES = gql`
       doc_number
       payer
       origin
+      category
       updated_at
     }
   }
@@ -322,6 +324,7 @@ export default function PaiementsPage() {
     const [expMethod, setExpMethod] = useState('Espèces');
     const [expDocType, setExpDocType] = useState('Facture');
     const [expPhoto, setExpPhoto] = useState('');
+    const [expCategory, setExpCategory] = useState('');
     const [expPhotoCheque, setExpPhotoCheque] = useState('');
     const [expPhotoVerso, setExpPhotoVerso] = useState('');
     const [showExpForm, setShowExpForm] = useState(false);
@@ -530,7 +533,11 @@ export default function PaiementsPage() {
     };
 
     const expenseDetails = useMemo(() => {
-        if (!data?.getDailyExpenses) return { journalier: [], fournisseurs: [], divers: [], administratif: [], avances: [], doublages: [], extras: [], primes: [] };
+        const base = { journalier: [], fournisseurs: [], divers: [], administratif: [], avances: [], doublages: [], extras: [], primes: [] };
+        if (!data?.getDailyExpenses) return base;
+
+        // Add direct expenses from invoices categorized
+        const directExpenses = (data.getInvoices || []).filter((inv: any) => inv.payer === 'riadh' && inv.category);
 
         const agg = data.getDailyExpenses.reduce((acc: any, curr: any) => {
             let d = [], dv = [], dj = [], da = [];
@@ -549,7 +556,14 @@ export default function PaiementsPage() {
                 extras: [...acc.extras, ...curr.extras_details],
                 primes: [...acc.primes, ...curr.primes_details]
             };
-        }, { journalier: [], fournisseurs: [], divers: [], administratif: [], avances: [], doublages: [], extras: [], primes: [] });
+        }, { ...base });
+
+        // Merge direct expenses from invoices into the aggregation
+        directExpenses.forEach((inv: any) => {
+            if (inv.category === 'Journalier') agg.journalier.push({ designation: inv.supplier_name, amount: inv.amount });
+            else if (inv.category === 'Fournisseur') agg.fournisseurs.push({ supplier: inv.supplier_name, amount: inv.amount });
+            else if (inv.category === 'Divers') agg.divers.push({ designation: inv.supplier_name, amount: inv.amount });
+        });
 
         const group = (list: any[], nameKey: string, amountKey: string) => {
             const map = new Map();
@@ -675,6 +689,10 @@ export default function PaiementsPage() {
 
     const handleExpSubmit = async () => {
         if (!expName || !expAmount || !expDate) return;
+        if (!expCategory && !editingHistoryItem) {
+            Swal.fire('Catégorie requise', 'Veuillez sélectionner une catégorie (Fournisseur, Journalier ou Divers)', 'warning');
+            return;
+        }
         try {
             if (editingHistoryItem) {
                 await execUpdateInvoice({
@@ -685,7 +703,8 @@ export default function PaiementsPage() {
                         date: expDate,
                         payment_method: expMethod,
                         paid_date: expDate,
-                        doc_type: expDocType
+                        doc_type: expDocType,
+                        category: expCategory || editingHistoryItem.category
                     }
                 });
                 Swal.fire('Mis à jour!', 'Dépense mise à jour avec succès.', 'success');
@@ -702,7 +721,8 @@ export default function PaiementsPage() {
                         payment_method: expMethod,
                         paid_date: expDate,
                         payer: 'riadh',
-                        doc_type: expDocType
+                        doc_type: expDocType,
+                        category: expCategory
                     }
                 });
                 Swal.fire('Ajouté!', 'Dépense ajoutée avec succès.', 'success');
@@ -712,6 +732,7 @@ export default function PaiementsPage() {
             setExpPhoto('');
             setExpPhotoCheque('');
             setExpPhotoVerso('');
+            setExpCategory('');
             setShowExpForm(false);
             refetch();
             refetchHistory();
@@ -1042,118 +1063,145 @@ export default function PaiementsPage() {
                                     {showExpForm && (
                                         <motion.div
                                             initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-                                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-6 bg-red-50/30 rounded-3xl border border-red-100"
+                                            className="grid grid-cols-1 gap-4 mb-6 p-6 bg-red-50/30 rounded-3xl border border-red-100"
                                         >
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Nom / Libellé</label>
-                                                    <input
-                                                        type="text"
-                                                        value={expName}
-                                                        onChange={(e) => setExpName(e.target.value)}
-                                                        className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-bold text-sm outline-none focus:border-red-400"
-                                                        placeholder="Ex: Facture STEG..."
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-3 items-end">
-                                                    <div>
-                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Montant (DT)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={expAmount}
-                                                            onChange={(e) => setExpAmount(e.target.value)}
-                                                            className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-black text-lg outline-none focus:border-red-400"
-                                                            placeholder="0.000"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Date</label>
-                                                        <PremiumDatePicker
-                                                            label="Date"
-                                                            value={expDate}
-                                                            onChange={setExpDate}
-                                                            align="right"
-                                                        />
-                                                    </div>
+                                            {/* Category Selection */}
+                                            <div className="flex flex-col gap-2 mb-2">
+                                                <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Choisir une Catégorie <span className="text-red-500">*</span></label>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {[
+                                                        { id: 'Fournisseur', label: 'Fournisseur', icon: Truck },
+                                                        { id: 'Journalier', label: 'Journalier', icon: Clock },
+                                                        { id: 'Divers', label: 'Divers', icon: Sparkles }
+                                                    ].map((cat) => (
+                                                        <button
+                                                            key={cat.id}
+                                                            type="button"
+                                                            onClick={() => setExpCategory(cat.id)}
+                                                            className={`flex items-center justify-center gap-2 h-14 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${expCategory === cat.id
+                                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 ring-4 ring-red-500/10'
+                                                                : 'bg-white border border-red-100 text-red-400 hover:bg-white/80'
+                                                                }`}
+                                                        >
+                                                            <cat.icon size={16} />
+                                                            {cat.label}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Mode de Paiement</label>
-                                                    <select
-                                                        value={expMethod}
-                                                        onChange={(e) => setExpMethod(e.target.value)}
-                                                        className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-bold text-sm outline-none focus:border-red-400 appearance-none"
-                                                    >
-                                                        <option value="Espèces">💵 Espèces</option>
-                                                        <option value="Chèque">✍️ Chèque</option>
-                                                        <option value="TPE (Carte)">💳 TPE (Carte)</option>
-                                                        <option value="Ticket Restaurant">🎫 T. Restaurant</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Type de Document</label>
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setExpDocType('Facture')}
-                                                            className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'Facture'
-                                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                                                                : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
-                                                                }`}
-                                                        >
-                                                            📄 Facture
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setExpDocType('BL')}
-                                                            className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'BL'
-                                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                                                                : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
-                                                                }`}
-                                                        >
-                                                            📋 BL
-                                                        </button>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Nom / Libellé</label>
+                                                        <input
+                                                            type="text"
+                                                            value={expName}
+                                                            onChange={(e) => setExpName(e.target.value)}
+                                                            className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-bold text-sm outline-none focus:border-red-400"
+                                                            placeholder="Ex: Facture STEG..."
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3 items-end">
+                                                        <div>
+                                                            <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Montant (DT)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={expAmount}
+                                                                onChange={(e) => setExpAmount(e.target.value)}
+                                                                className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-black text-lg outline-none focus:border-red-400"
+                                                                placeholder="0.000"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Date</label>
+                                                            <PremiumDatePicker
+                                                                label="Date"
+                                                                value={expDate}
+                                                                onChange={setExpDate}
+                                                                align="right"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Facture / Bon (Photo)</label>
-                                                        <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
-                                                            <UploadCloud size={14} />
-                                                            {expPhoto ? 'Facture OK' : 'Joindre Facture'}
-                                                            <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'invoice')} />
-                                                        </label>
+                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Mode de Paiement</label>
+                                                        <select
+                                                            value={expMethod}
+                                                            onChange={(e) => setExpMethod(e.target.value)}
+                                                            className="w-full h-11 bg-white border border-red-100 rounded-xl px-4 font-bold text-sm outline-none focus:border-red-400 appearance-none"
+                                                        >
+                                                            <option value="Espèces">💵 Espèces</option>
+                                                            <option value="Chèque">✍️ Chèque</option>
+                                                            <option value="TPE (Carte)">💳 TPE (Carte)</option>
+                                                            <option value="Ticket Restaurant">🎫 T. Restaurant</option>
+                                                        </select>
                                                     </div>
-
-                                                    {expMethod === 'Chèque' && (
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            <div>
-                                                                <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Chèque (Recto)</label>
-                                                                <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
-                                                                    <UploadCloud size={14} />
-                                                                    {expPhotoCheque ? 'Recto OK' : 'Joindre'}
-                                                                    <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'recto')} />
-                                                                </label>
-                                                            </div>
-                                                            <div>
-                                                                <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Chèque (Verso)</label>
-                                                                <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
-                                                                    <UploadCloud size={14} />
-                                                                    {expPhotoVerso ? 'Verso OK' : 'Joindre'}
-                                                                    <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'verso')} />
-                                                                </label>
-                                                            </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Type de Document</label>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpDocType('Facture')}
+                                                                className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'Facture'
+                                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                                                    : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
+                                                                    }`}
+                                                            >
+                                                                📄 Facture
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpDocType('BL')}
+                                                                className={`flex-1 h-11 rounded-xl font-bold text-xs transition-all ${expDocType === 'BL'
+                                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                                                                    : 'bg-white border border-red-100 text-red-400 hover:bg-red-50'
+                                                                    }`}
+                                                            >
+                                                                📋 BL
+                                                            </button>
                                                         </div>
-                                                    )}
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Facture / Bon (Photo)</label>
+                                                            <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
+                                                                <UploadCloud size={14} />
+                                                                {expPhoto ? 'Facture OK' : 'Joindre Facture'}
+                                                                <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'invoice')} />
+                                                            </label>
+                                                        </div>
+
+                                                        {expMethod === 'Chèque' && (
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Chèque (Recto)</label>
+                                                                    <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
+                                                                        <UploadCloud size={14} />
+                                                                        {expPhotoCheque ? 'Recto OK' : 'Joindre'}
+                                                                        <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'recto')} />
+                                                                    </label>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Chèque (Verso)</label>
+                                                                    <label className="flex items-center justify-center gap-2 h-11 w-full bg-white border border-red-100 rounded-xl cursor-pointer hover:bg-red-50 transition-all font-bold text-[10px] text-red-500 text-center px-1">
+                                                                        <UploadCloud size={14} />
+                                                                        {expPhotoVerso ? 'Verso OK' : 'Joindre'}
+                                                                        <input type="file" className="hidden" onChange={(e) => handlePhotoUpload(e, 'verso')} />
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={handleExpSubmit}
+                                                        disabled={addingExp}
+                                                        className={`w-full h-11 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg md:mt-auto ${editingHistoryItem ? 'bg-blue-600 shadow-blue-500/20' : 'bg-red-500 shadow-red-500/20'}`}
+                                                    >
+                                                        {addingExp ? <Loader2 size={16} className="animate-spin mx-auto" /> : (editingHistoryItem ? 'Enregistrer les modifications' : 'Enregistrer la Dépense')}
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    onClick={handleExpSubmit}
-                                                    disabled={addingExp}
-                                                    className={`w-full h-11 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg md:mt-auto ${editingHistoryItem ? 'bg-blue-600 shadow-blue-500/20' : 'bg-red-500 shadow-red-500/20'}`}
-                                                >
-                                                    {addingExp ? <Loader2 size={16} className="animate-spin mx-auto" /> : (editingHistoryItem ? 'Enregistrer les modifications' : 'Enregistrer la Dépense')}
-                                                </button>
                                             </div>
                                         </motion.div>
                                     )}
