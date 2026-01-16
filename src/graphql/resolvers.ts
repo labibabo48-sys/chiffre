@@ -350,14 +350,17 @@ export const resolvers = {
                 query(`SELECT SUM(CAST(NULLIF(REPLACE(tickets_restaurant, ',', '.'), '') AS NUMERIC)) as total FROM chiffres WHERE date ${dateFilter}`, params)
             ]);
 
+            const tBankDeposits = parseFloat(bankRes.rows[0]?.total || '0');
+            const tCash = parseFloat(cashRes.rows[0]?.total || '0');
+
             return {
                 totalRecetteNette: parseFloat(netRes.rows[0]?.total || '0'),
                 totalFacturesPayees: parseFloat(invoicesRes.rows[0]?.total || '0'),
                 totalUnpaidInvoices: parseFloat(unpaidInvoicesRes.rows[0]?.total || '0'),
                 totalTPE: parseFloat(tpeRes.rows[0]?.total || '0'),
                 totalCheque: parseFloat(chequeRes.rows[0]?.total || '0'),
-                totalCash: parseFloat(cashRes.rows[0]?.total || '0'),
-                totalBankDeposits: parseFloat(bankRes.rows[0]?.total || '0'),
+                totalCash: tCash - tBankDeposits,
+                totalBankDeposits: tBankDeposits,
                 totalRecetteCaisse: parseFloat(caisseRes.rows[0]?.total || '0'),
                 totalExpenses: parseFloat(expRes.rows[0]?.total || '0'),
                 totalTicketsRestaurant: parseFloat(ticketRes.rows[0]?.total || '0')
