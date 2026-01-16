@@ -738,10 +738,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const getCurrentState = () => ({
         recetteCaisse,
         expenses,
-        expenses,
         tpe,
         tpe2,
-        cheque,
         cheque,
         especes,
         ticketsRestaurant,
@@ -1196,10 +1194,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     total_diponce: totalExpenses.toString(),
                     diponce: JSON.stringify(expenses),
                     recette_net: recetteNett.toString(),
-                    recette_net: recetteNett.toString(),
                     tpe,
                     tpe2,
-                    cheque_bancaire: cheque,
                     cheque_bancaire: cheque,
                     espaces: especes,
                     tickets_restaurant: ticketsRestaurant,
@@ -2420,35 +2416,62 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     </button>
                                 </h3>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {[
-                                        { label: 'TPE 1', icon: CreditCard, val: tpe, set: setTpe },
-                                        { label: 'TPE 2', icon: CreditCard, val: tpe2, set: setTpe2 },
-                                        { label: 'Espèces', icon: Coins, val: especes, set: setEspeces },
-                                        { label: 'Chèque', icon: Wallet, val: cheque, set: setCheque },
-                                        { label: 'Ticket Restaurant', icon: Receipt, val: ticketsRestaurant, set: setTicketsRestaurant }
-                                    ].map((m, i) => (
-                                        <div key={i} className="relative">
-                                            <label className="text-xs font-black uppercase tracking-[0.15em] text-white/50 ml-2 mb-2 block">{m.label}</label>
-                                            <div className="relative">
-                                                <m.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                                                {hideRecetteCaisse ? (
-                                                    <div className="w-full h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-2xl text-white">
-                                                        ********
-                                                    </div>
-                                                ) : (
-                                                    <input
-                                                        type="number"
-                                                        disabled={m.label === 'Espèces' || isLocked}
-                                                        value={m.val}
-                                                        onWheel={(e) => e.currentTarget.blur()}
-                                                        onChange={(e) => m.set(e.target.value)}
-                                                        className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${(m.label === 'Espèces' || isLocked) ? 'bg-white/20 border-white/30 cursor-not-allowed' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
-                                                    />
-                                                )}
+                                <div className="flex flex-col lg:flex-row gap-4">
+                                    <div className="flex flex-col gap-4 w-full lg:w-1/4">
+                                        {[
+                                            { label: 'TPE 1', icon: CreditCard, val: tpe, set: setTpe },
+                                            { label: 'TPE 2', icon: CreditCard, val: tpe2, set: setTpe2 },
+                                        ].map((m, i) => (
+                                            <div key={i} className="relative">
+                                                <label className="text-xs font-black uppercase tracking-[0.15em] text-white/50 ml-2 mb-2 block">{m.label}</label>
+                                                <div className="relative">
+                                                    <m.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                                                    {hideRecetteCaisse ? (
+                                                        <div className="w-full h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-2xl text-white">
+                                                            ********
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            disabled={isLocked}
+                                                            value={m.val}
+                                                            onWheel={(e) => e.currentTarget.blur()}
+                                                            onChange={(e) => m.set(e.target.value)}
+                                                            className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${isLocked ? 'bg-white/20 border-white/30 cursor-not-allowed' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full lg:w-3/4">
+                                        {[
+                                            { label: 'Espèces', icon: Coins, val: especes, set: setEspeces },
+                                            { label: 'Chèque', icon: Wallet, val: cheque, set: setCheque },
+                                            { label: 'Ticket Restaurant', icon: Receipt, val: ticketsRestaurant, set: setTicketsRestaurant }
+                                        ].map((m, i) => (
+                                            <div key={i} className="relative">
+                                                <label className="text-xs font-black uppercase tracking-[0.15em] text-white/50 ml-2 mb-2 block">{m.label}</label>
+                                                <div className="relative">
+                                                    <m.icon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                                                    {hideRecetteCaisse ? (
+                                                        <div className="w-full h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-2xl text-white">
+                                                            ********
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            disabled={m.label === 'Espèces' || isLocked}
+                                                            value={m.val}
+                                                            onWheel={(e) => e.currentTarget.blur()}
+                                                            onChange={(e) => m.set(e.target.value)}
+                                                            className={`w-full h-20 rounded-2xl pl-11 pr-3 font-black text-2xl md:text-3xl text-white outline-none transition-all shadow-inner ${(m.label === 'Espèces' || isLocked) ? 'bg-white/20 border-white/30 cursor-not-allowed' : 'bg-white/10 border border-white/10 focus:bg-white/20 focus:border-white/40'}`}
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div >
