@@ -172,6 +172,8 @@ export const typeDefs = `#graphql
       photos: String
       doc_type: String
       doc_number: String
+      payment_method: String
+      paid_date: String
     ): Invoice
     
     addBankDeposit(

@@ -522,7 +522,7 @@ export const resolvers = {
         },
         unpayInvoice: async (_: any, { id }: { id: number }) => {
             const res = await query(
-                "UPDATE invoices SET status = 'unpaid', payment_method = NULL, paid_date = NULL, photo_cheque_url = NULL, photo_verso_url = NULL WHERE id = $1 RETURNING *",
+                "UPDATE invoices SET status = 'unpaid', payment_method = NULL, paid_date = NULL, photo_cheque_url = NULL, photo_verso_url = NULL, payer = NULL WHERE id = $1 RETURNING *",
                 [id]
             );
             const row = res.rows[0];
@@ -531,7 +531,7 @@ export const resolvers = {
                 photos: typeof row.photos === 'string' ? row.photos : JSON.stringify(row.photos || [])
             };
         },
-        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos, doc_type, doc_number }: any) => {
+        updateInvoice: async (_: any, { id, supplier_name, amount, date, photo_url, photos, doc_type, doc_number, payment_method, paid_date }: any) => {
             const fields = [];
             const params = [];
             if (supplier_name !== undefined) { params.push(supplier_name); fields.push(`supplier_name = $${params.length}`); }
@@ -541,6 +541,8 @@ export const resolvers = {
             if (photos !== undefined) { params.push(photos); fields.push(`photos = $${params.length}::jsonb`); }
             if (doc_type !== undefined) { params.push(doc_type); fields.push(`doc_type = $${params.length}`); }
             if (doc_number !== undefined) { params.push(doc_number); fields.push(`doc_number = $${params.length}`); }
+            if (payment_method !== undefined) { params.push(payment_method); fields.push(`payment_method = $${params.length}`); }
+            if (paid_date !== undefined) { params.push(paid_date); fields.push(`paid_date = $${params.length}`); }
 
             if (fields.length === 0) {
                 const r = await query('SELECT * FROM invoices WHERE id = $1', [id]);

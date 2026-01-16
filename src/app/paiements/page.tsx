@@ -203,8 +203,8 @@ const DELETE_BANK_DEPOSIT = gql`
 `;
 
 const ADD_PAID_INVOICE = gql`
-  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String) {
-    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer) {
+  mutation AddPaidInvoice($supplier_name: String!, $amount: String!, $date: String!, $photo_url: String, $photo_cheque_url: String, $photo_verso_url: String, $payment_method: String!, $paid_date: String!, $payer: String, $doc_type: String) {
+    addPaidInvoice(supplier_name: $supplier_name, amount: $amount, date: $date, photo_url: $photo_url, photo_cheque_url: $photo_cheque_url, photo_verso_url: $photo_verso_url, payment_method: $payment_method, paid_date: $paid_date, payer: $payer, doc_type: $doc_type) {
       id
     }
   }
@@ -232,6 +232,14 @@ const UNPAY_INVOICE = gql`
         id
         status
         paid_date
+    }
+  }
+`;
+
+const UPDATE_INVOICE = gql`
+  mutation UpdateInvoice($id: Int!, $supplier_name: String, $amount: String, $date: String, $payment_method: String, $paid_date: String) {
+    updateInvoice(id: $id, supplier_name: $supplier_name, amount: $amount, date: $date, payment_method: $payment_method, paid_date: $paid_date) {
+      id
     }
   }
 `;
@@ -303,6 +311,7 @@ export default function PaiementsPage() {
     const [expPhotoCheque, setExpPhotoCheque] = useState('');
     const [expPhotoVerso, setExpPhotoVerso] = useState('');
     const [showExpForm, setShowExpForm] = useState(false);
+    const [editingHistoryItem, setEditingHistoryItem] = useState<any>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
     // Unpaid Invoices Modal State & Logic
@@ -339,6 +348,7 @@ export default function PaiementsPage() {
     const [execPayInvoice] = useMutation(PAY_INVOICE);
     const [execDeleteInvoice] = useMutation(DELETE_INVOICE);
     const [execUnpayInvoice] = useMutation(UNPAY_INVOICE);
+    const [execUpdateInvoice] = useMutation(UPDATE_INVOICE);
 
     const handlePaySubmit = async () => {
         if (!showPayModal) return;
@@ -547,19 +557,37 @@ export default function PaiementsPage() {
     const handleExpSubmit = async () => {
         if (!expName || !expAmount || !expDate) return;
         try {
-            await addPaidInvoice({
-                variables: {
-                    supplier_name: expName,
-                    amount: expAmount,
-                    date: expDate,
-                    photo_url: expPhoto,
-                    photo_cheque_url: expPhotoCheque,
-                    photo_verso_url: expPhotoVerso,
-                    payment_method: expMethod,
-                    paid_date: expDate,
-                    payer: 'riadh'
-                }
-            });
+            if (editingHistoryItem) {
+                await execUpdateInvoice({
+                    variables: {
+                        id: parseInt(editingHistoryItem.id),
+                        supplier_name: expName,
+                        amount: expAmount,
+                        date: expDate,
+                        payment_method: expMethod,
+                        paid_date: expDate,
+                        doc_type: expDocType
+                    }
+                });
+                Swal.fire('Mis à jour!', 'Dépense mise à jour avec succès.', 'success');
+                setEditingHistoryItem(null);
+            } else {
+                await addPaidInvoice({
+                    variables: {
+                        supplier_name: expName,
+                        amount: expAmount,
+                        date: expDate,
+                        photo_url: expPhoto,
+                        photo_cheque_url: expPhotoCheque,
+                        photo_verso_url: expPhotoVerso,
+                        payment_method: expMethod,
+                        paid_date: expDate,
+                        payer: 'riadh',
+                        doc_type: expDocType
+                    }
+                });
+                Swal.fire('Ajouté!', 'Dépense ajoutée avec succès.', 'success');
+            }
             setExpName('');
             setExpAmount('');
             setExpPhoto('');
@@ -567,8 +595,10 @@ export default function PaiementsPage() {
             setExpPhotoVerso('');
             setShowExpForm(false);
             refetch();
+            refetchHistory();
         } catch (e) {
             console.error(e);
+            Swal.fire('Erreur', 'Une erreur est survenue lors de l\'enregistrement', 'error');
         }
     };
 
@@ -835,10 +865,10 @@ export default function PaiementsPage() {
                             <div className="bg-white p-6 rounded-[2.5rem] luxury-shadow border border-[#e6dace]/50">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-black text-[#4a3426] flex items-center gap-2">
-                                        <div className="bg-red-500 p-2 rounded-xl text-white">
+                                        <div className={editingHistoryItem ? "bg-blue-500 p-2 rounded-xl text-white" : "bg-red-500 p-2 rounded-xl text-white"}>
                                             <Receipt size={18} />
                                         </div>
-                                        Nouvelle Dépense
+                                        {editingHistoryItem ? 'Modifier la Dépense' : 'Nouvelle Dépense'}
                                     </h3>
                                     <div className="flex items-center gap-2">
                                         {!showExpForm && (
@@ -874,7 +904,17 @@ export default function PaiementsPage() {
                                             </div>
                                         )}
                                         <button
-                                            onClick={() => setShowExpForm(!showExpForm)}
+                                            onClick={() => {
+                                                if (showExpForm) {
+                                                    setEditingHistoryItem(null);
+                                                    setExpName('');
+                                                    setExpAmount('');
+                                                    setExpPhoto('');
+                                                    setExpPhotoCheque('');
+                                                    setExpPhotoVerso('');
+                                                }
+                                                setShowExpForm(!showExpForm);
+                                            }}
                                             className="text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-500 px-3 py-2 rounded-xl hover:bg-red-100 transition-all h-10"
                                         >
                                             {showExpForm ? 'Annuler' : 'Ajouter une dépense'}
@@ -993,9 +1033,9 @@ export default function PaiementsPage() {
                                                 <button
                                                     onClick={handleExpSubmit}
                                                     disabled={addingExp}
-                                                    className="w-full h-11 bg-red-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 md:mt-auto"
+                                                    className={`w-full h-11 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg md:mt-auto ${editingHistoryItem ? 'bg-blue-600 shadow-blue-500/20' : 'bg-red-500 shadow-red-500/20'}`}
                                                 >
-                                                    {addingExp ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Enregistrer la Dépense'}
+                                                    {addingExp ? <Loader2 size={16} className="animate-spin mx-auto" /> : (editingHistoryItem ? 'Enregistrer les modifications' : 'Enregistrer la Dépense')}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -1715,6 +1755,22 @@ export default function PaiementsPage() {
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setEditingHistoryItem(inv);
+                                                                            setExpName(inv.supplier_name);
+                                                                            setExpAmount(inv.amount);
+                                                                            setExpDate(inv.date);
+                                                                            setExpMethod(inv.payment_method);
+                                                                            setExpDocType(inv.doc_type || 'Facture');
+                                                                            setShowExpForm(true);
+                                                                            setShowHistoryModal(false);
+                                                                        }}
+                                                                        className="w-10 h-10 rounded-full border-2 border-blue-50 hover:border-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all text-blue-400"
+                                                                        title="Modifier"
+                                                                    >
+                                                                        <Edit2 size={18} />
+                                                                    </button>
                                                                     <button
                                                                         onClick={() => handleDelete(inv)}
                                                                         className="w-10 h-10 rounded-full border-2 border-red-50 hover:border-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all text-red-400"
