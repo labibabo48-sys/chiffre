@@ -13,7 +13,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useRef } from 'react';
 import HistoryModal from '@/components/HistoryModal';
-import QuickPinchZoom, { make3dTransformValue } from 'react-quick-pinch-zoom';
 
 // --- Premium Date Picker Component ---
 const PremiumDatePicker = ({ value, onChange, label, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, align?: 'left' | 'right' }) => {
@@ -182,6 +181,17 @@ export default function DashboardPage() {
     const [hideTotalExpenses, setHideTotalExpenses] = useState(false);
     const [hideTotalSalaries, setHideTotalSalaries] = useState(false);
     const [hideMonthlySummary, setHideMonthlySummary] = useState(false);
+    const [imgZoom, setImgZoom] = useState(1);
+    const [imgRotation, setImgRotation] = useState(0);
+
+    const resetView = () => {
+        setImgZoom(1);
+        setImgRotation(0);
+    };
+
+    useEffect(() => {
+        if (!viewingData) resetView();
+    }, [viewingData]);
 
     // Filter dates
     const startOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
@@ -1032,147 +1042,191 @@ export default function DashboardPage() {
                 }
             </AnimatePresence >
 
-            {/* Viewing Data Modal (Photos) - UPGRADED PREMIUM VERSION */}
+            {/* Viewing Data Modal (Photos) - EXACT LOGIC FROM FACTURATION */}
             <AnimatePresence>
-                {viewingData && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[150] bg-[#0a0a0a] flex flex-col"
-                        onClick={() => setViewingData(null)}
-                    >
-                        {/* Header Control Bar */}
-                        <div className="absolute top-0 inset-x-0 z-[160] p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pointer-events-none">
-                            <div className="pointer-events-auto">
-                                <div className="flex items-center gap-3 text-white mb-1">
-                                    <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">{selectedSupplier}</h2>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black tracking-[0.2em] text-[#c69f6e] uppercase opacity-80 leading-none">
-                                        {viewingData.amount?.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} DT • {viewingData.paymentMethod}
-                                    </span>
-                                </div>
-                                <div className="mt-4 text-[9px] font-black tracking-[0.3em] text-white/40 uppercase">
-                                    Document {(viewingData._currentIndex || 0) + 1} / {(viewingData._allPhotos || []).length}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 pointer-events-auto">
-                                {/* Action Buttons */}
-                                <div className="flex items-center p-1 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const link = document.createElement('a');
-                                            link.href = (viewingData._allPhotos || [])[viewingData._currentIndex || 0];
-                                            link.download = `facture-${selectedSupplier}.png`;
-                                            link.click();
-                                        }}
-                                        className="h-10 px-5 flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors"
-                                    >
-                                        <Download size={14} /> Télécharger
-                                    </button>
-                                </div>
-
-                                <button
-                                    onClick={() => setViewingData(null)}
-                                    className="w-14 h-14 bg-white/10 hover:bg-red-500/20 text-white rounded-2xl flex items-center justify-center transition-all border border-white/10 backdrop-blur-md"
-                                >
-                                    <X size={28} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Centered Image Viewport */}
-                        <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
-                            {(() => {
-                                // Prepare all photos for navigation
-                                if (!viewingData._allPhotos) {
-                                    let gallery: string[] = [];
-                                    try {
-                                        const rawPhotos = viewingData.photos;
-                                        if (rawPhotos && rawPhotos !== 'null' && rawPhotos !== '[]') {
-                                            const parsed = typeof rawPhotos === 'string' ? JSON.parse(rawPhotos) : rawPhotos;
-                                            gallery = Array.isArray(parsed) ? parsed : [];
-                                        }
-                                    } catch (e) { gallery = []; }
-
-                                    const allPhotos = [...gallery];
-                                    if (viewingData.photo_url && viewingData.photo_url.length > 5 && !allPhotos.includes(viewingData.photo_url)) {
-                                        allPhotos.unshift(viewingData.photo_url);
-                                    }
-                                    if (viewingData.photo_cheque_url) allPhotos.push(viewingData.photo_cheque_url);
-                                    if (viewingData.photo_verso_url) allPhotos.push(viewingData.photo_verso_url);
-
-                                    viewingData._allPhotos = allPhotos;
-                                    viewingData._currentIndex = 0;
-                                }
-
-                                const currentPhoto = viewingData._allPhotos[viewingData._currentIndex || 0];
-                                if (!currentPhoto) return <div className="text-white/20 font-black uppercase tracking-widest">Aucun visuel</div>;
-
-                                return (
-                                    <>
-                                        {/* Navigation Arrows */}
-                                        {viewingData._allPhotos.length > 1 && (
-                                            <>
-                                                <button
-                                                    onClick={() => setViewingData({ ...viewingData, _currentIndex: Math.max(0, (viewingData._currentIndex || 0) - 1) })}
-                                                    disabled={(viewingData._currentIndex || 0) === 0}
-                                                    className="absolute left-6 md:left-10 z-[160] w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-0"
-                                                >
-                                                    <ChevronLeft size={32} />
-                                                </button>
-                                                <button
-                                                    onClick={() => setViewingData({ ...viewingData, _currentIndex: Math.min(viewingData._allPhotos.length - 1, (viewingData._currentIndex || 0) + 1) })}
-                                                    disabled={(viewingData._currentIndex || 0) === viewingData._allPhotos.length - 1}
-                                                    className="absolute right-6 md:right-10 z-[160] w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-0"
-                                                >
-                                                    <ChevronRight size={32} />
-                                                </button>
-                                            </>
-                                        )}
-
-                                        {/* Zoom Engine */}
-                                        <div className="w-full h-full flex items-center justify-center p-4 md:p-20">
-                                            <QuickPinchZoom
-                                                onUpdate={({ x, y, scale }) => {
-                                                    const img = document.getElementById('zoomed-image');
-                                                    if (img) img.style.transform = make3dTransformValue({ x, y, scale });
-                                                }}
-                                                containerProps={{ className: 'w-full h-full' }}
-                                            >
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <img
-                                                        id="zoomed-image"
-                                                        src={currentPhoto}
-                                                        className="max-w-full max-h-full object-contain rounded-[1rem] md:rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
-                                                        alt="Document"
-                                                    />
-                                                </div>
-                                            </QuickPinchZoom>
+                {
+                    viewingData && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 overflow-y-auto no-scrollbar"
+                            onClick={() => setViewingData(null)}
+                        >
+                            <div className="w-full max-w-6xl space-y-8 py-10" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center text-white mb-4">
+                                    <div>
+                                        <h2 className="text-3xl font-black uppercase tracking-tight">{selectedSupplier}</h2>
+                                        <p className="text-sm font-bold opacity-60 uppercase tracking-[0.3em]">
+                                            {viewingData.amount?.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} DT • {viewingData.paymentMethod}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex bg-white/10 rounded-2xl p-1 gap-1 border border-white/10">
+                                            <button onClick={() => setImgZoom(prev => Math.max(0.5, prev - 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Arrière"><ZoomOut size={20} /></button>
+                                            <div className="w-16 flex items-center justify-center font-black text-xs tabular-nums text-[#c69f6e]">{Math.round(imgZoom * 100)}%</div>
+                                            <button onClick={() => setImgZoom(prev => Math.min(4, prev + 0.25))} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Zoom Avant"><ZoomIn size={20} /></button>
+                                            <div className="w-px h-6 bg-white/10 self-center mx-1"></div>
+                                            <button onClick={() => setImgRotation(prev => prev + 90)} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Tourner"><RotateCcw size={20} /></button>
+                                            <button onClick={resetView} className="w-10 h-10 hover:bg-white/10 rounded-xl flex items-center justify-center transition-all" title="Réinitialiser"><Maximize2 size={20} /></button>
                                         </div>
+                                        <button onClick={() => setViewingData(null)} className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"><X size={32} /></button>
+                                    </div>
+                                </div>
 
-                                        {/* Floating Controls Bar (Bottom) */}
-                                        <div className="absolute bottom-10 inset-x-0 z-[160] flex justify-center pointer-events-none">
-                                            <div className="pointer-events-auto flex items-center gap-1 p-2 bg-[#1a1a1a]/80 backdrop-blur-2xl rounded-[1.5rem] border border-white/10 shadow-2xl">
-                                                <div className="flex items-center border-r border-white/10 pr-1">
-                                                    <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><ZoomOut size={18} /></button>
-                                                    <div className="px-3 text-[10px] font-black text-white/40 uppercase tracking-widest min-w-[60px] text-center">Auto</div>
-                                                    <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><ZoomIn size={18} /></button>
+                                <div className={`grid grid-cols-1 ${viewingData.paymentMethod === 'Chèque' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-8`}>
+                                    {/* Photo Facture */}
+                                    <div className="space-y-8">
+                                        {(() => {
+                                            let gallery: string[] = [];
+                                            try {
+                                                const rawPhotos = viewingData.photos;
+                                                if (rawPhotos && rawPhotos !== 'null' && rawPhotos !== '[]') {
+                                                    const parsed = typeof rawPhotos === 'string' ? JSON.parse(rawPhotos) : rawPhotos;
+                                                    gallery = Array.isArray(parsed) ? parsed : [];
+                                                }
+                                            } catch (e) {
+                                                gallery = [];
+                                            }
+
+                                            const allPhotos = [...gallery];
+                                            if (viewingData.photo_url && viewingData.photo_url.length > 5 && !allPhotos.includes(viewingData.photo_url)) {
+                                                allPhotos.unshift(viewingData.photo_url);
+                                            }
+
+                                            if (allPhotos.length === 0) {
+                                                return (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold uppercase tracking-widest">Sans Facture</div>
+                                                );
+                                            }
+
+                                            return allPhotos.map((photo, pIdx) => (
+                                                <div key={pIdx} className="space-y-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Document {pIdx + 1} / Facture</p>
+                                                        <a href={photo} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} /> Télécharger
+                                                        </a>
+                                                    </div>
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden group h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={photo}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt={`Facture ${pIdx + 1}`}
+                                                                style={{ pointerEvents: imgZoom > 1 ? 'none' : 'auto', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                        <div className="absolute top-6 left-6 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className="bg-black/60 backdrop-blur-md text-[10px] font-black text-[#c69f6e] px-4 py-2 rounded-full border border-[#c69f6e]/20 shadow-lg uppercase tracking-widest">Loupe: {Math.round(imgZoom * 100)}% • Molette pour zoomer</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <button onClick={() => window.location.reload()} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><RotateCcw size={18} /></button>
-                                                <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><Maximize2 size={18} /></button>
+                                            ));
+                                        })()}
+                                    </div>
+
+                                    {/* Photos Chèque */}
+                                    {viewingData.paymentMethod === 'Chèque' && (
+                                        <>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Recto</p>
+                                                    {viewingData.photo_cheque_url && (
+                                                        <a href={viewingData.photo_cheque_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                {viewingData.photo_cheque_url ? (
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={viewingData.photo_cheque_url}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt="Chèque Recto"
+                                                                style={{ pointerEvents: imgZoom > 1 ? 'none' : 'auto', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Recto</div>
+                                                )}
                                             </div>
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic">Chèque Verso</p>
+                                                    {viewingData.photo_verso_url && (
+                                                        <a href={viewingData.photo_verso_url} download target="_blank" className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                                                            <Download size={12} />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                {viewingData.photo_verso_url ? (
+                                                    <div
+                                                        className="bg-black rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden h-[70vh] relative"
+                                                        onWheel={(e) => {
+                                                            if (e.deltaY < 0) setImgZoom(prev => Math.min(4, prev + 0.1));
+                                                            else setImgZoom(prev => Math.max(0.5, prev - 0.1));
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className={`w-full h-full flex items-center justify-center p-4 ${imgZoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                                            animate={{ scale: imgZoom, rotate: imgRotation }}
+                                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                            drag={imgZoom > 1}
+                                                            dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                                            dragElastic={0.1}
+                                                        >
+                                                            <img
+                                                                src={viewingData.photo_verso_url}
+                                                                draggable="false"
+                                                                className="max-w-full max-h-full rounded-xl object-contain shadow-2xl"
+                                                                alt="Chèque Verso"
+                                                                style={{ pointerEvents: imgZoom > 1 ? 'none' : 'auto', userSelect: 'none' }}
+                                                            />
+                                                        </motion.div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-[70vh] bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 italic font-bold">Sans Verso</div>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence >
         </div >
     );
 }
