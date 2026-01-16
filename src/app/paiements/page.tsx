@@ -1268,34 +1268,7 @@ export default function PaiementsPage() {
 
                                 <div className="space-y-6">
                                     {/* Dernières Dépenses */}
-                                    <div className="space-y-4">
-                                        <h4 className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest px-2">Dernières dépenses réglées</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {(data?.getInvoices || [])
-                                                .filter((inv: any) => editingHistoryItem?.id !== inv.id)
-                                                .slice(0, 4)
-                                                .map((inv: any) => (
-                                                    <div
-                                                        key={inv.id}
-                                                        onClick={() => setSelectedInvoice(inv)}
-                                                        className="p-4 bg-[#fcfaf8] rounded-2xl border border-transparent hover:border-red-100 cursor-pointer transition-all flex justify-between items-center group"
-                                                    >
-                                                        <div>
-                                                            <p className="font-black text-[#4a3426] text-sm">{inv.supplier_name}</p>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className="text-[10px] font-bold text-red-500">{parseFloat(inv.amount).toFixed(3)} DT</span>
-                                                                <span className="text-[9px] font-bold text-[#8c8279] uppercase">{inv.payment_method}</span>
-                                                            </div>
-                                                        </div>
-                                                        {(inv.photo_url || inv.photo_cheque_url || inv.photo_verso_url) && (
-                                                            <div className="bg-red-50 p-2 rounded-xl text-red-400 group-hover:bg-red-500 group-hover:text-white transition-all">
-                                                                <ImageIcon size={16} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                        </div>
-                                    </div>
+
 
                                 </div>
                             </div>
