@@ -2058,10 +2058,12 @@ export default function PaiementsPage() {
                                             { title: 'Accompte', subtitle: 'Avances sur salaires', icon: Calculator, color: 'text-[#a89284]', iconBg: 'bg-[#a89284]/10', items: expenseDetails.avances },
                                             { title: 'Doublage', subtitle: 'Heures supplémentaires', icon: TrendingUp, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.doublages },
                                             { title: 'Extra', subtitle: 'Main d\'œuvre occasionnelle', icon: Zap, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.extras },
-                                            { title: 'Primes', subtitle: 'Récompenses & Bonus', icon: Sparkles, color: 'text-[#2d6a4f]', iconBg: 'bg-[#2d6a4f]/10', items: expenseDetails.primes }
+                                            { title: 'Primes', subtitle: 'Récompenses & Bonus', icon: Sparkles, color: 'text-[#2d6a4f]', iconBg: 'bg-[#2d6a4f]/10', items: expenseDetails.primes },
+                                            { title: 'Restes Salaires', subtitle: 'Salaires en attente', icon: Banknote, color: 'text-red-500', iconBg: 'bg-red-50', items: [], amount: 0 }
                                         ].map((cat, idx) => {
                                             const total = cat.amount !== undefined ? cat.amount : cat.items.reduce((sum, item) => sum + item.amount, 0);
-                                            if (total === 0) return null;
+                                            // Show Restes Salaires even if 0, but hide others if 0
+                                            if (total === 0 && cat.title !== 'Restes Salaires') return null;
                                             const isExpanded = expandedCategories.includes(idx);
                                             const hasItems = cat.items && cat.items.length > 0;
 
@@ -2128,12 +2130,11 @@ export default function PaiementsPage() {
 
                                 {/* Footer Total Summary */}
                                 <div className="p-8 bg-white border-t border-[#e6dace]/50 shrink-0">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {[
-                                            { label: 'Dépenses Directes', val: totals.expenses, color: 'text-[#4a3426]', bg: 'bg-[#4a3426]/5' },
                                             { label: 'Total Salaires', val: totals.salaries, color: 'text-[#a89284]', bg: 'bg-[#a89284]/5' },
                                             { label: 'Riadh (Historique)', val: totals.riadh, color: 'text-[#c69f6e]', bg: 'bg-[#c69f6e]/5' },
-                                            { label: 'Reste Prévu', val: stats.totalRecetteNette, color: 'text-[#22c55e]', bg: 'bg-[#22c55e]/5' }
+                                            { label: 'Reste Prévu', val: (stats.totalRecetteNette - totals.global), color: 'text-[#22c55e]', bg: 'bg-[#22c55e]/5' }
                                         ].map((sum, i) => (
                                             <div key={i} className={`p-4 ${sum.bg} rounded-[1.5rem] border border-white/50 shadow-sm`}>
                                                 <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest mb-1 opacity-60">{sum.label}</p>
