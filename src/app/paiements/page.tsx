@@ -855,50 +855,59 @@ export default function PaiementsPage() {
 
                 <main className="max-w-7xl mx-auto px-4 md:px-8 mt-8 space-y-8">
                     {/* Financial Summary Grid - 3 Columns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* 0. Total Global (NEW) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* 0. Somme Totale (Global) */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
                             onClick={() => setShowExpensesDetails(true)}
-                            className="col-span-1 sm:col-span-2 lg:col-span-4 bg-gradient-to-br from-[#4a3426] to-[#2d1e16] p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden group hover:scale-[1.005] transition-all text-white cursor-pointer active:scale-[0.99] border-4 border-[#c69f6e]/20"
+                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#4a3426] to-[#2d1e16] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white cursor-pointer active:scale-95"
                         >
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-3xl bg-[#c69f6e] flex items-center justify-center text-white shadow-lg shadow-[#c69f6e]/20 group-hover:rotate-12 transition-transform">
-                                        <Plus size={40} strokeWidth={3} />
-                                    </div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 text-[#c69f6e] mb-4 uppercase text-xs font-black tracking-widest">
+                                    <Plus size={16} strokeWidth={3} /> Somme Totale (Global)
+                                </div>
+                                <div className="flex justify-between items-end">
                                     <div>
-                                        <h3 className="text-sm font-black uppercase tracking-[0.4em] text-[#c69f6e] mb-1">Somme Totale</h3>
-                                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Dépenses + Salaires + Historique Riadh</p>
-                                    </div>
-                                </div>
-                                <div className="text-center md:text-right">
-                                    <div className="flex items-baseline justify-center md:justify-end gap-3">
-                                        <span className="text-6xl lg:text-8xl font-black tracking-tighter leading-none">
+                                        <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
                                             {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                        </span>
-                                        <span className="text-2xl font-black text-[#c69f6e]">DT</span>
+                                        </h3>
+                                        <span className="text-lg font-bold text-[#c69f6e]/70 mt-2 block">Dinars Tunisiens (DT)</span>
                                     </div>
-                                    <p className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] mt-2">Détails disponibles au clic</p>
+                                    <div className="text-right flex flex-col items-end opacity-40">
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1">Détails Inclus</p>
+                                        <div className="flex gap-2 text-[9px] font-bold uppercase">
+                                            <span>Dépenses</span>
+                                            <span>+</span>
+                                            <span>Salaires</span>
+                                            <span>+</span>
+                                            <span>Riadh</span>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <div className="absolute -right-8 -bottom-8 opacity-5 group-hover:scale-125 transition-transform duration-500 text-white">
+                                <Plus size={180} />
                             </div>
                         </motion.div>
 
                         {/* 1. Chiffre d'Affaire */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                            className="bg-gradient-to-br from-[#10b981] to-[#059669] p-8 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white"
+                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#10b981] to-[#059669] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-3 uppercase text-[10px] font-black tracking-widest">
-                                    <Wallet size={14} /> Chiffre d'Affaire
+                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
+                                    <Wallet size={16} /> Chiffre d'Affaire
                                 </div>
-                                <h3 className="text-3xl lg:text-4xl font-black tracking-tighter">
+                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
                                     {stats.totalRecetteCaisse.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                 </h3>
-                                <span className="text-xs font-bold opacity-60 mt-1 block">DT</span>
+                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
+                            </div>
+                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                                <Wallet size={180} />
                             </div>
                         </motion.div>
 
@@ -906,52 +915,40 @@ export default function PaiementsPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                             onClick={() => setShowExpensesDetails(true)}
-                            className="bg-gradient-to-br from-[#6b7280] to-[#4b5563] p-8 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white cursor-pointer active:scale-95"
+                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#6b7280] to-[#4b5563] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white cursor-pointer active:scale-95"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-3 uppercase text-[10px] font-black tracking-widest">
-                                    <Banknote size={14} /> Dépenses & Riadh
+                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
+                                    <Banknote size={16} /> Total Dépenses & Riadh
                                 </div>
-                                <h3 className="text-3xl lg:text-4xl font-black tracking-tighter">
+                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
                                     {(totals.expenses + totals.riadh).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                 </h3>
-                                <span className="text-xs font-bold opacity-60 mt-1 block">DT</span>
+                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
                             </div>
-                        </motion.div>
-
-                        {/* 2.5 Total Salaires (NEW) */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                            onClick={() => setShowExpensesDetails(true)}
-                            className="bg-gradient-to-br from-[#a89284] to-[#8c7a6e] p-8 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white cursor-pointer active:scale-95"
-                        >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-3 uppercase text-[10px] font-black tracking-widest">
-                                    <Calculator size={14} /> Total Salaires
-                                </div>
-                                <h3 className="text-3xl lg:text-4xl font-black tracking-tighter">
-                                    {totals.salaries.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                </h3>
-                                <span className="text-xs font-bold opacity-60 mt-1 block">DT</span>
+                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                                <Banknote size={180} />
                             </div>
                         </motion.div>
 
                         {/* 3. Reste */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                            className="bg-gradient-to-br from-[#22c55e] to-[#16a34a] p-8 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#22c55e] to-[#16a34a] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-3 uppercase text-[10px] font-black tracking-widest">
-                                    <TrendingUp size={14} /> Reste Net
+                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
+                                    <TrendingUp size={16} /> Reste Net
                                 </div>
-                                <h3 className="text-3xl lg:text-4xl font-black tracking-tighter">
+                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
                                     {stats.totalRecetteNette.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                 </h3>
-                                <span className="text-xs font-bold opacity-60 mt-1 block">DT</span>
+                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
+                            </div>
+                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                                <TrendingUp size={180} />
                             </div>
                         </motion.div>
                     </div>
