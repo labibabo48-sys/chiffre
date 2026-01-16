@@ -766,7 +766,11 @@ export default function DashboardPage() {
                                             <span className="text-sm font-black uppercase tracking-[0.2em]">Total Dépenses Mensuel</span>
                                         </div>
                                         <div className="flex items-baseline gap-3">
-                                            <span className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter">{aggregates.total_diponce.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</span>
+                                            {hideRecetteCaisse ? (
+                                                <span className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter">********</span>
+                                            ) : (
+                                                <span className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter">{aggregates.total_diponce.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</span>
+                                            )}
                                             <span className="text-lg md:text-2xl md:text-3xl font-black opacity-30 uppercase">DT</span>
                                         </div>
                                         <div className="text-xs opacity-40 mt-1 font-medium">
@@ -779,9 +783,15 @@ export default function DashboardPage() {
                                             <span className="text-sm font-black uppercase tracking-[0.2em]">Recette Nette Estimée</span>
                                         </div>
                                         <div className="flex items-baseline gap-4 mt-2">
-                                            <span className={`text-4xl sm:text-6xl md:text-9xl lg:text-[10rem] font-black tracking-tighter leading-none transition-all duration-500 ${aggregates.recette_net >= 0 ? 'text-[#c69f6e]' : 'text-red-400'}`}>
-                                                {aggregates.recette_net.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                            </span>
+                                            {hideRecetteCaisse ? (
+                                                <span className={`text-4xl sm:text-6xl md:text-9xl lg:text-[10rem] font-black tracking-tighter leading-none transition-all duration-500 text-[#c69f6e]`}>
+                                                    ********
+                                                </span>
+                                            ) : (
+                                                <span className={`text-4xl sm:text-6xl md:text-9xl lg:text-[10rem] font-black tracking-tighter leading-none transition-all duration-500 ${aggregates.recette_net >= 0 ? 'text-[#c69f6e]' : 'text-red-400'}`}>
+                                                    {aggregates.recette_net.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                </span>
+                                            )}
                                             <span className="text-xl md:text-3xl md:text-4xl font-black opacity-20 text-white uppercase shrink-0">DT</span>
                                         </div>
                                     </div>
@@ -805,7 +815,7 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div className="flex items-baseline gap-2 text-white mt-1">
                                                     <div className="text-2xl md:text-3xl font-black tracking-tighter truncate">
-                                                        {m.val.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                        {hideRecetteCaisse ? '********' : m.val.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
                                                     </div>
                                                     <div className="text-[10px] font-black opacity-20 uppercase shrink-0">DT</div>
                                                 </div>
