@@ -7,12 +7,13 @@ import Sidebar from '@/components/Sidebar';
 import {
     LayoutDashboard, Loader2, Calendar,
     Wallet, TrendingUp, TrendingDown, CreditCard, Banknote, Coins, Receipt, Calculator,
-    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, EyeOff, Truck, Download, Clock, Filter, RotateCcw, FileText
+    Plus, Zap, Sparkles, Search, ChevronLeft, ChevronRight, ChevronDown, X, Eye, EyeOff, Truck, Download, Clock, Filter, RotateCcw, FileText, ZoomIn, ZoomOut, Maximize2, RotateCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useRef } from 'react';
 import HistoryModal from '@/components/HistoryModal';
+import QuickPinchZoom, { make3dTransformValue } from 'react-quick-pinch-zoom';
 
 // --- Premium Date Picker Component ---
 const PremiumDatePicker = ({ value, onChange, label, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, align?: 'left' | 'right' }) => {
@@ -1031,118 +1032,147 @@ export default function DashboardPage() {
                 }
             </AnimatePresence >
 
-            {/* Viewing Data Modal (Photos) */}
+            {/* Viewing Data Modal (Photos) - UPGRADED PREMIUM VERSION */}
             <AnimatePresence>
-                {
-                    viewingData && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4"
-                            onClick={() => setViewingData(null)}
-                        >
-                            <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="bg-white rounded-[3rem] p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl"
-                                onClick={e => e.stopPropagation()}
-                            >
-                                <button onClick={() => setViewingData(null)} className="absolute top-8 right-8 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"><X size={24} /></button>
-                                <h3 className="text-2xl font-black mb-8 text-[#4a3426] flex items-center gap-3 uppercase tracking-tighter"><Receipt size={28} className="text-[#c69f6e]" /> Justificatifs de Paiement</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {(() => {
-                                        let gallery: string[] = [];
-                                        try {
-                                            const rawPhotos = viewingData.photos;
-                                            // Handle various falsy or stringified null cases
-                                            if (rawPhotos && rawPhotos !== 'null' && rawPhotos !== '[]') {
-                                                const parsed = typeof rawPhotos === 'string' ? JSON.parse(rawPhotos) : rawPhotos;
-                                                gallery = Array.isArray(parsed) ? parsed : [];
-                                            }
-                                        } catch (e) {
-                                            gallery = [];
-                                        }
-
-                                        // Collect all unique photos
-                                        const allPhotos = [...gallery];
-                                        if (viewingData.photo_url && viewingData.photo_url.length > 5 && !allPhotos.includes(viewingData.photo_url)) {
-                                            allPhotos.unshift(viewingData.photo_url);
-                                        }
-
-                                        if (allPhotos.length === 0 && !viewingData.photo_cheque_url && !viewingData.photo_verso_url) {
-                                            return (
-                                                <div className="col-span-full py-20 text-center text-[#8c8279] opacity-50 italic font-medium">
-                                                    Aucun document attaché à cette facture.
-                                                </div>
-                                            );
-                                        }
-
-                                        return allPhotos.map((photo, pIdx) => (
-                                            <div key={pIdx} className="space-y-4">
-                                                <div className="flex justify-between items-center px-2">
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e]">Document {allPhotos.length > 1 ? pIdx + 1 : ''}</p>
-                                                    <a
-                                                        href={photo}
-                                                        download={`document-${pIdx + 1}.png`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-[#4a3426] transition-colors bg-[#f9f7f5] px-3 py-1.5 rounded-lg border border-[#e6dace]/30 shadow-sm"
-                                                    >
-                                                        <Download size={12} /> Télécharger
-                                                    </a>
-                                                </div>
-                                                <div className="rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl bg-gray-50 aspect-[3/4] md:aspect-auto md:min-h-[400px]">
-                                                    <img src={photo} className="w-full h-full object-contain" alt={`Document ${pIdx + 1}`} />
-                                                </div>
-                                            </div>
-                                        ));
-                                    })()}
-                                    {viewingData.photo_cheque_url && (
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center px-2">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e]">Chèque (Recto)</p>
-                                                <a
-                                                    href={viewingData.photo_cheque_url}
-                                                    download="cheque-recto.png"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-[#4a3426] transition-colors bg-[#f9f7f5] px-3 py-1.5 rounded-lg border border-[#e6dace]/30 shadow-sm"
-                                                >
-                                                    <Download size={12} /> Télécharger
-                                                </a>
-                                            </div>
-                                            <div className="rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl bg-gray-50 aspect-video">
-                                                <img src={viewingData.photo_cheque_url} className="w-full h-full object-contain" alt="Chèque Recto" />
-                                            </div>
-                                        </div>
-                                    )}
-                                    {viewingData.photo_verso_url && (
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center px-2">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c69f6e]">Chèque (Verso)</p>
-                                                <a
-                                                    href={viewingData.photo_verso_url}
-                                                    download="cheque-verso.png"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-[#4a3426] transition-colors bg-[#f9f7f5] px-3 py-1.5 rounded-lg border border-[#e6dace]/30 shadow-sm"
-                                                >
-                                                    <Download size={12} /> Télécharger
-                                                </a>
-                                            </div>
-                                            <div className="rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl bg-gray-50 aspect-video">
-                                                <img src={viewingData.photo_verso_url} className="w-full h-full object-contain" alt="Chèque Verso" />
-                                            </div>
-                                        </div>
-                                    )}
+                {viewingData && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[150] bg-[#0a0a0a] flex flex-col"
+                        onClick={() => setViewingData(null)}
+                    >
+                        {/* Header Control Bar */}
+                        <div className="absolute top-0 inset-x-0 z-[160] p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pointer-events-none">
+                            <div className="pointer-events-auto">
+                                <div className="flex items-center gap-3 text-white mb-1">
+                                    <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">{selectedSupplier}</h2>
                                 </div>
-                            </motion.div>
-                        </motion.div>
-                    )
-                }
-            </AnimatePresence >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black tracking-[0.2em] text-[#c69f6e] uppercase opacity-80 leading-none">
+                                        {viewingData.amount?.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} DT • {viewingData.paymentMethod}
+                                    </span>
+                                </div>
+                                <div className="mt-4 text-[9px] font-black tracking-[0.3em] text-white/40 uppercase">
+                                    Document {(viewingData._currentIndex || 0) + 1} / {(viewingData._allPhotos || []).length}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 pointer-events-auto">
+                                {/* Action Buttons */}
+                                <div className="flex items-center p-1 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const link = document.createElement('a');
+                                            link.href = (viewingData._allPhotos || [])[viewingData._currentIndex || 0];
+                                            link.download = `facture-${selectedSupplier}.png`;
+                                            link.click();
+                                        }}
+                                        className="h-10 px-5 flex items-center gap-2 text-[9px] font-black text-[#c69f6e] uppercase tracking-widest hover:text-white transition-colors"
+                                    >
+                                        <Download size={14} /> Télécharger
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => setViewingData(null)}
+                                    className="w-14 h-14 bg-white/10 hover:bg-red-500/20 text-white rounded-2xl flex items-center justify-center transition-all border border-white/10 backdrop-blur-md"
+                                >
+                                    <X size={28} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Centered Image Viewport */}
+                        <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
+                            {(() => {
+                                // Prepare all photos for navigation
+                                if (!viewingData._allPhotos) {
+                                    let gallery: string[] = [];
+                                    try {
+                                        const rawPhotos = viewingData.photos;
+                                        if (rawPhotos && rawPhotos !== 'null' && rawPhotos !== '[]') {
+                                            const parsed = typeof rawPhotos === 'string' ? JSON.parse(rawPhotos) : rawPhotos;
+                                            gallery = Array.isArray(parsed) ? parsed : [];
+                                        }
+                                    } catch (e) { gallery = []; }
+
+                                    const allPhotos = [...gallery];
+                                    if (viewingData.photo_url && viewingData.photo_url.length > 5 && !allPhotos.includes(viewingData.photo_url)) {
+                                        allPhotos.unshift(viewingData.photo_url);
+                                    }
+                                    if (viewingData.photo_cheque_url) allPhotos.push(viewingData.photo_cheque_url);
+                                    if (viewingData.photo_verso_url) allPhotos.push(viewingData.photo_verso_url);
+
+                                    viewingData._allPhotos = allPhotos;
+                                    viewingData._currentIndex = 0;
+                                }
+
+                                const currentPhoto = viewingData._allPhotos[viewingData._currentIndex || 0];
+                                if (!currentPhoto) return <div className="text-white/20 font-black uppercase tracking-widest">Aucun visuel</div>;
+
+                                return (
+                                    <>
+                                        {/* Navigation Arrows */}
+                                        {viewingData._allPhotos.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={() => setViewingData({ ...viewingData, _currentIndex: Math.max(0, (viewingData._currentIndex || 0) - 1) })}
+                                                    disabled={(viewingData._currentIndex || 0) === 0}
+                                                    className="absolute left-6 md:left-10 z-[160] w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-0"
+                                                >
+                                                    <ChevronLeft size={32} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setViewingData({ ...viewingData, _currentIndex: Math.min(viewingData._allPhotos.length - 1, (viewingData._currentIndex || 0) + 1) })}
+                                                    disabled={(viewingData._currentIndex || 0) === viewingData._allPhotos.length - 1}
+                                                    className="absolute right-6 md:right-10 z-[160] w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-0"
+                                                >
+                                                    <ChevronRight size={32} />
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Zoom Engine */}
+                                        <div className="w-full h-full flex items-center justify-center p-4 md:p-20">
+                                            <QuickPinchZoom
+                                                onUpdate={({ x, y, scale }) => {
+                                                    const img = document.getElementById('zoomed-image');
+                                                    if (img) img.style.transform = make3dTransformValue({ x, y, scale });
+                                                }}
+                                                containerProps={{ className: 'w-full h-full' }}
+                                            >
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <img
+                                                        id="zoomed-image"
+                                                        src={currentPhoto}
+                                                        className="max-w-full max-h-full object-contain rounded-[1rem] md:rounded-[2rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+                                                        alt="Document"
+                                                    />
+                                                </div>
+                                            </QuickPinchZoom>
+                                        </div>
+
+                                        {/* Floating Controls Bar (Bottom) */}
+                                        <div className="absolute bottom-10 inset-x-0 z-[160] flex justify-center pointer-events-none">
+                                            <div className="pointer-events-auto flex items-center gap-1 p-2 bg-[#1a1a1a]/80 backdrop-blur-2xl rounded-[1.5rem] border border-white/10 shadow-2xl">
+                                                <div className="flex items-center border-r border-white/10 pr-1">
+                                                    <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><ZoomOut size={18} /></button>
+                                                    <div className="px-3 text-[10px] font-black text-white/40 uppercase tracking-widest min-w-[60px] text-center">Auto</div>
+                                                    <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><ZoomIn size={18} /></button>
+                                                </div>
+                                                <button onClick={() => window.location.reload()} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><RotateCcw size={18} /></button>
+                                                <button onClick={() => { }} className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"><Maximize2 size={18} /></button>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div >
     );
 }
