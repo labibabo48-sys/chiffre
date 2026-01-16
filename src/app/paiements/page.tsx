@@ -679,7 +679,7 @@ export default function PaiementsPage() {
             extras: groupWithItems(agg.extras, 'username', 'montant'),
             primes: groupWithItems(agg.primes, 'username', 'montant'),
             restesSalaires: group(agg.restesSalaires, 'username', 'montant'),
-            remainders: groupWithItems((agg.remainders || []).map(r => ({ ...r, username: r.name, montant: r.amount })), 'username', 'montant', 'updated_at')
+            remainders: groupWithItems((agg.remainders || []).map((r: any) => ({ ...r, username: r.name, montant: r.amount })), 'username', 'montant', 'updated_at')
         };
     }, [data]);
 
