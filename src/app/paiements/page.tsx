@@ -1727,7 +1727,11 @@ export default function PaiementsPage() {
 
                                         if (filteredHistory.length > 0) {
                                             return filteredHistory
-                                                .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                .sort((a: any, b: any) => {
+                                                    const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                                                    if (dateDiff !== 0) return dateDiff;
+                                                    return parseInt(b.id) - parseInt(a.id);
+                                                })
                                                 .map((inv: any) => (
                                                     <div key={inv.id} className="group relative bg-white p-5 rounded-3xl border border-[#e6dace]/60 hover:border-[#c69f6e]/60 hover:shadow-lg hover:shadow-[#c69f6e]/5 transition-all duration-300">
                                                         <div className="flex justify-between items-center">

@@ -380,7 +380,7 @@ export const resolvers = {
                 return [];
             }
 
-            const res = await query(`SELECT * FROM bank_deposits ${dateFilter} ORDER BY date DESC`, params);
+            const res = await query(`SELECT * FROM bank_deposits ${dateFilter} ORDER BY date DESC, id DESC`, params);
             return res.rows;
         },
         getEmployees: async () => {
