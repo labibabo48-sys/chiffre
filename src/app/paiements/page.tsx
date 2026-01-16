@@ -619,7 +619,7 @@ export default function PaiementsPage() {
         // Add salary remainders
         (data.getSalaryRemainders || []).forEach((rem: any) => {
             const displayName = rem.employee_name === 'Restes Salaires' ? 'Tous Employés' : rem.employee_name;
-            agg.remainders.push({ name: displayName, amount: rem.amount });
+            agg.remainders.push({ name: displayName, amount: rem.amount, updated_at: rem.updated_at });
         });
 
         const group = (list: any[], nameKey: string, amountKey: string) => {
@@ -2377,7 +2377,15 @@ export default function PaiementsPage() {
                                                                 <div className="p-4 space-y-2">
                                                                     {(cat.items || []).map((item: any, i: number) => (
                                                                         <div key={i} className="flex justify-between items-center px-5 py-3 bg-white rounded-xl border border-[#e6dace]/10 shadow-sm">
-                                                                            <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
+                                                                                {item.updated_at && (
+                                                                                    <span className="text-[9px] font-bold text-green-600/60 flex items-center gap-1 mt-0.5">
+                                                                                        <CheckCircle2 size={9} />
+                                                                                        {new Date(Number(item.updated_at) || item.updated_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
                                                                             <span className="text-[11px] font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[9px] opacity-40 ml-0.5">DT</span></span>
                                                                         </div>
                                                                     ))}
