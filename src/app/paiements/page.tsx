@@ -855,162 +855,119 @@ export default function PaiementsPage() {
 
                 <main className="max-w-7xl mx-auto px-4 md:px-8 mt-8 space-y-8">
                     {/* Financial Summary Grid - 3 Columns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* 0. Somme Totale (Global) */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
-                            onClick={() => setShowExpensesDetails(true)}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#4a3426] to-[#2d1e16] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white cursor-pointer active:scale-95"
-                        >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 text-[#c69f6e] mb-4 uppercase text-xs font-black tracking-widest">
-                                    <Plus size={16} strokeWidth={3} /> Somme Totale (Global)
-                                </div>
-                                <div className="flex justify-between items-end">
-                                    <div>
-                                        <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
-                                            {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                        </h3>
-                                        <span className="text-lg font-bold text-[#c69f6e]/70 mt-2 block">Dinars Tunisiens (DT)</span>
-                                    </div>
-                                    <div className="text-right flex flex-col items-end opacity-40">
-                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1">Détails Inclus</p>
-                                        <div className="flex gap-2 text-[9px] font-bold uppercase">
-                                            <span>Dépenses</span>
-                                            <span>+</span>
-                                            <span>Salaires</span>
-                                            <span>+</span>
-                                            <span>Riadh</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="absolute -right-8 -bottom-8 opacity-5 group-hover:scale-125 transition-transform duration-500 text-white">
-                                <Plus size={180} />
-                            </div>
-                        </motion.div>
-
+                    <div className="space-y-4">
                         {/* 1. Chiffre d'Affaire */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#10b981] to-[#059669] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
+                            className="bg-[#3eb37c] p-10 rounded-[2.5rem] shadow-sm relative overflow-hidden group hover:scale-[1.005] transition-all text-white h-56 flex flex-col justify-center"
                         >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
-                                    <Wallet size={16} /> Chiffre d'Affaire
+                                <div className="flex items-center gap-3 text-white/90 mb-4 uppercase text-[11px] font-bold tracking-[0.2em]">
+                                    <FileText size={18} /> Chiffre d'Affaire
                                 </div>
-                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
-                                    {stats.totalRecetteCaisse.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                <h3 className="text-6xl font-black tracking-tighter mb-2">
+                                    {stats.totalRecetteCaisse.toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}
                                 </h3>
-                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
+                                <span className="text-xl font-bold opacity-80 block">DT</span>
                             </div>
-                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
-                                <Wallet size={180} />
+                            <div className="absolute right-8 bottom-0 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
+                                <Wallet size={160} />
                             </div>
                         </motion.div>
 
-                        {/* 2. Total Dépenses */}
+                        {/* 2. Total Dépenses (This now shows the TOTAL Global) */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                             onClick={() => setShowExpensesDetails(true)}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#6b7280] to-[#4b5563] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white cursor-pointer active:scale-95"
+                            className="bg-[#4b5563] p-10 rounded-[2.5rem] shadow-sm relative overflow-hidden group hover:scale-[1.005] transition-all text-white h-56 flex flex-col justify-center cursor-pointer"
                         >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
-                                    <Banknote size={16} /> Total Dépenses & Riadh
+                                <div className="flex items-center gap-3 text-white/90 mb-4 uppercase text-[11px] font-bold tracking-[0.2em]">
+                                    <Banknote size={18} /> Total Dépenses
                                 </div>
-                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
-                                    {(totals.expenses + totals.riadh).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                <h3 className="text-6xl font-black tracking-tighter mb-2">
+                                    {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}
                                 </h3>
-                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
+                                <span className="text-xl font-bold opacity-80 block">DT</span>
                             </div>
-                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
-                                <Banknote size={180} />
+                            <div className="absolute right-8 bottom-0 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
+                                <Banknote size={160} />
                             </div>
                         </motion.div>
 
                         {/* 3. Reste */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                            className="col-span-1 sm:col-span-2 lg:col-span-3 bg-gradient-to-br from-[#22c55e] to-[#16a34a] p-10 rounded-[2.5rem] shadow-lg relative overflow-hidden group hover:scale-[1.01] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                            className="bg-[#56b350] p-10 rounded-[2.5rem] shadow-sm relative overflow-hidden group hover:scale-[1.005] transition-all text-white h-56 flex flex-col justify-center"
                         >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-3 text-white/80 mb-4 uppercase text-xs font-black tracking-widest">
-                                    <TrendingUp size={16} /> Reste Net
+                                <div className="flex items-center gap-3 text-white/90 mb-4 uppercase text-[11px] font-bold tracking-[0.2em]">
+                                    <TrendingUp size={18} /> Reste
                                 </div>
-                                <h3 className="text-5xl lg:text-7xl font-black tracking-tighter">
-                                    {stats.totalRecetteNette.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                <h3 className="text-6xl font-black tracking-tighter mb-2">
+                                    {stats.totalRecetteNette.toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}
                                 </h3>
-                                <span className="text-lg font-bold opacity-70 mt-2 block">DT</span>
+                                <span className="text-xl font-bold opacity-80 block">DT</span>
                             </div>
-                            <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
-                                <TrendingUp size={180} />
+                            <div className="absolute right-8 bottom-0 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
+                                <TrendingUp size={160} />
                             </div>
                         </motion.div>
                     </div>
 
                     {/* Secondary Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* 4. Total Cash */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                            className="bg-gradient-to-br from-[#f59e0b] to-[#d97706] p-6 rounded-[2rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                            className="bg-[#f59e0b] p-8 rounded-[2rem] shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all text-white h-40 flex flex-col justify-center"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-2 text-white/80 mb-2 uppercase text-[9px] font-black tracking-widest">
-                                    <Coins size={12} /> Total Cash
+                                <div className="flex items-center gap-2 text-white/90 mb-2 uppercase text-[10px] font-bold tracking-widest">
+                                    <Coins size={14} /> Total Cash
                                 </div>
-                                <h3 className="text-3xl font-black tracking-tighter">
-                                    {stats.totalCash.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                </h3>
-                                <span className="text-xs font-bold opacity-70">DT</span>
+                                <h3 className="text-4xl font-black tracking-tighter">{stats.totalCash.toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}</h3>
+                                <span className="text-sm font-bold opacity-70">DT</span>
                             </div>
-                            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                            <div className="absolute right-4 bottom-2 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
                                 <Coins size={80} />
                             </div>
                         </motion.div>
 
                         {/* 5. Bancaire */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                            className="bg-gradient-to-br from-[#3b82f6] to-[#2563eb] p-6 rounded-[2rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                            className="bg-[#3b82f6] p-8 rounded-[2rem] shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all text-white h-40 flex flex-col justify-center"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-2 text-white/80 mb-2 uppercase text-[9px] font-black tracking-widest">
-                                    <CreditCard size={12} /> Bancaire (TPE + Vers. + Chèques)
+                                <div className="flex items-center gap-2 text-white/90 mb-2 uppercase text-[10px] font-bold tracking-widest">
+                                    <CreditCard size={14} /> Bancaire (TPE + Vers. + Chèques)
                                 </div>
-                                <h3 className="text-3xl font-black tracking-tighter">
-                                    {(stats.totalTPE + stats.totalBankDeposits + stats.totalCheque).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                <h3 className="text-4xl font-black tracking-tighter">
+                                    {(stats.totalTPE + stats.totalBankDeposits + stats.totalCheque).toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}
                                 </h3>
-                                <span className="text-xs font-bold opacity-70">DT</span>
+                                <span className="text-sm font-bold opacity-70">DT</span>
                             </div>
-                            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                            <div className="absolute right-4 bottom-2 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
                                 <CreditCard size={80} />
                             </div>
                         </motion.div>
 
                         {/* 6. Ticket Restaurant */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-                            className="bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] p-6 rounded-[2rem] shadow-lg relative overflow-hidden group hover:scale-[1.02] transition-all text-white"
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+                            className="bg-[#8b5cf6] p-8 rounded-[2rem] shadow-sm relative overflow-hidden group hover:scale-[1.02] transition-all text-white h-40 flex flex-col justify-center"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12"></div>
                             <div className="relative z-10">
-                                <div className="flex items-center gap-2 text-white/80 mb-2 uppercase text-[9px] font-black tracking-widest">
-                                    <Ticket size={12} /> Ticket Restaurant
+                                <div className="flex items-center gap-2 text-white/90 mb-2 uppercase text-[10px] font-bold tracking-widest">
+                                    <Ticket size={14} /> Ticket Restaurant
                                 </div>
-                                <h3 className="text-3xl font-black tracking-tighter">
-                                    {(stats.totalTicketsRestaurant || 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                <h3 className="text-4xl font-black tracking-tighter">
+                                    {(stats.totalTicketsRestaurant || 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 }).replace(/\s/g, ',')}
                                 </h3>
-                                <span className="text-xs font-bold opacity-70">DT</span>
+                                <span className="text-sm font-bold opacity-70">DT</span>
                             </div>
-                            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-125 transition-transform duration-500 text-white">
+                            <div className="absolute right-4 bottom-2 opacity-10 group-hover:scale-110 transition-transform duration-500 text-white">
                                 <Ticket size={80} />
                             </div>
                         </motion.div>
