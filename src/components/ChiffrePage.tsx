@@ -32,6 +32,7 @@ const GET_CHIFFRES_RANGE = gql`
         diponce_divers
         diponce_admin
         diponce_journalier
+        restes_salaires_details { id username montant nb_jours }
     }
   }
 `;
@@ -57,7 +58,9 @@ const GET_CHIFFRE = gql`
         avances_details { id username montant }
         doublages_details { id username montant }
         extras_details { id username montant }
+        extras_details { id username montant }
         primes_details { id username montant }
+        restes_salaires_details { id username montant nb_jours }
         diponce_divers
         diponce_journalier
         diponce_admin
@@ -232,9 +235,19 @@ const DELETE_PRIME = gql`
   mutation DeletePrime($id: Int!) { deletePrime(id: $id) }
 `;
 
+const ADD_RESTES_SALAIRES = gql`
+  mutation AddRestesSalaires($username: String!, $amount: Float!, $nb_jours: Float, $date: String!) {
+    addRestesSalaires(username: $username, amount: $amount, nb_jours: $nb_jours, date: $date) { id username montant nb_jours }
+  }
+`;
+const DELETE_RESTES_SALAIRES = gql`
+  mutation DeleteRestesSalaires($id: Int!) { deleteRestesSalaires(id: $id) }
+`;
+
 const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [], initialData = null }: any) => {
     const [search, setSearch] = useState('');
     const [amount, setAmount] = useState('');
+    const [nbJours, setNbJours] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
@@ -242,9 +255,11 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [], initialDa
             if (initialData) {
                 setSearch(initialData.username);
                 setAmount(initialData.montant);
+                setNbJours(initialData.nb_jours || '');
             } else {
                 setSearch('');
                 setAmount('');
+                setNbJours('');
             }
         }
     }, [isOpen, initialData]);
@@ -259,7 +274,8 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [], initialDa
         avance: initialData ? 'Mettre à jour Accompte' : 'Ajouter Accompte',
         doublage: initialData ? 'Mettre à jour Doublage' : 'Ajouter Doublage',
         extra: initialData ? 'Mettre à jour Extra' : 'Ajouter Extra',
-        prime: initialData ? 'Mettre à jour Prime' : 'Ajouter Prime'
+        prime: initialData ? 'Mettre à jour Prime' : 'Ajouter Prime',
+        restes_salaires: initialData ? 'Mettre à jour Reste Salaire' : 'Ajouter Reste Salaire',
     };
 
     return (
@@ -331,10 +347,28 @@ const EntryModal = ({ isOpen, onClose, onSubmit, type, employees = [], initialDa
                             </div>
                         </div>
 
+                        {type === 'restes_salaires' && (
+                            <div className="relative">
+                                <label className="text-[10px] font-black text-[#bba282] uppercase tracking-[0.2em] mb-2 block ml-1">Nombre de jours</label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#bba282] font-black"><Calendar size={20} /></div>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        step="0.5"
+                                        value={nbJours}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        onChange={(e) => setNbJours(e.target.value)}
+                                        className="w-full h-14 bg-[#fcfaf8] border border-[#e6dace] rounded-2xl pl-12 pr-4 font-black text-2xl text-[#4a3426] focus:border-[#c69f6e] outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <button
                             disabled={!search || !amount || parseFloat(amount) <= 0 || !employees.some((e: any) => e.name === search)}
                             onClick={() => {
-                                onSubmit(type, search, amount);
+                                onSubmit(type, search, amount, nbJours);
                                 onClose();
                             }}
                             className="w-full h-14 bg-[#4a3426] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-[#4a3426]/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-40 disabled:grayscale disabled:scale-100"
@@ -629,6 +663,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [deleteExtra] = useMutation(DELETE_EXTRA);
     const [addPrime] = useMutation(ADD_PRIME);
     const [deletePrime] = useMutation(DELETE_PRIME);
+    const [addRestesSalaires] = useMutation(ADD_RESTES_SALAIRES);
+    const [deleteRestesSalaires] = useMutation(DELETE_RESTES_SALAIRES);
 
     // Dashboard States
     const [recetteCaisse, setRecetteCaisse] = useState('0');
@@ -689,6 +725,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [doublagesList, setDoublagesList] = useState<{ id?: number, username: string, montant: string }[]>([]);
     const [extrasList, setExtrasList] = useState<{ id?: number, username: string, montant: string }[]>([]);
     const [primesList, setPrimesList] = useState<{ id?: number, username: string, montant: string }[]>([]);
+    const [restesSalairesList, setRestesSalairesList] = useState<{ id?: number, username: string, montant: string, nb_jours?: number }[]>([]);
 
     // UI States
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
@@ -749,6 +786,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         doublagesList,
         extrasList,
         primesList,
+        restesSalairesList,
         expensesDivers,
         expensesJournalier,
         expensesAdmin
@@ -776,6 +814,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             setDoublagesList(c.doublages_details || []);
             setExtrasList(c.extras_details || []);
             setPrimesList(c.primes_details || []);
+            setRestesSalairesList(c.restes_salaires_details || []);
             setExpensesDivers(JSON.parse(c.diponce_divers || '[]').map((d: any) => ({ ...d, details: d.details || '' })));
             setExpensesJournalier(JSON.parse(c.diponce_journalier || '[]').map((j: any) => ({ ...j, details: j.details || '' })));
             let adminData = JSON.parse(c.diponce_admin || '[]');
@@ -808,6 +847,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                         setDoublagesList(d.doublagesList);
                         setExtrasList(d.extrasList);
                         setPrimesList(d.primesList);
+                        setRestesSalairesList(d.restesSalairesList || []);
                         setExpenses(d.expenses.map((e: any) => ({ ...e, details: e.details || '' })));
                         setExpensesDivers((d.expensesDivers || []).map((dv: any) => ({ ...dv, details: dv.details || '' })));
                         if (!d.expensesDivers) setExpensesDivers([{ designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces' }]);
@@ -843,12 +883,13 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const doublage = doublagesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0);
     const extraTotal = extrasList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0);
     const primesTotal = primesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0);
+    const restesSalairesTotal = restesSalairesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0);
 
     const totalExpensesDynamic = expenses.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesDivers = expensesDivers.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesJournalier = expensesJournalier.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesAdmin = expensesAdmin.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + totalExpensesJournalier + totalExpensesAdmin + acompte + doublage + extraTotal + primesTotal;
+    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + totalExpensesJournalier + totalExpensesAdmin + acompte + doublage + extraTotal + primesTotal + restesSalairesTotal;
     const recetteNett = (parseFloat(recetteCaisse) || 0) - totalExpenses;
 
     // Auto-balance logic
@@ -936,7 +977,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         setExpensesJournalier([...expensesJournalier, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces', doc_type: 'PHOTO' }]);
     };
 
-    const handleEntrySubmit = async (type: string, username: string, amount: string) => {
+    const handleEntrySubmit = async (type: string, username: string, amount: string, nbJours?: string) => {
         if (isLocked) return;
         try {
             // New employees are now added only via the dedicated "Ajouter Employé" button
@@ -946,6 +987,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             if (type === 'doublage') await addDoublage({ variables: { username, amount: parseFloat(amount), date } });
             if (type === 'extra') await addExtra({ variables: { username, amount: parseFloat(amount), date } });
             if (type === 'prime') await addPrime({ variables: { username, amount: parseFloat(amount), date } });
+            if (type === 'restes_salaires') await addRestesSalaires({ variables: { username, amount: parseFloat(amount), nb_jours: nbJours ? parseFloat(nbJours) : 0, date } });
 
             refetchChiffre();
             setToast({ msg: 'Ajouté avec succès', type: 'success' });
@@ -980,6 +1022,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     if (type === 'doublage') await deleteDoublage({ variables: { id } });
                     if (type === 'extra') await deleteExtra({ variables: { id } });
                     if (type === 'prime') await deletePrime({ variables: { id } });
+                    if (type === 'restes_salaires') await deleteRestesSalaires({ variables: { id } });
 
                     refetchChiffre();
                     setToast({ msg: 'Supprimé avec succès', type: 'success' });
@@ -2347,6 +2390,76 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     )}
                                 </div>
                             </div>
+
+                            {/* 2.6 Restes Salaires */}
+                            <div className="bg-white rounded-[2rem] p-6 luxury-shadow relative overflow-hidden border border-[#e6dace]/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <Wallet size={16} className="text-[#a67c52]" />
+                                        <div
+                                            className="cursor-pointer group/title"
+                                            onClick={() => setShowHistoryModal({ type: 'restes_salaires' })}
+                                        >
+                                            <h4 className="font-bold text-[#4a3426] text-xs uppercase tracking-wider group-hover/title:text-[#c69f6e] transition-colors">RESTES SALAIRES</h4>
+                                            <p className="text-[9px] font-bold text-[#8c8279] uppercase tracking-tighter opacity-70">Salaires non payés</p>
+                                        </div>
+                                        <button
+                                            disabled={isLocked}
+                                            onClick={() => setShowEntryModal({ type: 'restes_salaires' })}
+                                            className="text-[#c69f6e] hover:scale-110 transition-transform disabled:opacity-30"
+                                        >
+                                            <PlusCircle size={22} strokeWidth={1.5} />
+                                        </button>
+                                    </div>
+                                    <span
+                                        className="bg-[#f2efe9] text-[#a67c52] px-4 py-2 rounded-2xl font-black text-xl cursor-pointer hover:bg-[#e6dace] transition-colors"
+                                        onClick={() => setShowHistoryModal({ type: 'restes_salaires' })}
+                                    >
+                                        {restesSalairesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0).toFixed(3)} <span className="text-xs">DT</span>
+                                    </span>
+                                </div>
+                                <div className="space-y-2 text-sm text-[#4a3426]">
+                                    {restesSalairesList.length > 0 ? restesSalairesList.map((p, i) => (
+                                        <div key={i} className="flex justify-between p-3 bg-[#f9f6f2] rounded-2xl items-center group">
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className="font-bold text-[#4a3426] cursor-pointer hover:text-[#c69f6e] transition-colors"
+                                                    onClick={() => setShowHistoryModal({ type: 'restes_salaires', targetName: p.username })}
+                                                >
+                                                    {p.username}
+                                                </span>
+                                                {getDepartment(p.username) && (
+                                                    <span className="text-[10px] font-black text-[#8c8279] uppercase tracking-wider bg-[#f4ece4] px-2 py-0.5 rounded-lg border border-[#e6dace]/50">
+                                                        {getDepartment(p.username)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {p.nb_jours && p.nb_jours > 0 && <span className="text-[10px] font-bold text-[#8c8279] bg-white px-2 py-1 rounded-lg border border-[#e6dace]/50">{p.nb_jours}j</span>}
+                                                <b className="font-black text-[#4a3426]">{parseFloat(p.montant).toFixed(3)}</b>
+                                                {!isLocked && (
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={() => setShowEntryModal({ type: 'restes_salaires', data: p })}
+                                                            className="text-[#c69f6e] hover:text-[#4a3426] transition-colors"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => p.id && handleDeleteEntry('restes_salaires', p.id)}
+                                                            className="text-red-300 hover:text-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p className="text-center py-4 text-[#8c8279] italic opacity-50">Aucun reste salaire</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* 4. TOTALS & RÉPARTITION SUMMARY BOX */}
@@ -2378,7 +2491,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                         {!hideRecetteCaisse && (
                                             <div className="text-[10px] md:text-xs opacity-40 mt-1 text-white">
-                                                (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal).toFixed(3)})
+                                                (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal + restesSalairesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0)).toFixed(3)})
                                             </div>
                                         )}
                                     </div>

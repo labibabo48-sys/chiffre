@@ -10,7 +10,7 @@ import {
     TrendingUp, Receipt, Wallet, UploadCloud, Coins, Banknote,
     ChevronLeft, ChevronRight, ChevronDown, Image as ImageIcon, Ticket,
     Clock, CheckCircle2, Eye, Edit2, Trash2, X, Layout, Plus,
-    Truck, Sparkles, Calculator, Zap
+    Truck, Sparkles, Calculator, Zap, Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -190,6 +190,7 @@ const GET_PAYMENT_DATA = gql`
       doublages_details { username montant }
       extras_details { username montant }
       primes_details { username montant }
+      restes_salaires_details { username montant }
     }
     getSalaryRemainders(month: $month) {
       id
@@ -583,8 +584,14 @@ export default function PaiementsPage() {
     };
 
     const expenseDetails = useMemo(() => {
-        const base = { journalier: [], fournisseurs: [], divers: [], administratif: [], avances: [], doublages: [], extras: [], primes: [], remainders: [] };
-        if (!data?.getDailyExpenses) return base;
+        if (!data || !data.getDailyExpenses) return {
+            journalier: [], fournisseurs: [], divers: [], administratif: [],
+            avances: [], doublages: [], extras: [], primes: [], restesSalaires: [], remainders: []
+        };
+        const base = {
+            journalier: [], fournisseurs: [], divers: [], administratif: [],
+            avances: [], doublages: [], extras: [], primes: [], restesSalaires: [], remainders: []
+        };
 
         // Add direct expenses from invoices categorized
         const directExpenses = (data.getInvoices || []).filter((inv: any) => inv.payer === 'riadh' && inv.category);
@@ -605,7 +612,8 @@ export default function PaiementsPage() {
                 avances: [...acc.avances, ...curr.avances_details],
                 doublages: [...acc.doublages, ...curr.doublages_details],
                 extras: [...acc.extras, ...curr.extras_details],
-                primes: [...acc.primes, ...curr.primes_details]
+                primes: [...acc.primes, ...curr.primes_details],
+                restesSalaires: [...acc.restesSalaires, ...(curr.restes_salaires_details || [])]
             };
         }, { ...base });
 
@@ -642,6 +650,7 @@ export default function PaiementsPage() {
             doublages: group(agg.doublages, 'username', 'montant'),
             extras: group(agg.extras, 'username', 'montant'),
             primes: group(agg.primes, 'username', 'montant'),
+            restesSalaires: group(agg.restesSalaires, 'username', 'montant'),
             remainders: agg.remainders
         };
     }, [data]);
@@ -656,6 +665,7 @@ export default function PaiementsPage() {
             expenseDetails.doublages.reduce((a: number, b: any) => a + b.amount, 0) +
             expenseDetails.extras.reduce((a: number, b: any) => a + b.amount, 0) +
             expenseDetails.primes.reduce((a: number, b: any) => a + b.amount, 0) +
+            expenseDetails.restesSalaires.reduce((a: number, b: any) => a + b.amount, 0) +
             expenseDetails.remainders.reduce((a: number, b: any) => a + b.amount, 0);
 
         return {

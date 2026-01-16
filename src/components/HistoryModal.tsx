@@ -11,6 +11,7 @@ const GET_CHIFFRES_RANGE = gql`
       doublages_details { username montant }
       extras_details { username montant }
       primes_details { username montant }
+      restes_salaires_details { username montant nb_jours }
       diponce_divers
       diponce_admin
       diponce_journalier
@@ -37,6 +38,7 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate, targetName }:
         doublage: 'Liste des Doublages',
         extra: 'Liste des Extras',
         prime: 'Liste des Primes',
+        restes_salaires: 'Restes Salaires',
         divers: 'Dépenses Divers',
         admin: 'Dépenses Administratif',
         journalier: 'Dépenses Journalier',
@@ -48,6 +50,7 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate, targetName }:
         doublage: 'doublages_details',
         extra: 'extras_details',
         prime: 'primes_details',
+        restes_salaires: 'restes_salaires_details',
         divers: 'diponce_divers',
         admin: 'diponce_admin',
         journalier: 'diponce_journalier',

@@ -141,6 +141,7 @@ const GET_CHIFFRES_MONTHLY = gql`
       doublages_details { username montant }
       extras_details { username montant }
       primes_details { username montant }
+      restes_salaires_details { username montant nb_jours }
       diponce_divers
       diponce_journalier
       diponce_admin
@@ -249,6 +250,7 @@ export default function DashboardPage() {
                 allDoublages: [...acc.allDoublages, ...curr.doublages_details.map((i: any) => ({ ...i, date: curr.date }))],
                 allExtras: [...acc.allExtras, ...curr.extras_details.map((i: any) => ({ ...i, date: curr.date }))],
                 allPrimes: [...acc.allPrimes, ...curr.primes_details.map((i: any) => ({ ...i, date: curr.date }))],
+                allRestesSalaires: [...acc.allRestesSalaires, ...curr.restes_salaires_details.map((i: any) => ({ ...i, date: curr.date }))],
                 allDivers: [...acc.allDivers, ...JSON.parse(curr.diponce_divers || '[]').map((i: any) => ({ ...i, date: curr.date }))],
                 allJournalier: [...acc.allJournalier, ...JSON.parse(curr.diponce_journalier || '[]').map((i: any) => ({ ...i, date: curr.date }))],
                 allAdmin: [...acc.allAdmin, ...JSON.parse(curr.diponce_admin || '[]').map((i: any) => ({ ...i, date: curr.date }))],
@@ -257,7 +259,7 @@ export default function DashboardPage() {
             recette_de_caisse: 0, total_diponce: 0, recette_net: 0,
             tpe: 0, cheque_bancaire: 0, espaces: 0, tickets_restaurant: 0,
             extra: 0, primes: 0,
-            allExpenses: [], allAvances: [], allDoublages: [], allExtras: [], allPrimes: [],
+            allExpenses: [], allAvances: [], allDoublages: [], allExtras: [], allPrimes: [], allRestesSalaires: [],
             allDivers: [], allJournalier: [], allAdmin: []
         });
 
@@ -290,6 +292,7 @@ export default function DashboardPage() {
         const groupedDoublages = filterByName(aggregateGroup(base.allDoublages, 'username', 'montant'));
         const groupedExtras = filterByName(aggregateGroup(base.allExtras, 'username', 'montant'));
         const groupedPrimes = filterByName(aggregateGroup(base.allPrimes, 'username', 'montant'));
+        const groupedRestesSalaires = filterByName(aggregateGroup(base.allRestesSalaires, 'username', 'montant'));
 
         const totalGeneralExpenses =
             groupedExpenses.reduce((a: number, b: any) => a + b.amount, 0) +
@@ -301,12 +304,13 @@ export default function DashboardPage() {
             groupedAvances.reduce((a: number, b: any) => a + b.amount, 0) +
             groupedDoublages.reduce((a: number, b: any) => a + b.amount, 0) +
             groupedExtras.reduce((a: number, b: any) => a + b.amount, 0) +
-            groupedPrimes.reduce((a: number, b: any) => a + b.amount, 0);
+            groupedPrimes.reduce((a: number, b: any) => a + b.amount, 0) +
+            groupedRestesSalaires.reduce((a: number, b: any) => a + b.amount, 0);
 
         return {
             ...base,
             groupedExpenses, groupedJournalier, groupedDivers, groupedAdmin,
-            groupedAvances, groupedDoublages, groupedExtras, groupedPrimes,
+            groupedAvances, groupedDoublages, groupedExtras, groupedPrimes, groupedRestesSalaires,
             totalGeneralExpenses, totalEmployeeExpenses
         };
     }, [data, searchQuery]);
@@ -753,6 +757,42 @@ export default function DashboardPage() {
                                         </AnimatePresence>
                                     </div>
 
+                                    {/* 2.5 Restes Salaires */}
+                                    <div className="bg-white rounded-[2.5rem] p-6 md:p-8 luxury-shadow border border-[#e6dace]/50 flex flex-col">
+                                        <button onClick={() => toggleSection('restesSalaires')} className="flex justify-between items-center w-full text-left">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-2xl bg-[#1e40af]/10 flex items-center justify-center text-[#1e40af]">
+                                                    <Wallet size={20} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-[#4a3426] text-xs uppercase tracking-widest">Restes Salaires</h4>
+                                                    <p className="text-[8px] font-bold text-[#8c8279] uppercase tracking-[0.2em] mt-0.5">Salaires Restants</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-[#fdfbf7] border border-[#e6dace]/40 px-3 md:px-4 py-2 rounded-xl">
+                                                    <span className="text-[13px] md:text-sm font-black text-[#4a3426]">{aggregates.groupedRestesSalaires.reduce((a: number, b: any) => a + b.amount, 0).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</span>
+                                                    <span className="text-[9px] md:text-[10px] font-bold text-[#c69f6e] ml-1">DT</span>
+                                                </div>
+                                                <motion.div animate={{ rotate: expandedSections['restesSalaires'] ? 180 : 0 }} className="text-[#1e40af]"><ChevronDown size={20} /></motion.div>
+                                            </div>
+                                        </button>
+                                        <AnimatePresence>
+                                            {expandedSections['restesSalaires'] && (
+                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                                    <div className="pt-6 space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 mt-2 border-t border-dashed border-[#e6dace]/50">
+                                                        {aggregates.groupedRestesSalaires.length > 0 ? aggregates.groupedRestesSalaires.map((a: any, i: number) => (
+                                                            <div key={i} onClick={() => setShowHistoryModal({ isOpen: true, type: "restes_salaires", targetName: a.name })} className="cursor-pointer flex justify-between items-center p-3 bg-[#f9f6f2] rounded-xl border border-transparent">
+                                                                <span className="font-medium text-[#4a3426] text-sm opacity-70 hover:underline">{a.name}</span>
+                                                                <b className="font-black text-[#4a3426]">{a.amount.toFixed(3)}</b>
+                                                            </div>
+                                                        )) : <div className="py-10 text-center italic text-[#8c8279] opacity-40 text-xs">Aucune donnée</div>}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
                                     {/* TOTAL EMPLOYEE SALARIES CARD */}
                                     <div className="bg-[#1b4332] rounded-[2.5rem] p-8 text-white relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -767,7 +807,7 @@ export default function DashboardPage() {
                                                         {hideTotalSalaries ? <EyeOff size={14} /> : <Eye size={14} />}
                                                     </button>
                                                 </div>
-                                                <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wide">Accompte + Doublage + Extra + Primes</p>
+                                                <p className="text-[10px] opacity-60 mt-1 uppercase tracking-wide">Accompte + Doublage + Extra + Primes + Restes Salaires</p>
                                             </div>
                                             <div className="flex items-baseline gap-2">
                                                 {hideTotalSalaries ? (
@@ -791,7 +831,7 @@ export default function DashboardPage() {
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="flex items-center gap-2 opacity-70">
                                                 <Calculator size={18} />
-                                                <span className="text-sm font-black uppercase tracking-[0.2em]">Total Dépenses Mensuel</span>
+                                                <span className="text-sm font-black uppercase tracking-[0.2em]">Dépenses Caisse Mensuelle</span>
                                             </div>
                                             <button
                                                 onClick={() => setHideMonthlySummary(!hideMonthlySummary)}

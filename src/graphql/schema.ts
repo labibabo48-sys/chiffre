@@ -10,6 +10,7 @@ export const typeDefs = `#graphql
     id: Int
     username: String
     montant: Float
+    nb_jours: Float
     date: String
   }
 
@@ -42,6 +43,7 @@ export const typeDefs = `#graphql
     doublages_details: [DetailItem]
     extras_details: [DetailItem]
     primes_details: [DetailItem]
+    restes_salaires_details: [DetailItem]
   }
 
   type Supplier {
@@ -54,6 +56,7 @@ export const typeDefs = `#graphql
     name: String
     type: String
   }
+
 
   type SalaryHistory {
     month: String
@@ -112,6 +115,7 @@ export const typeDefs = `#graphql
     totalRecetteCaisse: Float
     totalExpenses: Float
     totalRiadhExpenses: Float
+    totalRestesSalaires: Float
   }
 
   type Query {
@@ -240,6 +244,9 @@ export const typeDefs = `#graphql
 
     addPrime(username: String!, amount: Float!, date: String!): DetailItem
     deletePrime(id: Int!): Boolean
+
+    addRestesSalaires(username: String!, amount: Float!, nb_jours: Float, date: String!): DetailItem
+    deleteRestesSalaires(id: Int!): Boolean
     
     upsertSalaryRemainder(employee_name: String!, amount: Float!, month: String!, status: String): SalaryRemainder
     deleteSalaryRemainder(id: Int!): Boolean
