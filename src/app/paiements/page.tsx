@@ -372,6 +372,8 @@ export default function PaiementsPage() {
     const [showExpForm, setShowExpForm] = useState(false);
     const [showSalaryRemaindersModal, setShowSalaryRemaindersModal] = useState(false);
     const [salaryRemainderMonth, setSalaryRemainderMonth] = useState(currentMonthStr);
+    const [salaryRemainderMode, setSalaryRemainderMode] = useState<'global' | 'employee'>('global');
+    const [salaryRemainderSearch, setSalaryRemainderSearch] = useState('');
     const [editingHistoryItem, setEditingHistoryItem] = useState<any>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
@@ -1092,13 +1094,6 @@ export default function PaiementsPage() {
                                                 >
                                                     <Clock size={12} />
                                                     <span>Historique Riadh</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowSalaryRemaindersModal(true)}
-                                                    className="w-full text-[10px] font-black uppercase tracking-widest bg-red-50/50 border border-red-100 text-red-500 py-1.5 rounded-lg hover:bg-red-50 transition-all flex items-center justify-center gap-2 shadow-sm"
-                                                >
-                                                    <Banknote size={12} />
-                                                    <span>Restes Salaires</span>
                                                 </button>
                                             </div>
                                         )}
@@ -2123,7 +2118,7 @@ export default function PaiementsPage() {
                                             { title: 'Primes', subtitle: 'Récompenses & Bonus', icon: Sparkles, color: 'text-[#2d6a4f]', iconBg: 'bg-[#2d6a4f]/10', items: expenseDetails.primes },
                                             { title: 'Restes Salaires', subtitle: 'Salaires en attente', icon: Banknote, color: 'text-red-500', iconBg: 'bg-red-50', items: expenseDetails.remainders }
                                         ].map((cat, idx) => {
-                                            const total = cat.amount !== undefined ? cat.amount : cat.items.reduce((sum, item) => sum + item.amount, 0);
+                                            const total = cat.amount !== undefined ? cat.amount : (cat.items || []).reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
                                             // Show Restes Salaires even if 0, but hide others if 0
                                             if (total === 0 && cat.title !== 'Restes Salaires') return null;
                                             const isExpanded = expandedCategories.includes(idx);
@@ -2138,7 +2133,7 @@ export default function PaiementsPage() {
                                                         onClick={() => {
                                                             if (!hasItems) return;
                                                             setExpandedCategories(prev =>
-                                                                prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+                                                                prev.includes(idx) ? prev.filter((i: number) => i !== idx) : [...prev, idx]
                                                             );
                                                         }}
                                                         className={`p-6 flex items-center justify-between cursor-pointer select-none ${hasItems ? 'hover:bg-[#fcfaf8]' : 'cursor-default'} rounded-[2rem] transition-colors`}
@@ -2148,7 +2143,20 @@ export default function PaiementsPage() {
                                                                 <cat.icon size={20} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1.5">{cat.title}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1.5">{cat.title}</p>
+                                                                    {cat.title === 'Restes Salaires' && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setShowSalaryRemaindersModal(true);
+                                                                            }}
+                                                                            className="px-2 py-0.5 bg-red-50 text-red-500 rounded-md text-[8px] font-black uppercase tracking-tighter hover:bg-red-100 transition-colors border border-red-100 mb-1"
+                                                                        >
+                                                                            Modifier
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 <p className="text-[9px] font-bold text-[#4a3426]/30 uppercase tracking-tighter leading-none">{cat.subtitle}</p>
                                                             </div>
                                                         </div>
@@ -2174,7 +2182,7 @@ export default function PaiementsPage() {
                                                                 className="overflow-hidden bg-[#fcfaf8]/50 border-t border-[#e6dace]/30"
                                                             >
                                                                 <div className="p-4 space-y-2">
-                                                                    {cat.items.map((item, i) => (
+                                                                    {(cat.items || []).map((item: any, i: number) => (
                                                                         <div key={i} className="flex justify-between items-center px-5 py-3 bg-white rounded-xl border border-[#e6dace]/10 shadow-sm">
                                                                             <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
                                                                             <span className="text-[11px] font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[9px] opacity-40 ml-0.5">DT</span></span>
@@ -2195,102 +2203,204 @@ export default function PaiementsPage() {
                         </div>
                     )
                 }
-            </AnimatePresence>
+            </AnimatePresence >
 
             {/* Salary Remainders Modal */}
             <AnimatePresence>
-                {showSalaryRemaindersModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
-                        onClick={() => setShowSalaryRemaindersModal(false)}
-                    >
+                {
+                    showSalaryRemaindersModal && (
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-[#f9f6f2] rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20 flex flex-col"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[200] bg-[#4a3426]/60 backdrop-blur-md flex items-center justify-center p-4"
+                            onClick={() => setShowSalaryRemaindersModal(false)}
                         >
-                            <div className="p-8 bg-white border-b border-[#e6dace] shrink-0">
-                                <div className="flex justify-between items-center mb-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-500/20">
-                                            <Banknote size={24} />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                onClick={e => e.stopPropagation()}
+                                className="bg-[#f9f6f2] rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20 flex flex-col"
+                            >
+                                <div className="px-8 pb-8 bg-white border-b border-[#e6dace] shrink-0">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                                                <Banknote size={24} />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-black text-[#4a3426] uppercase tracking-tight">Restes Salaires</h2>
+                                                <p className="text-xs font-bold text-[#8c8279] opacity-60 uppercase tracking-widest mt-1">Saisie manuelle des reliquats mensuels</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h2 className="text-2xl font-black text-[#4a3426] uppercase tracking-tight">Restes Salaires</h2>
-                                            <p className="text-xs font-bold text-[#8c8279] opacity-60 uppercase tracking-widest mt-1">Saisie manuelle des reliquats mensuels</p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex bg-[#fcfaf8] border border-[#e6dace] rounded-xl p-1 shadow-inner">
+                                                <input
+                                                    type="month"
+                                                    value={salaryRemainderMonth}
+                                                    onChange={(e) => setSalaryRemainderMonth(e.target.value)}
+                                                    className="bg-transparent px-3 py-1 text-sm font-black text-[#4a3426] outline-none"
+                                                />
+                                            </div>
+                                            <button onClick={() => setShowSalaryRemaindersModal(false)} className="w-10 h-10 rounded-full hover:bg-[#fcfaf8] flex items-center justify-center text-[#8c8279] transition-colors">
+                                                <X size={20} />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex bg-[#fcfaf8] border border-[#e6dace] rounded-xl p-1 shadow-inner">
-                                            <input
-                                                type="month"
-                                                value={salaryRemainderMonth}
-                                                onChange={(e) => setSalaryRemainderMonth(e.target.value)}
-                                                className="bg-transparent px-3 py-1 text-sm font-black text-[#4a3426] outline-none"
-                                            />
-                                        </div>
-                                        <button onClick={() => setShowSalaryRemaindersModal(false)} className="w-10 h-10 rounded-full hover:bg-[#fcfaf8] flex items-center justify-center text-[#8c8279] transition-colors">
-                                            <X size={20} />
+
+                                    <div className="flex bg-[#fcfaf8] p-1 rounded-2xl border border-[#e6dace] w-fit mx-auto shadow-inner">
+                                        <button
+                                            onClick={() => setSalaryRemainderMode('global')}
+                                            className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${salaryRemainderMode === 'global' ? 'bg-white text-red-500 shadow-md ring-1 ring-red-100' : 'text-[#8c8279] hover:text-[#4a3426]'}`}
+                                        >
+                                            Montant Global
+                                        </button>
+                                        <button
+                                            onClick={() => setSalaryRemainderMode('employee')}
+                                            className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${salaryRemainderMode === 'employee' ? 'bg-white text-red-500 shadow-md ring-1 ring-red-100' : 'text-[#8c8279] hover:text-[#4a3426]'}`}
+                                        >
+                                            Par Employé
                                         </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex-1 p-12 flex flex-col items-center justify-center">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="w-full max-w-sm space-y-8 bg-white p-10 rounded-[3rem] shadow-xl shadow-red-500/5 border border-red-100"
-                                >
-                                    <div className="text-center space-y-2">
-                                        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 ring-8 ring-red-50/50">
-                                            <Banknote size={40} />
-                                        </div>
-                                        <h3 className="text-xl font-black text-[#4a3426] uppercase tracking-tight">Montant Global</h3>
-                                        <p className="text-xs font-bold text-[#8c8279] opacity-40 uppercase tracking-widest">Total pour {salaryRemainderMonth}</p>
-                                    </div>
+                                <div className="flex-1 overflow-hidden flex flex-col">
+                                    {salaryRemainderMode === 'global' ? (
+                                        <div className="flex-1 p-12 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar">
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="w-full max-w-sm space-y-8 bg-white p-10 rounded-[3rem] shadow-xl shadow-red-500/5 border border-red-100"
+                                            >
+                                                <div className="text-center space-y-2">
+                                                    <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 ring-8 ring-red-50/50">
+                                                        <Banknote size={40} />
+                                                    </div>
+                                                    <h3 className="text-xl font-black text-[#4a3426] uppercase tracking-tight">Montant Global</h3>
+                                                    <p className="text-xs font-bold text-[#8c8279] opacity-40 uppercase tracking-widest">Total pour {salaryRemainderMonth}</p>
+                                                </div>
 
-                                    <div className="relative group">
-                                        <input
-                                            key={salaryRemainderMonth}
-                                            type="number"
-                                            step="0.001"
-                                            placeholder="0,000"
-                                            defaultValue={(data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires')?.amount || 0}
-                                            onBlur={async (e: any) => {
-                                                const val = parseFloat(e.target.value);
-                                                await upsertSalaryRemainder({
-                                                    variables: {
-                                                        employee_name: 'Restes Salaires',
-                                                        amount: val || 0,
-                                                        month: salaryRemainderMonth,
-                                                        status: 'CONFIRMÉ'
-                                                    }
-                                                });
-                                                refetch();
-                                            }}
-                                            className="w-full h-24 bg-[#f9f6f2] border-2 border-transparent focus:border-red-200 rounded-[2rem] text-center text-5xl font-black text-[#4a3426] outline-none transition-all shadow-inner group-hover:bg-[#f3efea]"
-                                        />
-                                        <div className="absolute right-8 top-1/2 -translate-y-1/2 text-xl font-black text-red-500 opacity-20 group-focus-within:opacity-100 transition-opacity">DT</div>
-                                    </div>
+                                                <div className="relative group">
+                                                    <input
+                                                        key={salaryRemainderMonth}
+                                                        type="number"
+                                                        step="0.001"
+                                                        placeholder="0,000"
+                                                        defaultValue={(data?.getSalaryRemainders || []).find((r: any) => r.employee_name === 'Restes Salaires')?.amount || 0}
+                                                        onBlur={async (e) => {
+                                                            const val = parseFloat(e.target.value);
+                                                            await upsertSalaryRemainder({
+                                                                variables: {
+                                                                    employee_name: 'Restes Salaires',
+                                                                    amount: val || 0,
+                                                                    month: salaryRemainderMonth,
+                                                                    status: 'CONFIRMÉ'
+                                                                }
+                                                            });
+                                                            refetch();
+                                                        }}
+                                                        className="w-full h-24 bg-[#f9f6f2] border-2 border-transparent focus:border-red-200 rounded-[2rem] text-center text-5xl font-black text-[#4a3426] outline-none transition-all shadow-inner group-hover:bg-[#f3efea]"
+                                                    />
+                                                    <div className="absolute right-8 top-1/2 -translate-y-1/2 text-xl font-black text-red-500 opacity-20 group-focus-within:opacity-100 transition-opacity">DT</div>
+                                                </div>
 
-                                    <div className="flex items-center gap-4 p-4 bg-green-50 rounded-2xl border border-green-100">
-                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-green-500 shadow-sm">
-                                            <CheckCircle2 size={20} />
+                                                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-2xl border border-green-100">
+                                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-green-500 shadow-sm">
+                                                        <CheckCircle2 size={20} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-[10px] font-black text-green-600 uppercase tracking-widest leading-none mb-1">Sauvegarde Auto</p>
+                                                        <p className="text-[9px] font-bold text-green-500/70">Enregistré dès que vous quittez le champ.</p>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-green-600 uppercase tracking-widest leading-none mb-1">Sauvegarde Auto</p>
-                                            <p className="text-[9px] font-bold text-green-500/70">Enregistré dès que vous quittez le champ.</p>
+                                    ) : (
+                                        <div className="flex-1 flex flex-col min-h-0 bg-[#f9f6f2]">
+                                            <div className="p-8 pb-4 shrink-0">
+                                                <div className="relative">
+                                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8c8279]" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Rechercher un employé..."
+                                                        value={salaryRemainderSearch}
+                                                        onChange={(e) => setSalaryRemainderSearch(e.target.value)}
+                                                        className="w-full h-12 bg-white border border-[#e6dace] rounded-2xl pl-12 pr-4 font-bold text-[#4a3426] focus:border-red-400 outline-none transition-all placeholder:text-[#8c8279]/40 shadow-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
+                                                <div className="bg-white rounded-[2rem] border border-[#e6dace]/50 shadow-sm overflow-hidden">
+                                                    <table className="w-full text-left border-collapse">
+                                                        <thead>
+                                                            <tr className="bg-[#fcfaf8]/80 border-b border-[#e6dace]/30">
+                                                                <th className="px-8 py-5 text-[10px] font-black text-[#8c8279] uppercase tracking-[0.2em]">Employé</th>
+                                                                <th className="px-8 py-5 text-[10px] font-black text-[#8c8279] uppercase tracking-[0.2em] text-center">Montant</th>
+                                                                <th className="px-8 py-5 text-[10px] font-black text-[#8c8279] uppercase tracking-[0.2em] text-right">Statut</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {(() => {
+                                                                const employees = data?.getEmployees || [];
+                                                                const remainders = data?.getSalaryRemainders || [];
+
+                                                                return employees
+                                                                    .filter((emp: any) => emp.name.toLowerCase().includes(salaryRemainderSearch.toLowerCase()))
+                                                                    .map((emp: any) => {
+                                                                        const rem = remainders.find((r: any) => r.employee_name === emp.name);
+                                                                        const initials = emp.name.split(' ').map((n: any) => n[0]).join('').toUpperCase().substring(0, 2);
+
+                                                                        return (
+                                                                            <tr key={emp.id} className="border-b border-[#e6dace]/10 hover:bg-[#fcfaf8]/40 transition-colors">
+                                                                                <td className="px-8 py-4">
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <div className="w-10 h-10 rounded-full bg-[#f4ece4] flex items-center justify-center text-[10px] font-black text-[#c69f6e]">
+                                                                                            {initials}
+                                                                                        </div>
+                                                                                        <span className="font-black text-[#4a3426] tracking-tight">{emp.name}</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="px-8 py-4">
+                                                                                    <div className="flex items-center justify-center gap-2">
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            step="0.001"
+                                                                                            defaultValue={rem?.amount || 0}
+                                                                                            onBlur={async (e) => {
+                                                                                                const val = parseFloat(e.target.value);
+                                                                                                await upsertSalaryRemainder({
+                                                                                                    variables: {
+                                                                                                        employee_name: emp.name,
+                                                                                                        amount: val || 0,
+                                                                                                        month: salaryRemainderMonth,
+                                                                                                        status: 'CONFIRMÉ'
+                                                                                                    }
+                                                                                                });
+                                                                                                refetch();
+                                                                                            }}
+                                                                                            className="w-32 h-10 bg-[#f9f6f2] border border-[#e6dace] rounded-xl px-3 text-center font-black text-[#4a3426] focus:border-red-400 outline-none"
+                                                                                        />
+                                                                                        <span className="text-[10px] font-black text-[#c69f6e]">DT</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="px-8 py-4 text-right">
+                                                                                    <span className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100 flex items-center justify-center gap-2 w-fit ml-auto">
+                                                                                        CONFIRMÉ <CheckCircle2 size={12} />
+                                                                                    </span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        );
+                                                                    });
+                                                            })()}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            </div>
+                                    )}
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
+                    )}
             </AnimatePresence>
         </div>
     );
