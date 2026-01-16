@@ -2153,7 +2153,7 @@ export default function PaiementsPage() {
                                                                                     setSalaryRemainderMode('global');
                                                                                     setShowSalaryRemaindersModal(true);
                                                                                 }}
-                                                                                className="px-2 py-0.5 bg-red-50 text-red-500 rounded-md text-[8px] font-black uppercase tracking-tighter hover:bg-red-100 transition-colors border border-red-100"
+                                                                                className="px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors"
                                                                             >
                                                                                 Global
                                                                             </button>
@@ -2163,7 +2163,7 @@ export default function PaiementsPage() {
                                                                                     setSalaryRemainderMode('employee');
                                                                                     setShowSalaryRemaindersModal(true);
                                                                                 }}
-                                                                                className="px-2 py-0.5 bg-red-50 text-red-500 rounded-md text-[8px] font-black uppercase tracking-tighter hover:bg-red-100 transition-colors border border-red-100"
+                                                                                className="px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors"
                                                                             >
                                                                                 Employés
                                                                             </button>
@@ -2244,19 +2244,8 @@ export default function PaiementsPage() {
                                             className="bg-transparent px-3 py-1 text-sm font-black text-[#4a3426] outline-none"
                                         />
                                     </div>
-                                    <div className="flex bg-[#fcfaf8] p-1 rounded-2xl border border-[#e6dace] w-fit shadow-inner">
-                                        <button
-                                            onClick={() => setSalaryRemainderMode('global')}
-                                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${salaryRemainderMode === 'global' ? 'bg-white text-red-500 shadow-md ring-1 ring-red-100' : 'text-[#8c8279] hover:text-[#4a3426]'}`}
-                                        >
-                                            Montant Global
-                                        </button>
-                                        <button
-                                            onClick={() => setSalaryRemainderMode('employee')}
-                                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${salaryRemainderMode === 'employee' ? 'bg-white text-red-500 shadow-md ring-1 ring-red-100' : 'text-[#8c8279] hover:text-[#4a3426]'}`}
-                                        >
-                                            Par Employé
-                                        </button>
+                                    <div className="flex bg-[#fcfaf8] p-1 rounded-2xl border border-[#e6dace] w-fit shadow-inner invisible">
+                                        {/* Spacer to keep layout balanced if needed, or just remove. Removing completely is better but flex justify-between suggests keeping something or changing justify check. Let's start by removing the buttons but keeping the structure if needed? No, let's remove the div completely and let justify-between spread the remaining two items (date and close). Actually, justify-between with 3 items centers the middle one. With 2, it spreads them. To keep date on left and close on right, justify-between is fine. */}
                                     </div>
                                     <button onClick={() => setShowSalaryRemaindersModal(false)} className="w-10 h-10 rounded-full hover:bg-[#fcfaf8] flex items-center justify-center text-[#8c8279] transition-colors">
                                         <X size={20} />
