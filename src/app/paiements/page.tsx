@@ -22,7 +22,7 @@ const formatDateToDisplay = (dateStr: string) => {
     return `${d}/${m}/${y}`;
 };
 
-const PremiumDatePicker = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label: string }) => {
+const PremiumDatePicker = ({ value, onChange, label, align = 'left' }: { value: string, onChange: (val: string) => void, label: string, align?: 'left' | 'right' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
 
@@ -52,7 +52,7 @@ const PremiumDatePicker = ({ value, onChange, label }: { value: string, onChange
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 bg-white/50 hover:bg-white border border-[#e6dace] rounded-xl px-3 py-2 transition-all min-w-[130px] group"
+                className="flex items-center gap-2 bg-white/50 hover:bg-white border border-[#e6dace] rounded-xl px-3 py-2 transition-all min-w-[130px] group w-full"
             >
                 <Calendar size={14} className="text-[#c69f6e]" />
                 <span className="text-[11px] font-black text-[#4a3426] tracking-tight truncate">
@@ -68,7 +68,7 @@ const PremiumDatePicker = ({ value, onChange, label }: { value: string, onChange
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute top-full left-0 mt-3 bg-white rounded-3xl shadow-2xl border border-[#e6dace] p-5 z-[110] w-72"
+                            className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-0'} mt-3 bg-white rounded-3xl shadow-2xl border border-[#e6dace] p-5 z-[110] w-72`}
                         >
                             <div className="flex justify-between items-center mb-4">
                                 <button
@@ -681,6 +681,7 @@ export default function PaiementsPage() {
                                 label="Fin"
                                 value={dateRange.end}
                                 onChange={(val) => handleCustomDateChange('end', val)}
+                                align="right"
                             />
                         </div>
 
@@ -970,6 +971,7 @@ export default function PaiementsPage() {
                                                             label="Date"
                                                             value={expDate}
                                                             onChange={setExpDate}
+                                                            align="right"
                                                         />
                                                     </div>
                                                 </div>
@@ -1182,7 +1184,7 @@ export default function PaiementsPage() {
                                     {showBankForm && (
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                                            className="overflow-hidden mb-6"
+                                            className="mb-6"
                                         >
                                             <div className="space-y-3 p-4 bg-[#fcfaf8] rounded-3xl border border-[#e6dace]/50">
                                                 <div className="grid grid-cols-2 gap-3 items-end">
@@ -1202,6 +1204,7 @@ export default function PaiementsPage() {
                                                             label="Date"
                                                             value={bankDate}
                                                             onChange={setBankDate}
+                                                            align="right"
                                                         />
                                                     </div>
                                                 </div>
@@ -1409,6 +1412,7 @@ export default function PaiementsPage() {
                                                         label="Fin"
                                                         value={unpaidDateRange.end}
                                                         onChange={(val) => setUnpaidDateRange(prev => ({ ...prev, end: val }))}
+                                                        align="right"
                                                     />
                                                 </div>
                                                 {(unpaidDateRange.start || unpaidDateRange.end) && (
@@ -1714,6 +1718,7 @@ export default function PaiementsPage() {
                                                 label="Fin"
                                                 value={historyDateRange.end}
                                                 onChange={(val) => setHistoryDateRange(prev => ({ ...prev, end: val }))}
+                                                align="right"
                                             />
                                         </div>
                                         {(historyDateRange.start || historyDateRange.end) && (
