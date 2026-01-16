@@ -753,7 +753,7 @@ export default function PaiementsPage() {
     const handleExpSubmit = async () => {
         if (!expName || !expAmount || !expDate) return;
         if (!expCategory && !editingHistoryItem) {
-            Swal.fire('Catégorie requise', 'Veuillez sélectionner une catégorie (Fournisseur, Journalier ou Divers)', 'warning');
+            Swal.fire('Catégorie requise', 'Veuillez sélectionner une catégorie (Fournisseur ou Divers)', 'warning');
             return;
         }
         try {
@@ -1131,10 +1131,9 @@ export default function PaiementsPage() {
                                             {/* Category Selection */}
                                             <div className="flex flex-col gap-2 mb-2">
                                                 <label className="text-[10px] font-black text-red-700/50 uppercase ml-1">Choisir une Catégorie <span className="text-red-500">*</span></label>
-                                                <div className="grid grid-cols-3 gap-3">
+                                                <div className="grid grid-cols-2 gap-3">
                                                     {[
                                                         { id: 'Fournisseur', label: 'Fournisseur', icon: Truck },
-                                                        { id: 'Journalier', label: 'Journalier', icon: Clock },
                                                         { id: 'Divers', label: 'Divers', icon: Sparkles }
                                                     ].map((cat) => (
                                                         <button
