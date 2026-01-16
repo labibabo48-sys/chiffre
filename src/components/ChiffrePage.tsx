@@ -31,7 +31,6 @@ const GET_CHIFFRES_RANGE = gql`
         diponce
         diponce_divers
         diponce_admin
-        diponce_journalier
         restes_salaires_details { id username montant nb_jours }
     }
   }
@@ -46,10 +45,8 @@ const GET_CHIFFRE = gql`
         total_diponce
         diponce
         recette_net
-        recette_net
         tpe
         tpe2
-        cheque_bancaire
         cheque_bancaire
         espaces
         tickets_restaurant
@@ -58,11 +55,9 @@ const GET_CHIFFRE = gql`
         avances_details { id username montant }
         doublages_details { id username montant }
         extras_details { id username montant }
-        extras_details { id username montant }
         primes_details { id username montant }
         restes_salaires_details { id username montant nb_jours }
         diponce_divers
-        diponce_journalier
         diponce_admin
         is_locked
     }
@@ -122,7 +117,6 @@ const SAVE_CHIFFRE = gql`
     $extra: String!
     $primes: String!
     $diponce_divers: String!
-    $diponce_journalier: String!
     $diponce_admin: String!
 ) {
     saveChiffre(
@@ -141,7 +135,6 @@ const SAVE_CHIFFRE = gql`
       extra: $extra
       primes: $primes
       diponce_divers: $diponce_divers
-      diponce_journalier: $diponce_journalier
       diponce_admin: $diponce_admin
     ) {
         id
@@ -470,7 +463,6 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate, targetName }:
         prime: 'Liste des Primes',
         divers: 'Dépenses Divers',
         admin: 'Dépenses Administratif',
-        journalier: 'Dépenses Journalier',
         supplier: 'Dépenses Fournisseur'
     };
 
@@ -481,7 +473,6 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate, targetName }:
         prime: 'primes_details',
         divers: 'diponce_divers',
         admin: 'diponce_admin',
-        journalier: 'diponce_journalier',
         supplier: 'diponce'
     };
 
@@ -491,7 +482,7 @@ const HistoryModal = ({ isOpen, onClose, type, startDate, endDate, targetName }:
 
     historyData?.getChiffresByRange?.forEach((chiffre: any) => {
         let details = [];
-        const isJsonType = ['divers', 'admin', 'journalier', 'supplier'].includes(type);
+        const isJsonType = ['divers', 'admin', 'supplier'].includes(type);
 
         if (isJsonType) {
             try {
@@ -693,16 +684,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     }[]>([
         { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces', doc_type: 'BL' }
     ]);
-    const [expensesJournalier, setExpensesJournalier] = useState<{
-        designation: string,
-        amount: string,
-        details: string,
-        invoices: string[],
-        paymentMethod: string,
-        doc_type?: string
-    }[]>([
-        { designation: '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces', doc_type: 'BL' }
-    ]);
     const [expensesAdmin, setExpensesAdmin] = useState<{
         designation: string,
         amount: string,
@@ -733,7 +714,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [supplierSearch, setSupplierSearch] = useState('');
     const [designationSearch, setDesignationSearch] = useState('');
     const [showSupplierDropdown, setShowSupplierDropdown] = useState<number | null>(null);
-    const [showJournalierDropdown, setShowJournalierDropdown] = useState<number | null>(null);
     const [showDiversDropdown, setShowDiversDropdown] = useState<number | null>(null);
     const [showEntryModal, setShowEntryModal] = useState<any>(null); // { type: 'avance' | 'doublage' | 'extra' | 'prime', data: any }
     const [showEmployeeList, setShowEmployeeList] = useState(false);
@@ -741,7 +721,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     const [employeeSearch, setEmployeeSearch] = useState('');
     const [employeeDepartment, setEmployeeDepartment] = useState('');
     const [viewingInvoices, setViewingInvoices] = useState<string[] | null>(null);
-    const [viewingInvoicesTarget, setViewingInvoicesTarget] = useState<{ index: number, type: 'expense' | 'divers' | 'journalier' } | null>(null);
+    const [viewingInvoicesTarget, setViewingInvoicesTarget] = useState<{ index: number, type: 'expense' | 'divers' } | null>(null);
     const [imgZoom, setImgZoom] = useState(1);
     const [imgRotation, setImgRotation] = useState(0);
 
@@ -755,7 +735,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
     }, [viewingInvoices]);
     const [showCalendar, setShowCalendar] = useState(false);
     const [showSupplierModal, setShowSupplierModal] = useState(false);
-    const [showJournalierModal, setShowJournalierModal] = useState(false);
     const [showDiversModal, setShowDiversModal] = useState(false);
     const [showEmployeeModal, setShowEmployeeModal] = useState(false);
     const [hideRecetteCaisse, setHideRecetteCaisse] = useState(false);
@@ -765,7 +744,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     // Modal Details States
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [modalDetailsTarget, setModalDetailsTarget] = useState<{ index: number, type: 'expense' | 'divers' | 'journalier' } | null>(null);
+    const [modalDetailsTarget, setModalDetailsTarget] = useState<{ index: number, type: 'expense' | 'divers' } | null>(null);
     const [tempDetails, setTempDetails] = useState('');
     const [lastFocusedValue, setLastFocusedValue] = useState('');
 
@@ -788,7 +767,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         primesList,
         restesSalairesList,
         expensesDivers,
-        expensesJournalier,
         expensesAdmin
     });
 
@@ -816,7 +794,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
             setPrimesList(c.primes_details || []);
             setRestesSalairesList(c.restes_salaires_details || []);
             setExpensesDivers(JSON.parse(c.diponce_divers || '[]').map((d: any) => ({ ...d, details: d.details || '' })));
-            setExpensesJournalier(JSON.parse(c.diponce_journalier || '[]').map((j: any) => ({ ...j, details: j.details || '' })));
             let adminData = JSON.parse(c.diponce_admin || '[]');
             if (adminData.length === 0) {
                 adminData = [
@@ -887,9 +864,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
     const totalExpensesDynamic = expenses.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesDivers = expensesDivers.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-    const totalExpensesJournalier = expensesJournalier.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
     const totalExpensesAdmin = expensesAdmin.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + totalExpensesJournalier + totalExpensesAdmin + acompte + doublage + extraTotal + primesTotal + restesSalairesTotal;
+    const totalExpenses = totalExpensesDynamic + totalExpensesDivers + totalExpensesAdmin + acompte + doublage + extraTotal + primesTotal + restesSalairesTotal;
     const recetteNett = (parseFloat(recetteCaisse) || 0) - totalExpenses;
 
     // Auto-balance logic
@@ -920,12 +896,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         setExpensesDivers(newDivers);
     };
 
-    const handleJournalierChange = (index: number, field: string, value: any) => {
-        setHasInteracted(true);
-        const newJournalier = [...expensesJournalier];
-        (newJournalier[index] as any)[field] = value;
-        setExpensesJournalier(newJournalier);
-    };
 
     const handleAdminChange = (index: number, field: string, value: any) => {
         setHasInteracted(true);
@@ -961,20 +931,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         }
         setHasInteracted(true);
         setExpensesDivers([...expensesDivers, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces', doc_type: 'BL' }]);
-    };
-    const handleAddJournalier = (designation?: string) => {
-        if (isLocked) {
-            setShowConfirm({
-                type: 'alert',
-                title: 'INTERDIT',
-                message: 'Cette date est verrouillée. Impossible d’ajouter des dépenses.',
-                color: 'red',
-                alert: true
-            });
-            return;
-        }
-        setHasInteracted(true);
-        setExpensesJournalier([...expensesJournalier, { designation: designation || '', amount: '0', details: '', invoices: [], paymentMethod: 'Espèces', doc_type: 'PHOTO' }]);
     };
 
     const handleEntrySubmit = async (type: string, username: string, amount: string, nbJours?: string) => {
@@ -1081,20 +1037,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         setHasInteracted(true);
         setExpensesDivers(expensesDivers.filter((_, i) => i !== index));
     };
-    const handleRemoveJournalier = (index: number) => {
-        if (isLocked) {
-            setShowConfirm({
-                type: 'alert',
-                title: 'INTERDIT',
-                message: 'Cette date est verrouillée. Impossible de supprimer cette dépense.',
-                color: 'red',
-                alert: true
-            });
-            return;
-        }
-        setHasInteracted(true);
-        setExpensesJournalier(expensesJournalier.filter((_, i) => i !== index));
-    };
 
     const handleShareInvoice = async (img: string) => {
         try {
@@ -1144,11 +1086,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
         const newInvoices = [...viewingInvoices];
         newInvoices.splice(idx, 1);
 
-        if (viewingInvoicesTarget.type === 'journalier') {
-            const list = [...expensesJournalier];
-            list[viewingInvoicesTarget.index].invoices = newInvoices;
-            setExpensesJournalier(list);
-        } else if (viewingInvoicesTarget.type === 'divers') {
+        if (viewingInvoicesTarget.type === 'divers') {
             const list = [...expensesDivers];
             list[viewingInvoicesTarget.index].invoices = newInvoices;
             setExpensesDivers(list);
@@ -1180,10 +1118,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     const newDivers = [...expensesDivers];
                     newDivers[index].invoices = [...newDivers[index].invoices, ...base64s];
                     setExpensesDivers(newDivers);
-                } else if ((isDivers as any) === 'journalier') {
-                    const newJournalier = [...expensesJournalier];
-                    newJournalier[index].invoices = [...newJournalier[index].invoices, ...base64s];
-                    setExpensesJournalier(newJournalier);
                 } else {
                     const newExpenses = [...expenses];
                     newExpenses[index].invoices = [...newExpenses[index].invoices, ...base64s];
@@ -1245,7 +1179,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                     extra,
                     primes,
                     diponce_divers: JSON.stringify(expensesDivers),
-                    diponce_journalier: JSON.stringify(expensesJournalier),
                     diponce_admin: JSON.stringify(expensesAdmin),
                 }
             });
@@ -1336,10 +1269,10 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                 <header className={`sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-[#e6dace] py-4 px-4 md:px-12 flex justify-between items-center transition-all duration-300`}>
 
                     <h2 className="text-lg md:text-xl font-black text-[#4a3426] block sm:hidden lg:block uppercase tracking-widest">
-                        Journalier
+                        Chiffre d'Affaire
                     </h2>
                     <h2 className="text-xl font-black text-[#4a3426] hidden sm:block lg:hidden uppercase tracking-widest">
-                        Journalier
+                        Chiffre d'Affaire
                     </h2>
 
                     <div className="flex items-center gap-4 ml-auto">
@@ -1462,215 +1395,11 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             </div>
                         </section>
 
-                        {/* 1. Dépenses Journalier */}
+                        {/* 1. Dépenses Fournisseur */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
                                     <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</div>
-                                    <span>Dépenses Journalier</span>
-                                </h3>
-                                <button
-                                    onClick={() => {
-                                        if (isLocked) {
-                                            setShowConfirm({
-                                                type: 'alert',
-                                                title: 'INTERDIT',
-                                                message: 'Cette date est verrouillée. Impossible d’ajouter des dépenses.',
-                                                color: 'red',
-                                                alert: true
-                                            });
-                                            return;
-                                        }
-                                        setShowJournalierModal(true);
-                                    }}
-                                    className={`flex items-center gap-2 px-3 py-1.5 bg-white border border-[#e6dace] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c69f6e] hover:bg-[#fcfaf8] transition-all`}
-                                >
-                                    <Plus size={12} />
-                                    Ajouter Journalier
-                                </button>
-                            </div>
-
-                            <section className="bg-white rounded-[2rem] p-6 luxury-shadow border border-[#e6dace]/50 space-y-4">
-                                <div className="space-y-3">
-                                    {expensesJournalier.map((journalier, index) => (
-                                        <div key={index} className="group flex flex-col p-2 rounded-xl transition-all border hover:bg-[#f9f6f2] border-transparent hover:border-[#e6dace]">
-                                            <div className="flex flex-col md:flex-row items-center gap-3 w-full">
-                                                <div
-                                                    className="w-full md:w-32 relative"
-                                                    onClick={() => {
-                                                        if (isLocked) {
-                                                            setShowConfirm({
-                                                                type: 'alert',
-                                                                title: 'INTERDIT',
-                                                                message: 'Cette date est verrouillée. Impossible de modifier cette dépense.',
-                                                                color: 'red',
-                                                                alert: true
-                                                            });
-                                                        }
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="number"
-                                                        placeholder="0.00"
-                                                        value={journalier.amount}
-                                                        disabled={isLocked}
-                                                        onWheel={(e) => e.currentTarget.blur()}
-                                                        onChange={(e) => handleJournalierChange(index, 'amount', e.target.value)}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 px-3 font-black text-xl outline-none focus:border-[#c69f6e] text-center ${isLocked ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
-                                                    />
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bba282] text-xs font-black">DT</span>
-                                                </div>
-
-                                                <div
-                                                    className="flex-1 w-full relative"
-                                                    onClick={(e) => {
-                                                        if (isLocked) {
-                                                            const target = e.target as HTMLElement;
-                                                            if (!target.closest('.doc-type-toggle')) {
-                                                                setShowConfirm({
-                                                                    type: 'alert',
-                                                                    title: 'INTERDIT',
-                                                                    message: 'Cette date est verrouillée. Impossible de modifier cette dépense.',
-                                                                    color: 'red',
-                                                                    alert: true
-                                                                });
-                                                            }
-                                                        }
-                                                    }}
-                                                >
-                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                                        <Search className="text-[#bba282] cursor-pointer hover:text-[#c69f6e] transition-colors" size={16} onClick={() => journalier.designation && setShowHistoryModal({ type: "journalier", targetName: journalier.designation })} />
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Désignation Journalière..."
-                                                        value={journalier.designation}
-                                                        disabled={isLocked}
-                                                        onFocus={() => {
-                                                            setShowJournalierDropdown(index);
-                                                            setDesignationSearch(journalier.designation);
-                                                        }}
-                                                        onBlur={() => setTimeout(() => setShowJournalierDropdown(null), 200)}
-                                                        onChange={(e) => {
-                                                            handleJournalierChange(index, 'designation', e.target.value);
-                                                            setDesignationSearch(e.target.value);
-                                                        }}
-                                                        className={`w-full bg-white border border-[#e6dace] rounded-xl h-12 pl-12 pr-10 focus:border-[#c69f6e] outline-none font-medium transition-all ${isLocked ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
-                                                    />
-                                                    <button
-                                                        onClick={() => {
-                                                            if (isLocked) {
-                                                                setShowConfirm({
-                                                                    type: 'alert',
-                                                                    title: 'INTERDIT',
-                                                                    message: 'Cette date est verrouillée. Impossible de modifier ce document.',
-                                                                    color: 'red',
-                                                                    alert: true
-                                                                });
-                                                                return;
-                                                            }
-                                                            setShowJournalierDropdown(showJournalierDropdown === index ? null : index);
-                                                        }}
-                                                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-[#bba282] hover:text-[#c69f6e] transition-colors`}
-                                                    >
-                                                        <ChevronDown size={18} />
-                                                    </button>
-                                                    {showJournalierDropdown === index && (
-                                                        <div className="absolute top-full left-0 w-full bg-white shadow-xl rounded-xl z-50 mt-1 max-h-48 overflow-y-auto border border-[#e6dace]">
-                                                            {commonDesignations
-                                                                .filter((d: string) => d.toLowerCase().includes(designationSearch.toLowerCase()))
-                                                                .map((d: string) => (
-                                                                    <div
-                                                                        key={d}
-                                                                        className="p-3 hover:bg-[#f9f6f2] cursor-pointer font-medium text-[#4a3426] text-sm"
-                                                                        onClick={() => {
-                                                                            handleJournalierChange(index, 'designation', d);
-                                                                            setShowJournalierDropdown(null);
-                                                                        }}
-                                                                    >
-                                                                        {d}
-                                                                    </div>
-                                                                ))
-                                                            }
-                                                            {commonDesignations.filter((d: string) => d.toLowerCase().includes(designationSearch.toLowerCase())).length === 0 && designationSearch && (
-                                                                <div className="p-4 text-center text-[#bba282] text-xs italic">
-                                                                    Aucune désignation trouvée
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <button
-                                                    onClick={() => {
-                                                        setModalDetailsTarget({ index, type: 'journalier' });
-                                                        setTempDetails(journalier.details || '');
-                                                        setShowDetailsModal(true);
-                                                    }}
-                                                    className={`h-12 w-32 rounded-xl border flex items-center justify-center gap-2 transition-all ${journalier.details ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-[#fcfaf8] text-[#bba282] border-[#e6dace] hover:border-[#c69f6e] hover:text-[#c69f6e]'} ${isLocked && !journalier.details ? 'cursor-not-allowed opacity-50' : ''}`}
-                                                >
-                                                    <FileText size={16} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">{journalier.details ? 'Détails OK' : 'Détails'}</span>
-                                                </button>
-
-
-                                                <div className="flex items-center gap-2 w-full md:w-auto">
-                                                    <label
-                                                        onClick={(e) => {
-                                                            if (journalier.invoices.length > 0) {
-                                                                setViewingInvoices(journalier.invoices);
-                                                                setViewingInvoicesTarget({ index, type: 'journalier' });
-                                                                e.preventDefault();
-                                                            } else if (isLocked) {
-                                                                setShowConfirm({
-                                                                    type: 'alert',
-                                                                    title: 'INTERDIT',
-                                                                    message: 'Cette date est verrouillée. Impossible d\'ajouter des photos.',
-                                                                    color: 'red',
-                                                                    alert: true
-                                                                });
-                                                                e.preventDefault();
-                                                            }
-                                                        }}
-                                                        className={`h-12 w-24 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors relative whitespace-nowrap text-[10px] ${journalier.invoices.length > 0 ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-dashed border-[#bba282] text-[#bba282] hover:bg-[#f9f6f2]'} ${isLocked && journalier.invoices.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        <UploadCloud size={14} />
-                                                        <span className="font-black uppercase tracking-widest">
-                                                            PHOTO {journalier.invoices.length > 0 ? `(${journalier.invoices.length})` : ''}
-                                                        </span>
-                                                        <input type="file" multiple disabled={isLocked} className="hidden" onChange={(e) => handleFileUpload(index, e, 'invoice', 'journalier' as any)} />
-                                                    </label>
-                                                    <div className="w-12 flex justify-center">
-                                                        {(index > 0 || expensesJournalier.length > 1) && (
-                                                            <button onClick={() => handleRemoveJournalier(index)} className="h-12 w-12 flex items-center justify-center text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
-                                                                <Trash2 size={20} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => handleAddJournalier()}
-                                    disabled={isLocked}
-                                    className={`mt-4 w-full py-3 border-2 border-dashed border-[#e6dace] rounded-xl text-[#bba282] font-bold flex items-center justify-center gap-2 hover:border-[#c69f6e] hover:text-[#c69f6e] transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                    <Plus size={18} /> Nouvelle Ligne (Journalier)
-                                </button>
-                                <div className="mt-4 p-4 bg-[#fcfaf8] rounded-2xl flex justify-between items-center border border-[#e6dace]/50">
-                                    <span className="text-xs font-black text-[#8c8279] uppercase tracking-widest">Total Dépenses Journalier</span>
-                                    <span className="text-2xl font-black text-[#4a3426]">{totalExpensesJournalier.toFixed(3)} <span className="text-sm">DT</span></span>
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* 2. Dépenses Fournisseur */}
-                        <div>
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-[#4a3426] flex items-center gap-2">
-                                    <div className="bg-[#4a3426] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</div>
                                     <span>Dépenses Fournisseur</span>
                                 </h3>
                                 <button
@@ -2491,7 +2220,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         </div>
                                         {!hideRecetteCaisse && (
                                             <div className="text-[10px] md:text-xs opacity-40 mt-1 text-white">
-                                                (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Journalier: {totalExpensesJournalier.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal + restesSalairesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0)).toFixed(3)})
+                                                (Fournisseurs: {totalExpensesDynamic.toFixed(3)} + Divers: {totalExpensesDivers.toFixed(3)} + Admin: {totalExpensesAdmin.toFixed(3)} + Fixes: {(acompte + doublage + extraTotal + primesTotal + restesSalairesList.reduce((acc, curr) => acc + (parseFloat(curr.montant) || 0), 0)).toFixed(3)})
                                             </div>
                                         )}
                                     </div>
@@ -2629,8 +2358,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             </div>
                         </div>
                     </div>
-                </main>
-            </div>
+                </main >
+            </div >
 
             {/* Toast */}
             <AnimatePresence>
@@ -2671,13 +2400,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                         });
                                                         const base64s = await Promise.all(loaders);
 
-                                                        if (viewingInvoicesTarget.type === 'journalier') {
-                                                            const newJournalier = [...expensesJournalier];
-                                                            const currentInvoices = newJournalier[viewingInvoicesTarget.index].invoices || [];
-                                                            newJournalier[viewingInvoicesTarget.index].invoices = [...currentInvoices, ...base64s];
-                                                            setExpensesJournalier(newJournalier);
-                                                            setViewingInvoices(newJournalier[viewingInvoicesTarget.index].invoices);
-                                                        } else if (viewingInvoicesTarget.type === 'divers') {
+                                                        if (viewingInvoicesTarget.type === 'divers') {
                                                             const newDivers = [...expensesDivers];
                                                             const currentInvoices = newDivers[viewingInvoicesTarget.index].invoices || [];
                                                             newDivers[viewingInvoicesTarget.index].invoices = [...currentInvoices, ...base64s];
@@ -2797,7 +2520,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
 
             {/* Click outside to close dropdowns */}
             {showSupplierDropdown !== null && <div className="fixed inset-0 z-40" onClick={() => setShowSupplierDropdown(null)} />}
-            {showJournalierDropdown !== null && <div className="fixed inset-0 z-40" onClick={() => setShowJournalierDropdown(null)} />}
             {showDiversDropdown !== null && <div className="fixed inset-0 z-40" onClick={() => setShowDiversDropdown(null)} />}
 
             {/* Supplier Modal */}
@@ -2830,9 +2552,7 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                     <p className="text-[10px] text-[#c69f6e] font-black uppercase tracking-[0.2em] mt-1">
                                         {modalDetailsTarget.type === 'divers'
                                             ? `Catégorie : ${expensesDivers[modalDetailsTarget.index]?.designation || ''}`
-                                            : modalDetailsTarget.type === 'journalier'
-                                                ? `Désignation : ${expensesJournalier[modalDetailsTarget.index]?.designation || ''}`
-                                                : `Fournisseur : ${expenses[modalDetailsTarget.index]?.supplier || ''}`}
+                                            : `Fournisseur : ${expenses[modalDetailsTarget.index]?.supplier || ''}`}
                                     </p>
                                 </div>
                             </div>
@@ -2884,10 +2604,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                 const newDivers = [...expensesDivers];
                                                 newDivers[modalDetailsTarget.index].details = tempDetails;
                                                 setExpensesDivers(newDivers);
-                                            } else if (modalDetailsTarget.type === 'journalier') {
-                                                const newJournalier = [...expensesJournalier];
-                                                newJournalier[modalDetailsTarget.index].details = tempDetails;
-                                                setExpensesJournalier(newJournalier);
                                             } else {
                                                 const newExpenses = [...expenses];
                                                 newExpenses[modalDetailsTarget.index].details = tempDetails;
@@ -2912,9 +2628,9 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                 {/* Removed old showSupplierModal */}
             </AnimatePresence>
 
-            {/* Selection Modals Journalier/Divers */}
+            {/* Selection Modals Divers */}
             <AnimatePresence>
-                {(showSupplierModal || showJournalierModal || showDiversModal || showEmployeeModal) && (
+                {(showSupplierModal || showDiversModal || showEmployeeModal) && (
                     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -2923,7 +2639,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                             className="absolute inset-0 bg-black/40 backdrop-blur-md"
                             onClick={() => {
                                 setShowSupplierModal(false);
-                                setShowJournalierModal(false);
                                 setShowDiversModal(false);
                                 setShowEmployeeModal(false);
                                 setDesignationSearch('');
@@ -3027,7 +2742,6 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                         <button
                                             onClick={() => {
                                                 setShowSupplierModal(false);
-                                                setShowJournalierModal(false);
                                                 setShowDiversModal(false);
                                                 setShowEmployeeModal(false);
                                                 setDesignationSearch('');
@@ -3059,13 +2773,8 @@ export default function ChiffrePage({ role, onLogout }: ChiffrePageProps) {
                                                     } else {
                                                         await upsertDesignation({ variables: { name: val.trim() } });
                                                         refetchDesignations();
-                                                        if (showJournalierModal) {
-                                                            handleAddJournalier(val.trim());
-                                                            setShowJournalierModal(false);
-                                                        } else {
-                                                            handleAddDivers(val.trim());
-                                                            setShowDiversModal(false);
-                                                        }
+                                                        handleAddDivers(val.trim());
+                                                        setShowDiversModal(false);
                                                         setDesignationSearch('');
                                                     }
                                                     setToast({ msg: 'Ajouté avec succès', type: 'success' });

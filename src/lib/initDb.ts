@@ -39,7 +39,6 @@ const initDb = async () => {
       { name: 'extra', type: 'character varying(255)', default: "'0'" },
       { name: 'primes', type: 'character varying(255)', default: "'0'" },
       { name: 'diponce_divers', type: 'jsonb', default: null },
-      { name: 'diponce_journalier', type: 'jsonb', default: null },
       { name: 'diponce_admin', type: 'jsonb', default: null },
       { name: 'is_locked', type: 'boolean', default: 'false' }
     ];
@@ -138,7 +137,7 @@ const initDb = async () => {
       const divers = ["Entretien", "Outils", "Divers"];
 
       for (const d of journalier) {
-        await query('INSERT INTO public.designations (name, type) VALUES ($1, $2)', [d, 'journalier']);
+        await query('INSERT INTO public.designations (name, type) VALUES ($1, $2)', [d, 'divers']);
       }
       for (const d of divers) {
         await query('INSERT INTO public.designations (name, type) VALUES ($1, $2)', [d, 'divers']);
