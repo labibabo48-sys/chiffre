@@ -8,7 +8,7 @@ import {
     CreditCard, Loader2, Search, Calendar,
     ArrowUpRight, Download, Filter, User, FileText,
     TrendingUp, Receipt, Wallet, UploadCloud, Coins, Banknote,
-    ChevronLeft, ChevronRight, Image as ImageIcon, Ticket,
+    ChevronLeft, ChevronRight, ChevronDown, Image as ImageIcon, Ticket,
     Clock, CheckCircle2, Eye, Edit2, Trash2, X, Layout, Plus,
     Truck, Sparkles, Calculator, Zap
 } from 'lucide-react';
@@ -351,6 +351,7 @@ export default function PaiementsPage() {
     // History Modal State
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [showExpensesDetails, setShowExpensesDetails] = useState(false);
+    const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
     const [historySearch, setHistorySearch] = useState('');
     const [historyDateRange, setHistoryDateRange] = useState({ start: '', end: '' });
 
@@ -1963,134 +1964,133 @@ export default function PaiementsPage() {
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                             <motion.div
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="absolute inset-0 bg-[#4a3426]/60 backdrop-blur-md"
+                                className="absolute inset-0 bg-[#4a3426]/60 backdrop-blur-sm"
                                 onClick={() => setShowExpensesDetails(false)}
                             />
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                                className="relative bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden border border-[#e6dace]"
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="relative bg-[#fcfaf8] w-full max-w-7xl h-auto max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 flex flex-col"
                             >
-                                <div className="p-8 md:p-10">
-                                    <div className="flex justify-between items-start mb-8">
+                                <div className="p-8 md:p-10 flex-1 overflow-y-auto custom-scrollbar">
+                                    <div className="flex justify-between items-center mb-8 bg-white/50 p-6 rounded-[2rem] border border-[#e6dace]/30">
                                         <div>
                                             <h2 className="text-3xl font-black text-[#4a3426] tracking-tighter">Détails des Dépenses</h2>
-                                            <p className="text-[#8c8279] font-bold text-xs uppercase tracking-[0.2em] mt-2">Récapitulatif financier</p>
+                                            <p className="text-[#c69f6e] font-black text-[10px] uppercase tracking-[0.3em] mt-1">Récapitulatif financier complet</p>
                                         </div>
-                                        <button
-                                            onClick={() => setShowExpensesDetails(false)}
-                                            className="w-12 h-12 bg-[#fcfaf8] rounded-2xl flex items-center justify-center text-[#8c8279] hover:bg-red-50 hover:text-red-500 transition-all border border-[#e6dace]/50"
-                                        >
-                                            <X size={24} />
-                                        </button>
+                                        <div className="flex items-center gap-4">
+                                            <div className="hidden md:flex flex-col items-end px-6 border-r border-[#e6dace]/50">
+                                                <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1">Total Global</p>
+                                                <p className="text-2xl font-black text-[#4a3426] tracking-tighter">
+                                                    {totals.global.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                    <span className="text-xs ml-1 text-[#c69f6e]">DT</span>
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowExpensesDetails(false)}
+                                                className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8c8279] hover:bg-red-50 hover:text-red-500 transition-all border border-[#e6dace]/50 shadow-sm"
+                                            >
+                                                <X size={24} />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-                                        {/* Category Component */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start pb-8">
                                         {[
-                                            { title: 'Dépenses Journalier', subtitle: 'Quotidien & Fonctionnement', icon: Clock, color: 'bg-[#c69f6e]/10', iconColor: 'text-[#c69f6e]', items: expenseDetails.journalier },
-                                            { title: 'Dépenses Fournisseurs', subtitle: 'Marchandises & Services', icon: Truck, color: 'bg-[#4a3426]/10', iconColor: 'text-[#4a3426]', items: expenseDetails.fournisseurs },
-                                            { title: 'Dépenses Divers', subtitle: 'Frais Exceptionnels', icon: Sparkles, color: 'bg-[#c69f6e]/10', iconColor: 'text-[#c69f6e]', items: expenseDetails.divers },
-                                            { title: 'Dépenses Administratif', subtitle: 'Loyers, Factures & Bur.', icon: Layout, color: 'bg-[#4a3426]/10', iconColor: 'text-[#4a3426]', items: expenseDetails.administratif },
-                                            { title: 'Historique Dépenses (Riadh)', subtitle: 'Paiements directs', icon: User, color: 'bg-[#c69f6e]/10', iconColor: 'text-[#c69f6e]', amount: stats.totalRiadhExpenses, items: [] }, // Added items: [] for consistency
-                                            { title: 'Accompte', subtitle: 'Avances sur salaires', icon: Calculator, color: 'bg-[#a89284]/10', iconColor: 'text-[#a89284]', items: expenseDetails.avances },
-                                            { title: 'Doublage', subtitle: 'Heures supplémentaires', icon: TrendingUp, color: 'bg-[#4a3426]/10', iconColor: 'text-[#4a3426]', items: expenseDetails.doublages },
-                                            { title: 'Extra', subtitle: 'Main d\'œuvre occasionnelle', icon: Zap, color: 'bg-[#c69f6e]/10', iconColor: 'text-[#c69f6e]', items: expenseDetails.extras },
-                                            { title: 'Primes', subtitle: 'Récompenses & Bonus', icon: Sparkles, color: 'bg-[#2d6a4f]/10', iconColor: 'text-[#2d6a4f]', items: expenseDetails.primes }
+                                            { title: 'Dépenses Journalier', subtitle: 'Quotidien & Fonctionnement', icon: Clock, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.journalier },
+                                            { title: 'Dépenses Fournisseurs', subtitle: 'Marchandises & Services', icon: Truck, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.fournisseurs },
+                                            { title: 'Dépenses Divers', subtitle: 'Frais Exceptionnels', icon: Sparkles, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.divers },
+                                            { title: 'Dépenses Administratif', subtitle: 'Loyers, Factures & Bureaux', icon: Layout, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.administratif },
+                                            { title: 'Historique Dépenses (Riadh)', subtitle: 'Paiements directs', icon: User, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', amount: stats.totalRiadhExpenses, items: [] },
+                                            { title: 'Accompte', subtitle: 'Avances sur salaires', icon: Calculator, color: 'text-[#a89284]', iconBg: 'bg-[#a89284]/10', items: expenseDetails.avances },
+                                            { title: 'Doublage', subtitle: 'Heures supplémentaires', icon: TrendingUp, color: 'text-[#4a3426]', iconBg: 'bg-[#4a3426]/10', items: expenseDetails.doublages },
+                                            { title: 'Extra', subtitle: 'Main d\'œuvre occasionnelle', icon: Zap, color: 'text-[#c69f6e]', iconBg: 'bg-[#c69f6e]/10', items: expenseDetails.extras },
+                                            { title: 'Primes', subtitle: 'Récompenses & Bonus', icon: Sparkles, color: 'text-[#2d6a4f]', iconBg: 'bg-[#2d6a4f]/10', items: expenseDetails.primes }
                                         ].map((cat, idx) => {
                                             const total = cat.amount !== undefined ? cat.amount : cat.items.reduce((sum, item) => sum + item.amount, 0);
                                             if (total === 0) return null;
+                                            const isExpanded = expandedCategories.includes(idx);
+                                            const hasItems = cat.items && cat.items.length > 0;
+
                                             return (
-                                                <div key={idx} className="bg-[#fcfaf8] rounded-3xl border border-[#e6dace]/40 overflow-hidden">
-                                                    <div className="p-6 flex justify-between items-center bg-white/50 border-b border-[#e6dace]/20">
+                                                <div
+                                                    key={idx}
+                                                    className={`group bg-white rounded-[2rem] border transition-all duration-300 ${isExpanded ? 'border-[#c69f6e] ring-4 ring-[#c69f6e]/5 shadow-xl' : 'border-[#e6dace]/50 hover:border-[#c69f6e]/30 shadow-sm shadow-[#4a3426]/5'}`}
+                                                >
+                                                    <div
+                                                        onClick={() => {
+                                                            if (!hasItems) return;
+                                                            setExpandedCategories(prev =>
+                                                                prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+                                                            );
+                                                        }}
+                                                        className={`p-6 flex items-center justify-between cursor-pointer select-none ${hasItems ? 'hover:bg-[#fcfaf8]' : 'cursor-default'} rounded-[2rem] transition-colors`}
+                                                    >
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl ${cat.color} flex items-center justify-center ${cat.iconColor}`}>
+                                                            <div className={`w-12 h-12 rounded-2xl ${cat.iconBg} flex items-center justify-center ${cat.color} group-hover:scale-110 transition-transform`}>
                                                                 <cat.icon size={20} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1">{cat.title}</p>
-                                                                <p className="text-[10px] font-bold text-[#4a3426]/40 uppercase tracking-tighter">{cat.subtitle}</p>
+                                                                <p className="text-[10px] font-black text-[#8c8279] uppercase tracking-widest leading-none mb-1.5">{cat.title}</p>
+                                                                <p className="text-[9px] font-bold text-[#4a3426]/30 uppercase tracking-tighter leading-none">{cat.subtitle}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-lg font-black text-[#4a3426]">{total.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</p>
-                                                            <p className="text-[9px] font-bold text-[#8c8279] opacity-40 uppercase">DT</p>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="text-right">
+                                                                <p className="text-lg font-black text-[#4a3426] leading-none mb-1">{total.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}</p>
+                                                                <p className="text-[8px] font-black text-[#c69f6e] uppercase tracking-widest opacity-60">DT</p>
+                                                            </div>
+                                                            {hasItems && (
+                                                                <div className={`text-[#c69f6e] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                                    <ChevronDown size={18} />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    {cat.items && cat.items.length > 0 && (
-                                                        <div className="p-4 bg-white/30 space-y-2">
-                                                            {cat.items.map((item, i) => (
-                                                                <div key={i} className="flex justify-between items-center px-4 py-2 hover:bg-white rounded-xl transition-all border border-transparent hover:border-[#e6dace]/30">
-                                                                    <span className="text-xs font-bold text-[#4a3426]/70">{item.name}</span>
-                                                                    <span className="text-xs font-black text-[#4a3426]">{item.amount.toFixed(3)} DT</span>
+
+                                                    <AnimatePresence>
+                                                        {isExpanded && hasItems && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                className="overflow-hidden bg-[#fcfaf8]/50 border-t border-[#e6dace]/30"
+                                                            >
+                                                                <div className="p-4 space-y-2">
+                                                                    {cat.items.map((item, i) => (
+                                                                        <div key={i} className="flex justify-between items-center px-5 py-3 bg-white rounded-xl border border-[#e6dace]/10 shadow-sm">
+                                                                            <span className="text-[11px] font-bold text-[#4a3426]/70 uppercase tracking-tight">{item.name}</span>
+                                                                            <span className="text-[11px] font-black text-[#4a3426]">{item.amount.toLocaleString('fr-FR', { minimumFractionDigits: 3 })} <span className="text-[9px] opacity-40 ml-0.5">DT</span></span>
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
                                                 </div>
                                             );
                                         })}
+                                    </div>
+                                </div>
 
-                                        <div className="my-6 border-t-2 border-dashed border-[#e6dace]/60" />
-
-                                        {/* Summaries */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-5 bg-[#4a3426]/5 rounded-3xl border border-[#4a3426]/10">
-                                                <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest mb-1">Total Dépenses</p>
-                                                <p className="text-xl font-black text-[#4a3426] uppercase">
-                                                    {(expenseDetails.journalier.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.fournisseurs.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.divers.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.administratif.reduce((a, b) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                                    <span className="text-xs ml-1 opacity-40">DT</span>
+                                {/* Footer Total Summary */}
+                                <div className="p-8 bg-white border-t border-[#e6dace]/50 shrink-0">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {[
+                                            { label: 'Dépenses Directes', val: totals.expenses, color: 'text-[#4a3426]', bg: 'bg-[#4a3426]/5' },
+                                            { label: 'Total Salaires', val: totals.salaries, color: 'text-[#a89284]', bg: 'bg-[#a89284]/5' },
+                                            { label: 'Riadh (Historique)', val: totals.riadh, color: 'text-[#c69f6e]', bg: 'bg-[#c69f6e]/5' },
+                                            { label: 'Reste Prévu', val: stats.totalRecetteNette, color: 'text-[#22c55e]', bg: 'bg-[#22c55e]/5' }
+                                        ].map((sum, i) => (
+                                            <div key={i} className={`p-4 ${sum.bg} rounded-[1.5rem] border border-white/50 shadow-sm`}>
+                                                <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest mb-1 opacity-60">{sum.label}</p>
+                                                <p className={`text-lg font-black ${sum.color} tracking-tighter`}>
+                                                    {sum.val.toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
+                                                    <span className="text-[10px] ml-1">DT</span>
                                                 </p>
                                             </div>
-                                            <div className="p-5 bg-[#2d6a4f]/5 rounded-3xl border border-[#2d6a4f]/10">
-                                                <p className="text-[9px] font-black text-[#8c8279] uppercase tracking-widest mb-1">Total Salaires</p>
-                                                <p className="text-xl font-black text-[#2d6a4f] uppercase">
-                                                    {(expenseDetails.avances.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.doublages.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.extras.reduce((a, b) => a + b.amount, 0) +
-                                                        expenseDetails.primes.reduce((a, b) => a + b.amount, 0)).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                                    <span className="text-xs ml-1 opacity-40">DT</span>
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Grand Total */}
-                                        <div className="p-8 bg-gradient-to-br from-[#4a3426] to-[#2d1e16] rounded-[2rem] shadow-xl relative overflow-hidden ring-4 ring-[#c69f6e]/20 mt-4">
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                                            <div className="relative z-10 flex justify-between items-center">
-                                                <div>
-                                                    <p className="text-[11px] font-black text-[#c69f6e] uppercase tracking-[0.25em] mb-1">Somme Totale</p>
-                                                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-none">Global Net Dépenses</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-4xl font-black text-white tracking-tighter">
-                                                        {(
-                                                            expenseDetails.journalier.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.fournisseurs.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.divers.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.administratif.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.avances.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.doublages.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.extras.reduce((a, b) => a + b.amount, 0) +
-                                                            expenseDetails.primes.reduce((a, b) => a + b.amount, 0) +
-                                                            stats.totalRiadhExpenses
-                                                        ).toLocaleString('fr-FR', { minimumFractionDigits: 3 })}
-                                                    </p>
-                                                    <p className="text-[10px] font-black text-[#c69f6e]/50 uppercase tracking-[0.2em] mt-1">Dinar Tunisien</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => setShowExpensesDetails(false)}
-                                            className="w-full h-14 bg-white hover:bg-[#c69f6e] text-[#8c8279] hover:text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all border border-[#e6dace] mt-4 shadow-sm"
-                                        >
-                                            Fermer
-                                        </button>
+                                        ))}
                                     </div>
                                 </div>
                             </motion.div>
